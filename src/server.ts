@@ -8,6 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { CallTools } from "./tools/call_tools";
 import { ListTools } from "./tools/list_tools";
+import sequelize from "./config/database";
 
 dotenv.config();
 
@@ -30,12 +31,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) =>
 
 async function main() {
   try {
-    const token = process.env.MEZON_TOKEN;
-    if (!token) {
-      throw new Error("MEZON_TOKEN environment variable is not set");
-    }
-
     try {
+      await sequelize.authenticate();
+      console.log("✅ Kết nối PostgreSQL thành công");
+      await sequelize.sync();
       await client.login();
       const transport = new StdioServerTransport();
       await server.connect(transport);

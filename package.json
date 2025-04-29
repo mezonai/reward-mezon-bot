@@ -18,13 +18,17 @@
   "dependencies": {
     "@google/genai": "^0.10.0",
     "@modelcontextprotocol/sdk": "^1.10.2",
+    "@types/pg": "^8.11.14",
     "dotenv": "^16.4.1",
     "mezon-sdk": "^2.7.86",
+    "pg": "^8.15.6",
+    "sequelize": "^6.37.7",
     "zod": "^3.24.3"
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.0",
     "@types/node": "^20.11.0",
+    "@types/sequelize": "^4.28.20",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3",

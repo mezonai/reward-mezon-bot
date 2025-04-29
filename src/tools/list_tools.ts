@@ -49,7 +49,7 @@ export const ListTools = {
     },
     {
       name: "ask-gemini",
-      description: "Ask Gemini AI about infomation in a channel",
+      description: "Ask Gemini AI about information in a channel",
       inputSchema: {
         type: "object",
         properties: {
@@ -74,46 +74,107 @@ export const ListTools = {
             type: "array",
             description: "List of messages to use as context",
           },
-          required: ["channel", "question", "messages"],
         },
+        required: ["channel", "question", "messages"],
       },
     },
-
     {
-      name: "award-trophy",
-      description: "Award a trophy to a user.",
+      name: "award-user",
+      description: "Award a trophy to a user",
       inputSchema: {
         type: "object",
         properties: {
-          UserId: {
+          userId: {
             type: "string",
-            description: "Target User ID to award",
+            description: "Target user ID to award",
           },
           rewardId: {
             type: "string",
             description: "ID of the trophy to award",
           },
+          userName: {
+            type: "string",
+            description: "Display name of the user",
+          },
         },
-        required: ["UserId", "rewardId"],
+        required: ["userId", "rewardId"],
       },
     },
     {
-      name: "create-trophy",
-      description: "Create a new trophy for your server.",
-      parameters: {
+      name: "create-reward",
+      description: "Create a new trophy for your server",
+      inputSchema: {
         type: "object",
         properties: {
-          name: { type: "string", description: "Trophy name" },
-          description: { type: "string", description: "Trophy description" },
-
-          value: { type: "integer", description: "Value of the trophy" },
+          name: {
+            type: "string",
+            description: "Trophy name",
+          },
+          description: {
+            type: "string",
+            description: "Trophy description",
+          },
+          points: {
+            type: "integer",
+            description: "Points of the trophy",
+          },
           icon: {
             type: "string",
-            description: "Emoji or Icon",
-            nullable: true,
+            description: "Emoji or Icon (optional)",
+          },
+          createdBy: {
+            type: "string",
+            description: "User ID of the creator",
           },
         },
-        required: ["name", "description", "value"],
+        required: ["name", "description", "points", "createdBy"],
+      },
+    },
+    {
+      name: "rank",
+      description: "Get the leaderboard of users by trophy points",
+      inputSchema: {
+        type: "object",
+        properties: {
+          limit: {
+            type: "number",
+            description: "Number of top users to return",
+            default: 10,
+          },
+        },
+      },
+    },
+    {
+      name: "assign-role-on-score",
+      description:
+        "Assign a role to users when they reach a certain trophy score",
+      inputSchema: {
+        type: "object",
+        properties: {
+          roleId: {
+            type: "string",
+            description: "Role ID to assign",
+          },
+          scoreThreshold: {
+            type: "number",
+            description: "Minimum score required to assign the role",
+          },
+        },
+        required: ["roleId", "scoreThreshold"],
+      },
+    },
+    {
+      name: "get-user-rewards",
+      description: "Get the list of trophies awarded to a specific user",
+      inputSchema: {
+        type: "object",
+        properties: {
+          userId: {
+            type: "string",
+            description: "ID of the user",
+          },
+        },
+        required: ["userId"],
       },
     },
   ],

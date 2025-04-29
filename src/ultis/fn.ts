@@ -9,14 +9,12 @@ interface McpResponse {
 
 export const sendMessage = async (
   channel: string,
-  message: string,
+  message: string | object,
   server = "hello888"
 ) => {
   try {
-
-
     console.error("Sending message:", message);
-    console.error("Channel ID:", channel);
+
     await client.callTool({
       name: "send-message",
       arguments: {
@@ -83,4 +81,38 @@ export const readMessages = async (
     console.error("Error reading messages:", err);
     return null;
   }
+};
+
+export const createTrophy = async (
+  name: string,
+  description: string,
+  points: number,
+  icon?: string,
+  createdBy?: string
+) => {
+  return await client.callTool({
+    name: "create-trophy",
+    arguments: {
+      name,
+      description,
+      points,
+      icon,
+      createdBy,
+    },
+  });
+};
+
+export const awardTrophy = async (
+  userId: string,
+  rewardName: string,
+  userName: string
+) => {
+  return await client.callTool({
+    name: "award-trophy",
+    arguments: {
+      userId,
+      rewardName,
+      userName,
+    },
+  });
 };
