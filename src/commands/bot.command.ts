@@ -1,4 +1,11 @@
-import { askGemini, awardTrophy, createTrophy, sendMessage } from "../ultis/fn";
+import { formatLeaderboard } from "../ultis/constant";
+import {
+  askGemini,
+  awardTrophy,
+  createTrophy,
+  rankReward,
+  sendMessage,
+} from "../ultis/fn";
 
 export const commands = {
   help: {
@@ -12,8 +19,8 @@ export const commands = {
       const helpText = `
 🎮 **Danh sách lệnh:**
 *help - Hiển thị danh sách lệnh
-*trophy_create - Tạo trophy mới - *trophy_create tên | mô tả | giá trị
-*trophy_award @người dùng | reward Name - Trao trophy cho người dùng
+*new - Tạo trophy mới - *new tên troply | mô tả | giá trị
+*trophy_reward @người dùng | Trophy Name - Trao trophy cho người dùng
 *rank - Xem bảng xếp hạng trophy
 *trophy_user <userId> - Xem danh sách trophy của người dùng
 *trophy role <roleId> <score> - Gán role khi đạt điểm
@@ -100,6 +107,10 @@ export const commands = {
       const [Name, rewardName] = fullArg.split("|").map((s) => s.trim());
       const userName = Name.replace("@", "").trim();
 
+      console.log("userName", userName);
+      console.log("user_id", user_id);
+      console.log("rewardName", rewardName);
+
       const result = await awardTrophy(user_id, rewardName, userName);
       if (
         result &&
@@ -115,15 +126,39 @@ export const commands = {
 
   rank: {
     description: "Xem bảng xếp hạng người dùng",
-    execute: async (channel: string) => {
-      //   const result = await callTool("get-leaderboard", { limit: 10 });
-      //   await sendMessage(channel, result.content[0].text);
+    execute: async (
+      channel: string,
+      sender_id: string,
+      user_id: string,
+      args: string[]
+    ) => {
+      const fullArg = args.join(" ");
+      const result = await rankReward(+fullArg);
+
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatLeaderboard(JSON.parse(result.content[0].text));
+
+        console.error("text", text);
+
+        await sendMessage(channel, text);
+      } else {
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.");
+      }
     },
   },
 
   trophy_user: {
     description: "Xem danh sách trophy của người dùng",
-    execute: async (channel: string, args: string[]) => {
+    execute: async (
+      channel: string,
+      sender_id: string,
+      user_id: string,
+      args: string[]
+    ) => {
       const userId = args[0];
       if (!userId)
         return await sendMessage(channel, "Cú pháp: !trophy user <userId>");

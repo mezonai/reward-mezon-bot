@@ -108,11 +108,20 @@ export const awardTrophy = async (
   userName: string
 ) => {
   return await client.callTool({
-    name: "award-trophy",
+    name: "award-user",
     arguments: {
       userId,
       rewardName,
       userName,
+    },
+  });
+};
+
+export const rankReward = async (limit: number = 10) => {
+  return await client.callTool({
+    name: "rank",
+    arguments: {
+      limit,
     },
   });
 };

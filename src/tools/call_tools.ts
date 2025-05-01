@@ -5,11 +5,12 @@ import {
   AwardTrophySchema,
   CreateRewardSchema,
   GetLeaderboardSchema,
-  ReadMessagesSchema,
   SendMessageSchema,
 } from "./schema/tool_schema";
 import Reward from "../models/Reward";
 import UserReward from "../models/User_reward";
+import sequelize from "../config/database";
+import { QueryTypes } from "sequelize";
 
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
@@ -100,21 +101,106 @@ export const CallTools = async (request: any) => {
         try {
           let rewardId: any;
 
-          console.error("rewardName", rewardName);
-
           const result = await Reward.findOne({
             where: { name: rewardName.toLowerCase() },
           });
 
           if (result) {
-            rewardId = result?.dataValues?.id;
+            rewardId = result.id;
+          } else {
+            throw new Error(`Reward '${rewardName}' not found`);
           }
 
-           await UserReward.create({
+          await UserReward.create({
             reward_id: rewardId,
             user_id: userId,
             user_name: userName,
           });
+
+          const totalPointsResult: any = await sequelize.query(
+            `
+        SELECT SUM(r.points) AS total_points
+        FROM rewards r
+        JOIN user_rewards ur ON ur.reward_id = r.id
+        WHERE ur.user_id = :userId
+      `,
+            {
+              replacements: { userId },
+              type: QueryTypes.SELECT,
+            }
+          );
+
+          console.error("totalPointsResult", totalPointsResult);
+
+          const totalPoints = parseInt(
+            totalPointsResult[0]?.total_points || "0",
+            10
+          );
+
+          console.error("totalPoints", totalPoints);
+
+          const roleRewards: { point_threshold: number; role_name: string }[] =
+            await sequelize.query(
+              `
+          SELECT point_threshold, role_name
+          FROM role_rewards
+          ORDER BY point_threshold ASC
+        `,
+              {
+                type: QueryTypes.SELECT,
+              }
+            );
+
+          let newRole = null;
+          for (const role of roleRewards) {
+            if (totalPoints >= role.point_threshold) {
+              newRole = role.role_name;
+            }
+          }
+
+          if (newRole) {
+            const [existingRole] = await sequelize.query(
+              `
+          SELECT 1
+          FROM user_roles
+          WHERE user_id = :userId 
+        `,
+              {
+                replacements: { userId },
+                type: QueryTypes.SELECT,
+              }
+            );
+
+            if (!existingRole) {
+              await sequelize.query(
+                `
+            INSERT INTO user_roles (user_id, role_name, total_point)
+            VALUES (:userId, :roleName, :totalPoints)
+          `,
+                {
+                  replacements: {
+                    userId,
+                    roleName: newRole,
+                    totalPoints,
+                  },
+                  type: QueryTypes.INSERT,
+                }
+              );
+            } else {
+              await sequelize.query(
+                `
+          UPDATE user_roles
+          SET total_point = :totalPoints,
+          role_name = :roleName
+          WHERE user_id = :userId
+        `,
+                {
+                  replacements: { userId, totalPoints, roleName: newRole },
+                  type: QueryTypes.UPDATE,
+                }
+              );
+            }
+          }
 
           return {
             content: [
@@ -124,7 +210,17 @@ export const CallTools = async (request: any) => {
               },
             ],
           };
-        } catch (error) {}
+        } catch (error) {
+          console.error("Error awarding user:", error);
+          return {
+            content: [
+              {
+                type: "text",
+                text: "❌ Có lỗi khi trao reward. Vui lòng thử lại.",
+              },
+            ],
+          };
+        }
       }
 
       case "create-reward": {
@@ -153,17 +249,38 @@ export const CallTools = async (request: any) => {
 
       case "rank": {
         const { limit } = GetLeaderboardSchema.parse(args);
-        // Implement leaderboard fetching logic
-        console.log(`Fetching top ${limit} users from the leaderboard`);
+        console.log("Fetching leaderboard with limit:", limit);
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Leaderboard with top ${limit} users fetched successfully.`,
-            },
-          ],
-        };
+        const query = `
+          SELECT 
+          ur.user_name,
+          ul.role_name,
+          ul.total_point,
+          r.name AS reward_name
+        FROM user_rewards ur
+        JOIN user_roles ul ON ul.user_id = ur.user_id
+        JOIN rewards r ON r.id = ur.reward_id
+        GROUP BY ur.user_name, ul.role_name, ul.total_point, r.name
+          LIMIT :limit;
+  `;
+
+        try {
+          const results = await sequelize.query(query, {
+            replacements: { limit },
+            type: QueryTypes.SELECT,
+          });
+          console.error("result", results);
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(results, null, 2),
+              },
+            ],
+          };
+        } catch (err) {
+          console.error("Lỗi khi truy vấn:", err);
+        }
       }
 
       case "assign-role-on-score": {
@@ -210,7 +327,6 @@ export const CallTools = async (request: any) => {
       );
     }
 
-    // Handle any other errors (e.g., channel not found, API call errors)
     throw new Error(`An error occurred while processing the tool: ${error}`);
   }
 };
