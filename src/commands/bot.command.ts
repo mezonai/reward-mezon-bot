@@ -1,10 +1,16 @@
-import { formatLeaderboard } from "../ultis/constant";
+import {
+  formatLeaderboard,
+  formatListRole,
+  formatListTrophy,
+} from "../ultis/constant";
 import {
   askGemini,
   awardTrophy,
   createTrophy,
+  listRoleRewards,
   rankReward,
   sendMessage,
+  trophyUser,
 } from "../ultis/fn";
 
 export const commands = {
@@ -20,36 +26,41 @@ export const commands = {
 🎮 **Danh sách lệnh:**
 *help - Hiển thị danh sách lệnh
 *new - Tạo trophy mới - *new tên troply | mô tả | giá trị
-*trophy_reward @người dùng | Trophy Name - Trao trophy cho người dùng
+*trophy_award @người dùng | Trophy Name - Trao trophy cho người dùng
 *rank - Xem bảng xếp hạng trophy
-*trophy_user <userId> - Xem danh sách trophy của người dùng
-*trophy role <roleId> <score> - Gán role khi đạt điểm
+*trophy or *trophy user - Xem danh sách trophy của người dùng
+*list - Xem danh sách role rewards của người dùng
             `;
       await sendMessage(channel, helpText);
     },
   },
 
-  ask: {
-    description: "Hỏi bot AI",
-    execute: async (channel: string, args: string[]) => {
-      if (args.length === 0) {
-        return await sendMessage(channel, "Vui lòng nhập câu hỏi sau !ask");
-      }
-      const question = args.join(" ");
-      //   await askGemini(channel, question, messages);
-    },
-  },
+  // ask: {
+  //   description: "Hỏi bot AI",
+  //   execute: async (channel: string, args: string[]) => {
+  //     if (args.length === 0) {
+  //       return await sendMessage(channel, "Vui lòng nhập câu hỏi sau !ask");
+  //     }
+  //     const question = args.join(" ");
+  //       await askGemini(channel, question, messages);
+  //   },
+  // },
 
-  close: {
-    description: "Thoát khỏi chế độ hỏi Gemini",
-    execute: async (channel: string) => {
-      await sendMessage(channel, "🔒 Đã thoát khỏi chế độ hỏi Gemini.");
-    },
-  },
+  // close: {
+  //   description: "Thoát khỏi chế độ hỏi Gemini",
+  //   execute: async (channel: string) => {
+  //     await sendMessage(channel, "🔒 Đã thoát khỏi chế độ hỏi Gemini.");
+  //   },
+  // },
 
-  trophy_create: {
+  new: {
     description: "Tạo một trophy mới",
-    execute: async (channel: string, sender_id: any, args?: string[]) => {
+    execute: async (
+      channel: string,
+      sender_id: string,
+      user_id: string,
+      args: string[]
+    ) => {
       if (!args || args.length === 0) {
         await sendMessage(channel, {
           t: "Điền thông tin trophy",
@@ -133,7 +144,7 @@ export const commands = {
       args: string[]
     ) => {
       const fullArg = args.join(" ");
-      const result = await rankReward(+fullArg);
+      const result = await rankReward(+fullArg ? +fullArg : 10);
 
       if (
         result &&
@@ -142,7 +153,6 @@ export const commands = {
       ) {
         const text = formatLeaderboard(JSON.parse(result.content[0].text));
 
-        console.error("text", text);
 
         await sendMessage(channel, text);
       } else {
@@ -151,7 +161,7 @@ export const commands = {
     },
   },
 
-  trophy_user: {
+  trophy: {
     description: "Xem danh sách trophy của người dùng",
     execute: async (
       channel: string,
@@ -159,33 +169,70 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const userId = args[0];
-      if (!userId)
-        return await sendMessage(channel, "Cú pháp: !trophy user <userId>");
+      if (!sender_id)
+        return await sendMessage(channel, "Cú pháp: !trophy or !trophy  user");
+      const result = await trophyUser(user_id ? user_id : sender_id);
 
-      //   const result = await callTool("get-user-trophies", { userId });
-      //   await sendMessage(channel, result.content[0].text);
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatListTrophy(JSON.parse(result.content[0].text));
+
+        await sendMessage(channel, text);
+      } else {
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.");
+      }
     },
   },
 
-  trophy_role: {
-    description: "Gán role khi đạt điểm",
-    execute: async (channel: string, args: string[]) => {
-      const [roleId, score] = args;
-      if (!roleId || isNaN(Number(score)))
-        return await sendMessage(
-          channel,
-          "Cú pháp: !trophy role <roleId> <score>"
-        );
+  list: {
+    description: "Xem danh sách role rewards ",
+    execute: async (
+      channel: string,
+      sender_id: string,
+      user_id: string,
+      args: string[]
+    ) => {
+      const result = await listRoleRewards();
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatListRole(JSON.parse(result.content[0].text));
 
-      //   await callTool("assign-role-on-score", {
-      //     roleId,
-      //     scoreThreshold: Number(score),
-      //   });
-      await sendMessage(
-        channel,
-        `✅ Đã cấu hình gán role ${roleId} khi đạt ${score} điểm.`
-      );
+        await sendMessage(channel, text);
+      } else {
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.");
+      }
     },
   },
+
+  // trophy_role: {
+  //   description: "Gán role khi đạt điểm",
+  //   execute: async (
+  //     channel: string,
+  //     sender_id: string,
+  //     user_id: string,
+  //     args: string[]
+  //   ) => {
+  //     const [roleId, score] = args;
+  //     if (!roleId || isNaN(Number(score)))
+  //       return await sendMessage(
+  //         channel,
+  //         "Cú pháp: !trophy role <roleId> <score>"
+  //       );
+
+  //       await callTool("assign-role-on-score", {
+  //         roleId,
+  //         scoreThreshold: Number(score),
+  //       });
+  //     await sendMessage(
+  //       channel,
+  //       `✅ Đã cấu hình gán role ${roleId} khi đạt ${score} điểm.`
+  //     );
+  //   },
+  // },
 };

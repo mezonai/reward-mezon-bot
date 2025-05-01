@@ -255,13 +255,11 @@ export const CallTools = async (request: any) => {
           SELECT 
           ur.user_name,
           ul.role_name,
-          ul.total_point,
-          r.name AS reward_name
+          ul.total_point
         FROM user_rewards ur
         JOIN user_roles ul ON ul.user_id = ur.user_id
-        JOIN rewards r ON r.id = ur.reward_id
-        GROUP BY ur.user_name, ul.role_name, ul.total_point, r.name
-          LIMIT :limit;
+        GROUP BY ur.user_name, ul.role_name, ul.total_point
+          LIMIT :limit
   `;
 
         try {
@@ -283,33 +281,69 @@ export const CallTools = async (request: any) => {
         }
       }
 
-      case "assign-role-on-score": {
-        const { roleId, scoreThreshold } = args;
-        // Implement role assignment logic
-        console.log(
-          `Assigning role ${roleId} when score reaches ${scoreThreshold}`
+      // case "assign-role-on-score": {
+      //   const { roleId, scoreThreshold } = args;
+      //   // Implement role assignment logic
+      //   console.log(
+      //     `Assigning role ${roleId} when score reaches ${scoreThreshold}`
+      //   );
+
+      //   return {
+      //     content: [
+      //       {
+      //         type: "text",
+      //         text: `Role ${roleId} assigned successfully for users above score ${scoreThreshold}.`,
+      //       },
+      //     ],
+      //   };
+      // }
+      case "list-role-rewards": {
+        const result = await sequelize.query(
+          `
+          select role_name, point_threshold from role_rewards ORDER BY point_threshold DESC
+        `,
+          {
+            replacements: {},
+            type: QueryTypes.SELECT,
+          }
         );
+
+        console.error("result role", result);
 
         return {
           content: [
             {
               type: "text",
-              text: `Role ${roleId} assigned successfully for users above score ${scoreThreshold}.`,
+              text: JSON.stringify(result, null, 2),
             },
           ],
         };
       }
 
-      case "get-user-reward": {
+      case "get-user-rewards": {
         const { userId } = args;
-        // Fetch user trophies logic
-        console.log(`Fetching trophies for user ${userId}`);
+        const result = await sequelize.query(
+          `
+          SELECT 
+		  r.name, r.points,
+		  ur.user_name
+          FROM rewards r
+          JOIN user_rewards ur ON ur.reward_id = r.id
+          WHERE ur.user_id = :userId
+        `,
+          {
+            replacements: { userId },
+            type: QueryTypes.SELECT,
+          }
+        );
+
+        console.error("result reward", result);
 
         return {
           content: [
             {
               type: "text",
-              text: `Trophies for user ${userId} fetched successfully.`,
+              text: JSON.stringify(result, null, 2) || "No rewards found",
             },
           ],
         };

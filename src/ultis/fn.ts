@@ -91,7 +91,7 @@ export const createTrophy = async (
   createdBy?: string
 ) => {
   return await client.callTool({
-    name: "create-trophy",
+    name: "create-reward",
     arguments: {
       name,
       description,
@@ -123,5 +123,20 @@ export const rankReward = async (limit: number = 10) => {
     arguments: {
       limit,
     },
+  });
+};
+
+export const trophyUser = async (userId: string) => {
+  return await client.callTool({
+    name: "get-user-rewards",
+    arguments: {
+      userId,
+    },
+  });
+};
+
+export const listRoleRewards = async () => {
+  return await client.callTool({
+    name: "list-role-rewards",
   });
 };
