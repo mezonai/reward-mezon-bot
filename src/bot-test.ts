@@ -22,8 +22,8 @@ const checkNewMessages = async (data: any) => {
 
     try {
       await commands[command as keyof typeof commands].execute(
-        data.channel_id,
-        data.sender_id,
+        data?.channel_id,
+        data?.sender_id,
         user_id,
         args
       );
