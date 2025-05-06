@@ -1,4 +1,4 @@
-import { client } from "../config/connect";
+import { clientMCP } from "../config/connect";
 
 interface McpResponse {
   content: Array<{
@@ -10,12 +10,16 @@ interface McpResponse {
 export const sendMessage = async (
   channel: string,
   message: string | object,
-  server = "hello888"
+  server :string
 ) => {
   try {
     console.error("Sending message:", message);
 
-    await client.callTool({
+
+    console.error("Channel ID:", channel);
+    console.error("Server ID:", server);
+
+    await clientMCP.callTool({
       name: "send-message",
       arguments: {
         server: server,
@@ -28,60 +32,6 @@ export const sendMessage = async (
   }
 };
 
-export const askGemini = async (
-  channel: string,
-  question: string,
-  messages: any[],
-  server?: string
-): Promise<McpResponse | null> => {
-  try {
-    const response = (await client.callTool({
-      name: "ask-gemini",
-      arguments: {
-        server: server || "hello888",
-        channel,
-        question,
-        messages,
-      },
-    })) as McpResponse;
-
-    if (response?.content?.[0]?.text === "send-message") return null;
-    if (response?.content?.[0]?.text === "read-message") return null;
-
-    if (response?.content?.[0]?.text) {
-      await sendMessage(channel, response.content[0].text);
-    } else {
-      await sendMessage(
-        channel,
-        "Tôi không thể thực hiện yêu cầu  vui lòng thử lại"
-      );
-    }
-    return response;
-  } catch (err) {
-    console.error("Error", err);
-    return null;
-  }
-};
-
-export const readMessages = async (
-  channel: string,
-  limit: number = 5,
-  server = "hello888"
-) => {
-  try {
-    return await client.callTool({
-      name: "read-messages",
-      arguments: {
-        server: server,
-        channel,
-        limit,
-      },
-    });
-  } catch (err) {
-    console.error("Error reading messages:", err);
-    return null;
-  }
-};
 
 export const createTrophy = async (
   name: string,
@@ -90,7 +40,7 @@ export const createTrophy = async (
   icon?: string,
   createdBy?: string
 ) => {
-  return await client.callTool({
+  return await clientMCP.callTool({
     name: "create-reward",
     arguments: {
       name,
@@ -107,7 +57,7 @@ export const awardTrophy = async (
   rewardName: string,
   userName: string
 ) => {
-  return await client.callTool({
+  return await clientMCP.callTool({
     name: "award-user",
     arguments: {
       userId,
@@ -118,7 +68,7 @@ export const awardTrophy = async (
 };
 
 export const rankReward = async (limit: number = 10) => {
-  return await client.callTool({
+  return await clientMCP.callTool({
     name: "rank",
     arguments: {
       limit,
@@ -127,7 +77,7 @@ export const rankReward = async (limit: number = 10) => {
 };
 
 export const trophyUser = async (userId: string) => {
-  return await client.callTool({
+  return await clientMCP.callTool({
     name: "get-user-rewards",
     arguments: {
       userId,
@@ -136,7 +86,7 @@ export const trophyUser = async (userId: string) => {
 };
 
 export const listRoleRewards = async () => {
-  return await client.callTool({
+  return await clientMCP.callTool({
     name: "list-role-rewards",
   });
 };

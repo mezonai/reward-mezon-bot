@@ -1,3 +1,5 @@
+import { compareAsc, format, parse, subDays } from "date-fns";
+
 export function formatLeaderboard(data: any[]): string {
   if (data.length === 0) {
     return "❌ Không có người dùng nào trong danh sách.";
@@ -35,3 +37,44 @@ export function formatListRole(data: any[]): string {
 
   return leaderboardRole.trim();
 }
+
+export function getStartOfWeek(date = new Date()) {
+  const day = date.getDay();
+  return day === 1 ? true : false;
+}
+
+export function getFirstDayOfMonth(date = new Date()) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+
+export const afterDate = (
+  dateString: string,
+  formatString: string,
+  numberDate: number
+): string => {
+  const date = parse(dateString, formatString, new Date());
+  const subDay = subDays(date, numberDate);
+  const formattedDate = format(subDay, formatString);
+  return formattedDate;
+};
+
+export const getMondayAndSunday = (currentDate: Date) => {
+  const dayOfWeek = currentDate.getDay();
+  const diffToMonday =
+    currentDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+  const monday = new Date(currentDate);
+  monday.setDate(diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+
+  const diffToSunday = currentDate.getDate() + ((7 - dayOfWeek) % 7);
+  const sunday = new Date(currentDate);
+  sunday.setDate(diffToSunday);
+  sunday.setHours(23, 59, 59, 999);
+  const formattedMonday = format(monday, "yyyy-MM-dd");
+  const formattedSunday = format(sunday, "yyyy-MM-dd");
+  return {
+    start_date: formattedMonday,
+    end_date: formattedSunday,
+  };
+};

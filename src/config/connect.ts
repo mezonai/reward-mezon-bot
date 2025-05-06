@@ -1,11 +1,11 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
-export const client = new Client({
+export const clientMCP = new Client({
   name: "mezon-bot",
   version: "1.0.0",
   capabilities: {
-    tools: ["send-message", "read-messages", "ask-gemini"],
+    tools: ["send-message"],
   },
 });
 
@@ -31,7 +31,7 @@ export const connectClient = async () => {
       args: ["./build/server.js"],
     });
 
-    await client.connect(transport);
+    await clientMCP.connect(transport);
     console.log("✅ Successfully connected to MCP server");
     currentTransport = transport;
     return transport;

@@ -23,7 +23,15 @@ export const CallTools = async (request: any) => {
           channel: channelId,
           message,
         } = SendMessageSchema.parse(args);
+
+
+        console.error("Parsed arguments server:",serverId);
+
+
         const channel = await findChannel(channelId, serverId);
+
+
+
 
         if (!channel) {
           throw new Error("Channel not found");

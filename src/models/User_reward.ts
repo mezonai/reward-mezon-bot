@@ -37,7 +37,6 @@ UserReward.init(
   {
     sequelize,
     tableName: "user_rewards",
-    modelName: "UserReward",
     timestamps: true,
   }
 );

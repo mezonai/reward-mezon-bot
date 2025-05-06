@@ -144,25 +144,25 @@ export const ListTools = {
         },
       },
     },
-    // {
-    //   name: "assign-role-on-score",
-    //   description:
-    //     "Assign a role to users when they reach a certain trophy score",
-    //   inputSchema: {
-    //     type: "object",
-    //     properties: {
-    //       roleId: {
-    //         type: "string",
-    //         description: "Role ID to assign",
-    //       },
-    //       scoreThreshold: {
-    //         type: "number",
-    //         description: "Minimum score required to assign the role",
-    //       },
-    //     },
-    //     required: ["roleId", "scoreThreshold"],
-    //   },
-    // },
+    {
+      name: "assign-role-on-score",
+      description:
+        "Assign a role to users when they reach a certain trophy score",
+      inputSchema: {
+        type: "object",
+        properties: {
+          roleId: {
+            type: "string",
+            description: "Role ID to assign",
+          },
+          scoreThreshold: {
+            type: "number",
+            description: "Minimum score required to assign the role",
+          },
+        },
+        required: ["roleId", "scoreThreshold"],
+      },
+    },
     {
       name: "get-user-rewards",
       description: "Get the list of trophies awarded to a specific user",
