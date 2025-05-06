@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { client } from "./config/mezon-client";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -9,6 +8,7 @@ import {
 import { CallTools } from "./tools/call_tools";
 import { ListTools } from "./tools/list_tools";
 import sequelize from "./config/database";
+import { client } from "./config/mezon-client";
 
 dotenv.config();
 
@@ -34,11 +34,11 @@ async function main() {
     try {
       await sequelize.authenticate();
       console.log("✅ Kết nối PostgreSQL thành công");
-      await sequelize.sync();
-      await client.login();
+      await sequelize.sync({ alter: true });
       const transport = new StdioServerTransport();
       await server.connect(transport);
-      console.error("Mezon MCP Clan running on stdio");
+      await client.login()
+      console.log("Mezon MCP Clan running on stdio");
     } catch (error) {
       console.error("Fatal error in main():", error);
       process.exit(1);

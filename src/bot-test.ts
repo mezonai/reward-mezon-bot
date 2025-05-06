@@ -25,27 +25,28 @@ const checkNewMessages = async (data: any) => {
         data?.channel_id,
         data?.sender_id,
         user_id,
+        data?.clan_id,
         args
       );
 
       return;
     } catch (err) {
       console.error(`Error executing command ${command}:`, err);
-      await sendMessage(data.channel_id, "❌ Đã xảy ra lỗi khi thực thi lệnh.");
+      await sendMessage(data.channel_id, "❌ Đã xảy ra lỗi khi thực thi lệnh.", data?.clan_id);
       return;
     }
   }
+
+
+  
 };
 
 async function main() {
   try {
-    await connectClient();
     await client.login();
-
+    await connectClient();
     client.onChannelMessage(async (data: any) => {
-      console.error("Receiving message:", data);
       if (data?.sender_id === process.env.BOT) return;
-
       checkNewMessages(data);
     });
     console.log("✅ Connected to Mezon server");

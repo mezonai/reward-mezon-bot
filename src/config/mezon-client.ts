@@ -5,13 +5,19 @@ import { TextChannel } from "mezon-sdk/dist/cjs/mezon-client/structures/TextChan
 
 dotenv.config();
 
+if (!process.env.MEZON_TOKEN) {
+  throw new Error("MEZON_TOKEN is not defined in .env file");
+}
+
 const client = new MezonClient(process.env.MEZON_TOKEN);
 
 client.once("ready", () => {
   console.log("✅ Mezon bot is ready!");
 });
 
-export async function findClan(clanId?: string) {
+ async function findClan(clanId?: string) {
+
+  console.error("Finding clan with ID find clan:", clanId);
   if (!clanId) {
     if (client.clans.size === 1) {
       return client.clans.first()!;
@@ -19,13 +25,17 @@ export async function findClan(clanId?: string) {
     const clanList = Array.from(client.clans.values())
       .map((g) => `"${g.name}"`)
       .join(", ");
+
+      console.error("Available clans:", clanList);
     throw new Error(
       `Bot is in multiple servers. Please specify server name or ID. Available servers: ${clanList}`
     );
   }
 
   try {
-    const clan = await client.clans.fetch(clanId);
+    console.error("Fetching clan with ID: ind clan", clanId);
+    const clan = await client.clans.fetch(clanId as string);
+    console.error("Clan found clan:", clan);
     if (clan) return clan;
   } catch {
     const clans = client.clans.filter(
@@ -57,6 +67,7 @@ export async function findChannel(
   const clan = await findClan(clanId);
   try {
     const channel = await client.channels.fetch(channelId);
+
     if (channel instanceof TextChannel && channel.clan.id === clan.id) {
       return channel;
     }

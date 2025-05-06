@@ -30,7 +30,6 @@ RoleReward.init(
   {
     sequelize,
     tableName: "role_rewards",
-    modelName: "RoleReward",
     timestamps: true,
   }
 );
