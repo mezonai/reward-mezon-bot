@@ -6,23 +6,8 @@ export const SendMessageSchema = z.object({
     .optional()
     .describe("Clan name or ID (optional if bot is only in one server)"),
   channel: z.string().describe('Channel name (e.g., "general") or ID'),
-  message: z.union([
-    z.string(),
-    z.object({
-      t: z.string(),
-      ui: z.object({
-        fields: z.array(
-          z.object({
-            name: z.string(),
-            label: z.string(),
-            type: z.string(),
-            optional: z.boolean().optional(),
-          })
-        ),
-        tool_call: z.string(),
-      }),
-    }),
-  ]),
+  message_id: z.string().describe("Message ID to reply to"),
+  message: z.string().describe("Message content to send"),
 });
 
 export const ReadMessagesSchema = z.object({
@@ -65,13 +50,7 @@ export const AwardTrophySchema = z.object({
   userName: z.string().describe("Name of the user to award the trophy to"),
 });
 
-// New schema for assigning a role based on trophy score
-export const AssignRoleOnScoreSchema = z.object({
-  roleId: z.string().describe("Role ID to assign"),
-  scoreThreshold: z
-    .number()
-    .describe("Minimum score required to assign the role"),
-});
+
 
 // New schema for getting user trophies
 export const GetUserTrophiesSchema = z.object({
@@ -84,4 +63,14 @@ export const GetLeaderboardSchema = z.object({
     .max(100)
     .default(10)
     .describe("Number of top users to return"),
+});
+
+// New schema for assigning a role based on trophy score
+
+export const AssignRoleOnScoreSchema = z.object({
+  action: z
+    .enum(["delete", "update", "create"])
+    .describe("action to perform"),
+    point_threshold: z.number().optional().describe("point threshold"),
+    role_name: z.string().describe("role name"),
 });

@@ -17,7 +17,6 @@ client.once("ready", () => {
 
  async function findClan(clanId?: string) {
 
-  console.error("Finding clan with ID find clan:", clanId);
   if (!clanId) {
     if (client.clans.size === 1) {
       return client.clans.first()!;
@@ -26,16 +25,13 @@ client.once("ready", () => {
       .map((g) => `"${g.name}"`)
       .join(", ");
 
-      console.error("Available clans:", clanList);
     throw new Error(
       `Bot is in multiple servers. Please specify server name or ID. Available servers: ${clanList}`
     );
   }
 
   try {
-    console.error("Fetching clan with ID: ind clan", clanId);
     const clan = await client.clans.fetch(clanId as string);
-    console.error("Clan found clan:", clan);
     if (clan) return clan;
   } catch {
     const clans = client.clans.filter(

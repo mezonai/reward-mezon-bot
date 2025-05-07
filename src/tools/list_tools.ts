@@ -15,69 +15,19 @@ export const ListTools = {
             type: "string",
             description: 'Channel name (e.g., "general") or ID',
           },
+          message_id: {
+            type: "string",
+            description: "Message ID to reply to",
+          },
           message: {
             type: "string",
             description: "Message content to send",
           },
         },
-        required: ["channel", "message"],
+        required: ["channel", "message", "message_id"],
       },
     },
-    {
-      name: "read-messages",
-      description: "Read recent messages from a Mezon channel",
-      inputSchema: {
-        type: "object",
-        properties: {
-          server: {
-            type: "string",
-            description:
-              "Clan name or ID (optional if bot is only in one server)",
-          },
-          channel: {
-            type: "string",
-            description: 'Channel name (e.g., "general") or ID',
-          },
-          limit: {
-            type: "number",
-            description: "Number of messages to fetch (max 100)",
-            default: 50,
-          },
-        },
-        required: ["channel"],
-      },
-    },
-    {
-      name: "ask-gemini",
-      description: "Ask Gemini AI about information in a channel",
-      inputSchema: {
-        type: "object",
-        properties: {
-          server: {
-            type: "string",
-            description:
-              "Clan name or ID (optional if bot is only in one server)",
-          },
-          channel: {
-            type: "string",
-            description: "Channel name or ID",
-          },
-          question: {
-            type: "string",
-            description: "The question to ask Gemini",
-          },
-          tools: {
-            type: "array",
-            description: "List of tools to use",
-          },
-          messages: {
-            type: "array",
-            description: "List of messages to use as context",
-          },
-        },
-        required: ["channel", "question", "messages"],
-      },
-    },
+    
     {
       name: "award-user",
       description: "Award a trophy to a user",
@@ -151,16 +101,20 @@ export const ListTools = {
       inputSchema: {
         type: "object",
         properties: {
-          roleId: {
+          action:{
             type: "string",
-            description: "Role ID to assign",
+            description: "Action to perform (create, update, delete)",
           },
-          scoreThreshold: {
+          role_name: {
+            type: "string",
+            description: "Name of the role to assign",
+          },
+          point_threshold: {
             type: "number",
             description: "Minimum score required to assign the role",
           },
         },
-        required: ["roleId", "scoreThreshold"],
+        required: ["roleName", "point_threshold", "action"],
       },
     },
     {
@@ -181,5 +135,21 @@ export const ListTools = {
       name: "list-role-rewards",
       description: "Get the list of role rewards for a specific user",
     },
+    {
+      name: "list-trophy",
+      description: "get the list of trophies",
+    },
+    {
+      name: "top-week",
+      description: "Get the leaderboard of users by trophy points this week",
+      
+    },
+    {
+      name: "top-month",
+      description: "Get the leaderboard of users by trophy points this month",
+      
+    }
+
+
   ],
 };

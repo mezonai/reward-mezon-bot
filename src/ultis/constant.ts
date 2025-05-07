@@ -1,14 +1,14 @@
-import { compareAsc, format, parse, subDays } from "date-fns";
+import { compareAsc, format, parse, subDays, addDays } from "date-fns";
 
 export function formatLeaderboard(data: any[]): string {
   if (data.length === 0) {
-    return "❌ Không có người dùng nào trong danh sách.";
+    return "❌ Không có 👤 nào trong danh sách.";
   }
   let leaderboard = "🏆 Bảng xếp hạng:\n";
   data.forEach((user, index) => {
-    leaderboard += `${index + 1}. @${user?.user_name} - ${
+    leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${
       user.total_point
-    } point -  role reward ${user.role_name}\n`;
+    } 💰 -   ${user.role_name == 'Đồng'? "🥉": user.role_name == 'Bạc'? "🥈" : user.role_name == 'Vàng' ? "🥇": "🏅"}  ${user.role_name}\n`;
   });
 
   return leaderboard.trim();
@@ -16,11 +16,26 @@ export function formatLeaderboard(data: any[]): string {
 
 export function formatListTrophy(data: any[]): string {
   if (data.length === 0) {
-    return "❌ Không có trophy nào trong danh sách.";
+    return "🏆 Không có trophy trong 📝.";
   }
-  let leaderboardTrophy = `🏆 List Trophy ${data[0].user_name}:\n`;
+  let leaderboard = "📝 Danh sách trophy 🏆:\n";
+  data.forEach((item, index) => {
+    leaderboard += `${index + 1}. 🏆 ${item?.name} - ${
+      item.description
+    } -  💰 ${item.points}\n`;
+  });
+
+  return leaderboard.trim();
+}
+
+
+export function formatListTrophyUser(data: any[]): string {
+  if (data.length === 0) {
+    return "🏆 Không có trophy nào trong danh sách.";
+  }
+  let leaderboardTrophy = `📝 List Trophy ${data[0].user_name}:\n`;
   data.forEach((item) => {
-    leaderboardTrophy += `- @${item.user_name} - ${item.points} point -  Troply ${item.name}\n`;
+    leaderboardTrophy += `- @${item.user_name} - ${item.points} 💰 -  🏆 ${item.name}\n`;
   });
 
   return leaderboardTrophy.trim();
@@ -28,11 +43,11 @@ export function formatListTrophy(data: any[]): string {
 
 export function formatListRole(data: any[]): string {
   if (data.length === 0) {
-    return "❌ Không có role nào trong danh sách.";
+    return "🔥 Không có role nào trong danh sách.";
   }
-  let leaderboardRole = `🏅 List role Rewards :\n`;
+  let leaderboardRole = `🌟 👑 List role Rewards  🌟:\n`;
   data.forEach((item) => {
-    leaderboardRole += `- ${item.role_name} - ${item.point_threshold} point \n`;
+    leaderboardRole += `- ${item.role_name == 'Đồng'? "🥉": item.role_name == 'Bạc'? "🥈" : item.role_name == 'Vàng' ? "🥇": "🏅"} ${item.role_name} - ${item.point_threshold} 💰 \n`;
   });
 
   return leaderboardRole.trim();
@@ -50,12 +65,24 @@ export function getFirstDayOfMonth(date = new Date()) {
 
 export const afterDate = (
   dateString: string,
-  formatString: string,
-  numberDate: number
+  numberDate: number,
+  formatString: string = "yyyy-MM-dd"
 ): string => {
   const date = parse(dateString, formatString, new Date());
   const subDay = subDays(date, numberDate);
   const formattedDate = format(subDay, formatString);
+  return formattedDate;
+};
+
+
+export const addDate = (
+  dateString: string,
+  numberDate: number,
+  formatString: string = "yyyy-MM-dd"
+): string => {
+  const date = parse(dateString, formatString, new Date());
+  const adday = addDays(date, numberDate);
+  const formattedDate = format(adday, formatString);
   return formattedDate;
 };
 
