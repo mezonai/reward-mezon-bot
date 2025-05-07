@@ -40,11 +40,9 @@ async function main() {
       await client.login()
       console.log("Mezon MCP Clan running on stdio");
     } catch (error) {
-      console.error("Fatal error in main():", error);
       process.exit(1);
     }
   } catch (error) {
-    console.error("Fatal error:", error);
     process.exit(1);
   }
 }

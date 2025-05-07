@@ -3,36 +3,54 @@ import {
   formatLeaderboard,
   formatListRole,
   formatListTrophy,
+  formatListTrophyUser,
 } from "../ultis/constant";
 import {
+  assignRoleOnScore,
   awardTrophy,
   createTrophy,
   listRoleRewards,
+  listTrophy,
   rankReward,
   sendMessage,
+  topWeek,
   trophyUser,
 } from "../ultis/fn";
 
+interface Action {
+  action :  "create" | "update" | "delete",
+}
+
 export const commands = {
-  help: {
+  "reward_help": {
     description: "Hiển thị danh sách các lệnh có sẵn",
     execute: async (
       channel: string,
-      sender_id: any,
-      user_id: any,
+      sender_id: string,
+      user_id: string,
       server: string,
+      message_id:string,
       args: string[],
     ) => {
+
       const helpText = `
-🎮 **Danh sách lệnh:**
-*help - Hiển thị danh sách lệnh
-*new - Tạo trophy mới - *new tên troply | mô tả | giá trị
-*trophy_award @người dùng | Trophy Name - Trao trophy cho người dùng
-*rank - Xem bảng xếp hạng trophy
-*trophy or *trophy user - Xem danh sách trophy của người dùng
-*list - Xem danh sách role rewards của người dùng
+      🎮 **Danh sách lệnh:**
+      *reward_help - Hiển thị danh sách lệnh
+      *new - Tạo trophy mới - *new tên trophy | mô tả | giá trị
+      *list_trophy - Xem danh sách trophy
+      *trophy_award @người dùng | Trophy Name - (Trao trophy cho người dùng)
+      *rank - Xem bảng xếp hạng trophy
+      *top_week - Xem bảng xếp hạng trophy tuần này
+      *top_month - Xem bảng xếp hạng trophy tháng này
+      *trophy or *trophy user - Xem danh sách trophy của người dùng hoặc của bản thân
+      *list - Xem danh sách role rewards 
+      *role_reward (
+        delete | role_name ) - xóa role_reward
+        create | role_name | điểm - tạo role_reward
+        update | role_name | điểm - cập nhật role_reward
+      )
             `;
-      await sendMessage(channel, helpText, server);
+      await sendMessage(channel, helpText, message_id, server);
     },
   },
 
@@ -41,30 +59,13 @@ export const commands = {
     description: "Tạo một trophy mới",
     execute: async (
       channel: string,
-      sender_id: any,
-      user_id: any,
+      sender_id: string,
+      user_id: string,
       server: string,
+      message_id:string,
       args: string[],
     ) => {
-      if (!args || args.length === 0) {
-        await sendMessage(channel, {
-          t: "Điền thông tin trophy",
-          ui: {
-            fields: [
-              { name: "name", label: "Tên trophy", type: "text" },
-              { name: "description", label: "Mô tả", type: "textarea" },
-              {
-                name: "icon",
-                label: "Biểu tượng",
-                type: "text",
-                optional: true,
-              },
-              { name: "value", label: "Giá trị", type: "number" },
-            ],
-            tool_call: "create-trophy",
-          },
-        }, server);
-      } else {
+      
         const fullArg = args.join(" ");
         const [name, description, points, icon] = fullArg
           .split("|")
@@ -83,11 +84,10 @@ export const commands = {
           Array.isArray(result.content) &&
           typeof result.content[0]?.text === "string"
         ) {
-          await sendMessage(channel, result.content[0].text, server);
+          await sendMessage(channel, result.content[0].text, message_id,server);
         } else {
-          await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", server);
+          await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.",message_id,server);
         }
-      }
     },
   },
 
@@ -95,18 +95,16 @@ export const commands = {
     description: "Trao trophy cho người dùng",
     execute: async (
       channel: string,
-      sender_id: any,
-      user_id: any,
+      sender_id: string,
+      user_id: string,
       server: string,
+      message_id:string,
       args: string[],
     ) => {
       const fullArg = args.join(" ");
       const [Name, rewardName] = fullArg.split("|").map((s) => s.trim());
       const userName = Name.replace("@", "").trim();
 
-      console.log("userName", userName);
-      console.log("user_id", user_id);
-      console.log("rewardName", rewardName);
 
       const result = await awardTrophy(user_id, rewardName, userName);
       if (
@@ -114,9 +112,9 @@ export const commands = {
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        await sendMessage(channel, result.content[0].text, server);
+        await sendMessage(channel, result.content[0].text,message_id ,server);
       } else {
-        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", server);
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", message_id,server);
       }
     },
   },
@@ -125,9 +123,10 @@ export const commands = {
     description: "Xem bảng xếp hạng người dùng",
     execute: async (
       channel: string,
-      sender_id: any,
-      user_id: any,
+      sender_id: string,
+      user_id: string,
       server: string,
+      message_id:string,
       args: string[],
     ) => {
       const fullArg = args.join(" ");
@@ -141,9 +140,9 @@ export const commands = {
         const text = formatLeaderboard(JSON.parse(result.content[0].text));
 
 
-        await sendMessage(channel, text, server);
+        await sendMessage(channel, text, message_id,server);
       } else {
-        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", server);
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.",message_id ,server);
       }
     },
   },
@@ -152,13 +151,14 @@ export const commands = {
     description: "Xem danh sách trophy của người dùng",
     execute: async (
       channel: string,
-      sender_id: any,
-      user_id: any,
+      sender_id: string,
+      user_id: string,
       server: string,
+      message_id:string,
       args: string[],
     ) => {
       if (!sender_id)
-        return await sendMessage(channel, "Cú pháp: !trophy or !trophy  user", server );
+        return await sendMessage(channel, "Cú pháp: !trophy or !trophy  user", message_id,server );
       const result = await trophyUser(user_id ? user_id : sender_id);
 
       if (
@@ -166,11 +166,11 @@ export const commands = {
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        const text = formatListTrophy(JSON.parse(result.content[0].text));
+        const text = formatListTrophyUser(JSON.parse(result.content[0].text));
 
-        await sendMessage(channel, text, server);
+        await sendMessage(channel, text, message_id,server);
       } else {
-        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", server);
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", message_id,server);
       }
     },
   },
@@ -179,9 +179,10 @@ export const commands = {
     description: "Xem danh sách role rewards ",
     execute: async (
       channel: string,
-      sender_id: any,
-      user_id: any,
+      sender_id: string,
+      user_id: string,
       server: string,
+      message_id:string,
       args: string[],
     ) => {
       const result = await listRoleRewards();
@@ -192,36 +193,90 @@ export const commands = {
       ) {
         const text = formatListRole(JSON.parse(result.content[0].text));
 
-        await sendMessage(channel, text, server);
+        await sendMessage(channel, text, message_id,server);
       } else {
-        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", server);
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.",message_id ,server);
       }
     },
   },
 
-  // trophy_role: {
-  //   description: "Gán role khi đạt điểm",
-  //   execute: async (
-  //     channel: string,
-  //     sender_id: string,
-  //     user_id: string,
-  //     args: string[]
-  //   ) => {
-  //     const [roleId, score] = args;
-  //     if (!roleId || isNaN(Number(score)))
-  //       return await sendMessage(
-  //         channel,
-  //         "Cú pháp: !trophy role <roleId> <score>"
-  //       );
+  role_reward : {
+    description: "Gán role khi đạt điểm",
+    execute: async (
+      channel: string,
+      sender_id: string,
+      user_id: string,
+      server: string,
+      message_id:string,
+      args: string[],
+    ) => {
+      const fullArg = args.join(" ");
+      const [action, roleName, score] = fullArg.split("|").map((s) => s.trim());
 
-  //       await callTool("assign-role-on-score", {
-  //         roleId,
-  //         scoreThreshold: Number(score),
-  //       });
-  //     await sendMessage(
-  //       channel,
-  //       `✅ Đã cấu hình gán role ${roleId} khi đạt ${score} điểm.`
-  //     );
-  //   },
-  // },
+
+      const result = await assignRoleOnScore(action as Action["action"], roleName, +score || 0);
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        await sendMessage(channel,  result.content[0]?.text, message_id,server);
+      } else {
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", message_id,server);
+      }
+    },
+  },
+
+  list_trophy: {
+    description: "Xem danh sách trophy ",
+    execute: async (
+      channel: string,
+      sender_id: string,
+      user_id: string,
+      server: string,
+      message_id:string,
+      args: string[],
+    ) => {
+      const result = await listTrophy();
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatListTrophy(JSON.parse(result.content[0].text));
+
+        await sendMessage(channel, text, message_id,server);
+      } else {
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", message_id,server);
+      }
+    },
+  },
+
+  top_week: {
+    description: "Xem danh sách top reward tuần",
+    execute: async (
+      channel: string,
+      sender_id: string,
+      user_id: string,
+      server: string,
+      message_id:string,
+      args: string[],
+    ) => {
+      const result = await topWeek();
+
+      console.log("result", result);
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatLeaderboard(JSON.parse(result.content[0].text));
+
+        await sendMessage(channel, text, message_id,server);
+      } else {
+        await sendMessage(channel, "Lỗi: Không thể xử lý kết quả trả về.", message_id,server);
+      }
+    },
+  },
+  
 };

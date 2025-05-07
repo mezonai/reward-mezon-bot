@@ -1,29 +1,22 @@
 import { clientMCP } from "../config/connect";
 
-interface McpResponse {
-  content: Array<{
-    type: string;
-    text: string;
-  }>;
-}
+
 
 export const sendMessage = async (
   channel: string,
-  message: string | object,
+  message: string,
+  message_id: string,
   server :string
 ) => {
   try {
-    console.error("Sending message:", message);
 
-
-    console.error("Channel ID:", channel);
-    console.error("Server ID:", server);
 
     await clientMCP.callTool({
       name: "send-message",
       arguments: {
         server: server,
         channel,
+        message_id,
         message,
       },
     });
@@ -88,5 +81,34 @@ export const trophyUser = async (userId: string) => {
 export const listRoleRewards = async () => {
   return await clientMCP.callTool({
     name: "list-role-rewards",
+  });
+};
+
+export const assignRoleOnScore = async (
+  action:  "create" | "update" | "delete",
+  roleName: string,
+  point_threshold: number,
+)   => {
+
+
+  return await clientMCP.callTool({
+    name: "assign-role-on-score",
+    arguments: {
+      role_name: roleName,
+      point_threshold,
+      action
+    },
+  });
+
+}
+
+export const listTrophy = async () => {
+  return await clientMCP.callTool({
+    name: "list-trophy",
+  });
+};
+export const topWeek = async () => {
+  return await clientMCP.callTool({
+    name: "top-week",
   });
 };
