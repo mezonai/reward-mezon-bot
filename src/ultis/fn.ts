@@ -1,4 +1,6 @@
 import { clientMCP } from "../config/connect";
+import { client } from "../config/mezon-client";
+import { EMarkdownType } from "mezon-sdk";
 
 
 
@@ -6,9 +8,10 @@ export const sendMessage = async (
   channel: string,
   message: string,
   message_id: string,
-  server :string
+  server: string
 ) => {
   try {
+
 
 
     await clientMCP.callTool({
@@ -26,21 +29,28 @@ export const sendMessage = async (
 };
 
 
-export const createTrophy = async (
+export const crudTrophy = async (
+  action: "del" | "upd" | "new",
   name: string,
   description: string,
   points: number,
   icon?: string,
   createdBy?: string
 ) => {
+  console.log("action 1", action);
+  console.log("name 1", name);
+  console.log("description 1", description);
+  console.log("points 1", points);
+  console.log("icon 1", icon);
   return await clientMCP.callTool({
-    name: "create-reward",
+    name: "crud-trophy",
     arguments: {
       name,
       description,
-      points,
+      points: points || 0,
       icon,
       createdBy,
+      action
     },
   });
 };
@@ -85,10 +95,10 @@ export const listRoleRewards = async () => {
 };
 
 export const assignRoleOnScore = async (
-  action:  "create" | "update" | "delete",
+  action: "new" | "upd" | "del",
   roleName: string,
   point_threshold: number,
-)   => {
+) => {
 
 
   return await clientMCP.callTool({
@@ -110,5 +120,42 @@ export const listTrophy = async () => {
 export const topWeek = async () => {
   return await clientMCP.callTool({
     name: "top-week",
+    arguments: {
+      date: new Date().toISOString().split("T")[0],
+    }
   });
 };
+
+export const topMonth = async () => {
+  return await clientMCP.callTool({
+    name: "top-month",
+    arguments: {
+      date: new Date().toISOString().split("T")[0],
+    }
+  });
+};
+
+
+export const replyMessage = async (
+  channelId: string,
+  message: string,
+  message_id: string,
+) => {
+  const fetchedChannel = await client.channels.fetch(channelId);
+  const fetchedMessage = await fetchedChannel.messages.fetch(message_id);
+
+
+  console.log("fetchedMessage", message);
+  await fetchedMessage.reply({
+    t: message,
+    mk: [
+      {
+        type: EMarkdownType.TRIPLE,
+        s: 0,
+        e: message.length,
+      },
+    ],
+  })
+}
+
+

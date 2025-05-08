@@ -6,35 +6,18 @@ export const SendMessageSchema = z.object({
     .optional()
     .describe("Clan name or ID (optional if bot is only in one server)"),
   channel: z.string().describe('Channel name (e.g., "general") or ID'),
-  message_id: z.string().describe("Message ID to reply to"),
   message: z.string().describe("Message content to send"),
 });
 
-export const ReadMessagesSchema = z.object({
-  server: z
-    .string()
-    .optional()
-    .describe("Clan name or ID (optional if bot is only in one server)"),
-  channel: z.string().describe('Channel name (e.g., "general") or ID'),
-  limit: z.number().min(1).max(100).default(50),
-});
-
-export const AskGeminiSchema = z.object({
-  server: z
-    .string()
-    .optional()
-    .describe("Clan name or ID (optional if bot is only in one server)"),
-  channel: z.string().describe('Channel name (e.g., "general") or ID'),
-  question: z.string().describe("The question to ask Gemini"),
-  messages: z.any().describe("List of messages to use as context"),
-});
-
-export const CreateRewardSchema = z.object({
+export const CrudRewardSchema = z.object({
   name: z.string().describe("Name of the reward"),
-  description: z.string().describe("Description of the reward"),
+  description: z.string().optional().describe("Description of the reward"),
   icon: z.string().optional().describe("Icon of the reward"),
-  points: z.number().describe("Points of the reward"),
+  points: z.number().optional().describe("Points of the reward"),
   createdBy: z.string().describe("User ID of the creator"),
+  action: z
+    .enum(["del", "upd", "new"])
+    .describe("action to perform"),
 });
 
 export const AddUserRewardSchema = z.object({
@@ -69,8 +52,17 @@ export const GetLeaderboardSchema = z.object({
 
 export const AssignRoleOnScoreSchema = z.object({
   action: z
-    .enum(["delete", "update", "create"])
+    .enum(["del", "upd", "new"])
     .describe("action to perform"),
-    point_threshold: z.number().optional().describe("point threshold"),
-    role_name: z.string().describe("role name"),
+  point_threshold: z.number().optional().describe("point threshold"),
+  role_name: z.string().describe("role name"),
 });
+
+export const TopWeekSchema = z.object({
+  date: z
+    .string()
+    .describe("Date to get the top week for")
+});
+
+
+

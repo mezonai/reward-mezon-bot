@@ -1,3 +1,4 @@
+
 export const ListTools = {
   tools: [
     {
@@ -15,10 +16,7 @@ export const ListTools = {
             type: "string",
             description: 'Channel name (e.g., "general") or ID',
           },
-          message_id: {
-            type: "string",
-            description: "Message ID to reply to",
-          },
+
           message: {
             type: "string",
             description: "Message content to send",
@@ -27,7 +25,7 @@ export const ListTools = {
         required: ["channel", "message", "message_id"],
       },
     },
-    
+
     {
       name: "award-user",
       description: "Award a trophy to a user",
@@ -51,7 +49,7 @@ export const ListTools = {
       },
     },
     {
-      name: "create-reward",
+      name: "crud-trophy",
       description: "Create a new trophy for your server",
       inputSchema: {
         type: "object",
@@ -75,6 +73,10 @@ export const ListTools = {
           createdBy: {
             type: "string",
             description: "User ID of the creator",
+          },
+          action: {
+            type: "string",
+            description: "Action to perform (create, update, delete)",
           },
         },
         required: ["name", "description", "points", "createdBy"],
@@ -101,7 +103,7 @@ export const ListTools = {
       inputSchema: {
         type: "object",
         properties: {
-          action:{
+          action: {
             type: "string",
             description: "Action to perform (create, update, delete)",
           },
@@ -134,6 +136,7 @@ export const ListTools = {
     {
       name: "list-role-rewards",
       description: "Get the list of role rewards for a specific user",
+
     },
     {
       name: "list-trophy",
@@ -142,12 +145,28 @@ export const ListTools = {
     {
       name: "top-week",
       description: "Get the leaderboard of users by trophy points this week",
-      
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            description: "get total point of week",
+          },
+        }
+      }
     },
     {
       name: "top-month",
       description: "Get the leaderboard of users by trophy points this month",
-      
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            description: "get total point of month",
+          },
+        }
+      }
     }
 
 

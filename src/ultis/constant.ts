@@ -1,4 +1,4 @@
-import { compareAsc, format, parse, subDays, addDays } from "date-fns";
+import { format, parse, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
 
 export function formatLeaderboard(data: any[]): string {
   if (data.length === 0) {
@@ -6,9 +6,8 @@ export function formatLeaderboard(data: any[]): string {
   }
   let leaderboard = "🏆 Bảng xếp hạng:\n";
   data.forEach((user, index) => {
-    leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${
-      user.total_point
-    } 💰 -   ${user.role_name == 'Đồng'? "🥉": user.role_name == 'Bạc'? "🥈" : user.role_name == 'Vàng' ? "🥇": "🏅"}  ${user.role_name}\n`;
+    leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${user.total_point
+      } 💰 -   ${user.role_name == 'Đồng' ? "🥉" : user.role_name == 'Bạc' ? "🥈" : user.role_name == 'Vàng' ? "🥇" : "🏅"}  ${user.role_name}\n`;
   });
 
   return leaderboard.trim();
@@ -20,9 +19,8 @@ export function formatListTrophy(data: any[]): string {
   }
   let leaderboard = "📝 Danh sách trophy 🏆:\n";
   data.forEach((item, index) => {
-    leaderboard += `${index + 1}. 🏆 ${item?.name} - ${
-      item.description
-    } -  💰 ${item.points}\n`;
+    leaderboard += `${index + 1}. 🏆 ${item?.name} - ${item.description
+      } -  💰 ${item.points}\n`;
   });
 
   return leaderboard.trim();
@@ -47,15 +45,15 @@ export function formatListRole(data: any[]): string {
   }
   let leaderboardRole = `🌟 👑 List role Rewards  🌟:\n`;
   data.forEach((item) => {
-    leaderboardRole += `- ${item.role_name == 'Đồng'? "🥉": item.role_name == 'Bạc'? "🥈" : item.role_name == 'Vàng' ? "🥇": "🏅"} ${item.role_name} - ${item.point_threshold} 💰 \n`;
+    leaderboardRole += ` ${item.role_name == 'Đồng' ? "🥉" : item.role_name == 'Bạc' ? "🥈" : item.role_name == 'Vàng' ? "🥇" : "🏅"} ${item.role_name} - ${item.point_threshold} 💰 \n`;
   });
 
   return leaderboardRole.trim();
 }
 
-export function getStartOfWeek(date = new Date()) {
+export function isFirstDayofWeek(date = new Date()) {
   const day = date.getDay();
-  return day === 1 ? true : false;
+  return day === 1;
 }
 
 export function getFirstDayOfMonth(date = new Date()) {
@@ -80,28 +78,45 @@ export const addDate = (
   numberDate: number,
   formatString: string = "yyyy-MM-dd"
 ): string => {
+
+
   const date = parse(dateString, formatString, new Date());
   const adday = addDays(date, numberDate);
   const formattedDate = format(adday, formatString);
   return formattedDate;
 };
 
-export const getMondayAndSunday = (currentDate: Date) => {
-  const dayOfWeek = currentDate.getDay();
-  const diffToMonday =
-    currentDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-  const monday = new Date(currentDate);
-  monday.setDate(diffToMonday);
-  monday.setHours(0, 0, 0, 0);
+export const getMondayAndSunday = (currentDate: Date | string) => {
 
-  const diffToSunday = currentDate.getDate() + ((7 - dayOfWeek) % 7);
-  const sunday = new Date(currentDate);
-  sunday.setDate(diffToSunday);
-  sunday.setHours(23, 59, 59, 999);
-  const formattedMonday = format(monday, "yyyy-MM-dd");
-  const formattedSunday = format(sunday, "yyyy-MM-dd");
+  if (typeof currentDate === "string") {
+    currentDate = parse(currentDate, "yyyy-MM-dd", new Date());
+  }
+  const startWeek = startOfWeek(currentDate);
+  const endWeek = endOfWeek(currentDate);
+  const start_date = format(startWeek, "yyyy-MM-dd");
+  const end_date = format(endWeek, "yyyy-MM-dd");
   return {
-    start_date: formattedMonday,
-    end_date: formattedSunday,
+    start_date,
+    end_date,
   };
+
 };
+
+export const isFirstDayOfMonth = (date = new Date()): boolean => {
+  return date.getDate() === 1;
+};
+
+
+export const getStartandEndOfMonth = (currentDate: Date | string) => {
+  if (typeof currentDate === "string") {
+    currentDate = parse(currentDate, "yyyy-MM-dd", new Date());
+  }
+  const startMonth = startOfMonth(currentDate);
+  const endMonth = endOfMonth(currentDate);
+  const start_date = format(startMonth, "yyyy-MM-dd");
+  const end_date = format(endMonth, "yyyy-MM-dd");
+  return {
+    start_date,
+    end_date,
+  };
+}
