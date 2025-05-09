@@ -15,7 +15,7 @@ client.once("ready", () => {
   console.log("✅ Mezon bot is ready!");
 });
 
- async function findClan(clanId?: string) {
+async function findClan(clanId?: string) {
 
   if (!clanId) {
     if (client.clans.size === 1) {
@@ -73,7 +73,7 @@ export async function findChannel(
         channel instanceof TextChannel &&
         (channel.name?.toLowerCase() === channelId.toLowerCase() ||
           channel.name?.toLowerCase() ===
-            channelId.toLowerCase().replace("#", ""))
+          channelId.toLowerCase().replace("#", ""))
     );
 
     if (channels.size === 0) {
