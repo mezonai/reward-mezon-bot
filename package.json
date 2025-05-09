@@ -20,6 +20,7 @@
     "@google/genai": "^0.10.0",
     "@modelcontextprotocol/sdk": "^1.10.2",
     "@types/pg": "^8.11.14",
+    "cron": "^4.3.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.1",
     "mezon-sdk": "^2.7.86",

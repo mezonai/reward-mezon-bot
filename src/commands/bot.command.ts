@@ -19,13 +19,14 @@ import {
   trophyUser,
 } from "../ultis/fn";
 import { ChannelMessage } from "mezon-sdk";
+import { getMonth, getWeek, subDays } from "date-fns";
 
 interface Action {
   action: "new" | "upd" | "del",
 }
 
 export const commands = {
-  "reward_help": {
+  help: {
     description: "Hiển thị danh sách các lệnh có sẵn",
     execute: async (
       message: ChannelMessage,
@@ -34,23 +35,24 @@ export const commands = {
     ) => {
 
       const helpText = `
-      🎮 **Danh sách lệnh:**
-      *reward_help - Hiển thị danh sách lệnh
-      *trophy new tên trophy | mô tả | giá trị - Tạo trophy mới 
-      *trophy upd tên trophy | mô tả | giá trị - Cập nhật trophy
-      *trophy del tên trophy - xóa trophy
-      *list_trophy - Xem danh sách trophy
-      *trophy_award @người dùng | Trophy Name - (Trao trophy cho người dùng)
-      *rank - Xem bảng xếp hạng trophy
-      *trophys or *trophys user - Xem danh sách trophy của người dùng hoặc của bản thân
-      *list - Xem danh sách role rewards 
-      *role_reward del | tên role name - xóa role reward
-      *role_reward new | tên role name | điểm role reward - tạo role reward
-      *role_reward upd | tên role name | điểm role reward - cập nhật role reward
-      *top_week - Xem bảng xếp hạng trophy tuần này
-      *top_month - Xem bảng xếp hạng trophy tháng này
+              🏆 **Reward - Help Menu:** 👑
+       
+      !help - Hiển thị danh sách lệnh
+      !trophy new tên trophy | mô tả | giá trị - Tạo trophy mới 
+      !trophy upd tên trophy | mô tả | giá trị - Cập nhật trophy
+      !trophy del tên trophy - xóa trophy
+      !list_trophy - Xem danh sách trophy
+      !award @người dùng | Trophy Name - (Trao trophy cho người dùng)
+      !rank  or !rank số hạng - Xem bảng xếp hạng reward 
+      !trophys or !trophys user - Xem danh sách trophy của người dùng hoặc của bản thân
+      !list - Xem danh sách role rewards 
+      !reward del | tên role name - xóa role reward
+      !reward new | tên role name | điểm role reward - tạo role reward
+      !reward upd | tên role name | điểm role reward - cập nhật role reward
+      !top_week - Xem bảng xếp hạng trophy tuần này
+      !top_month - Xem bảng xếp hạng trophy tháng này
             `;
-      await sendMessage(message.channel_id, helpText, message?.message_id!, message?.clan_id!);
+      await replyMessage(message.channel_id, helpText, message?.message_id!);
     },
   },
 
@@ -82,12 +84,12 @@ export const commands = {
       ) {
         await replyMessage(message.channel_id, result.content[0].text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
 
-  trophy_award: {
+  award: {
     description: "Trao trophy cho người dùng",
     execute: async (
       message: ChannelMessage,
@@ -105,7 +107,7 @@ export const commands = {
       ) {
         await replyMessage(message.channel_id, result.content[0].text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
@@ -130,7 +132,7 @@ export const commands = {
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
@@ -152,7 +154,7 @@ export const commands = {
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
@@ -173,12 +175,12 @@ export const commands = {
         const text = formatListRole(JSON.parse(result.content[0].text));
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
 
-  role_reward: {
+  reward: {
     description: "Gán role khi đạt điểm",
     execute: async (
       message: ChannelMessage,
@@ -195,7 +197,7 @@ export const commands = {
       ) {
         await replyMessage(message.channel_id, result.content[0]?.text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
@@ -217,7 +219,7 @@ export const commands = {
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
@@ -230,17 +232,17 @@ export const commands = {
       args: string[],
     ) => {
       const result = await topWeek();
-
+      const week = getWeek(new Date())
       if (
         result &&
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        const text = formatLeaderboard(JSON.parse(result.content[0].text));
+        const text = formatLeaderboard(JSON.parse(result.content[0].text), `Tuần ${week}`);
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },
@@ -252,16 +254,17 @@ export const commands = {
       args: string[],
     ) => {
       const result = await topMonth();
+      const month = getMonth(new Date()) + 1;
       if (
         result &&
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        const text = formatLeaderboard(JSON.parse(result.content[0].text));
+        const text = formatLeaderboard(JSON.parse(result.content[0].text), `Tháng ${month}`);
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.message_id!, message?.clan_id!);
+        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
       }
     },
   },

@@ -1,10 +1,10 @@
 import { format, parse, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
 
-export function formatLeaderboard(data: any[]): string {
+export function formatLeaderboard(data: any[], title?: string): string {
   if (data.length === 0) {
     return "❌ Không có 👤 nào trong danh sách.";
   }
-  let leaderboard = "🏆 Bảng xếp hạng:\n";
+  let leaderboard = `🏆 Bảng xếp hạng ${title ? title : ''} :\n`;
   data.forEach((user, index) => {
     leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${user.total_point
       } 💰 -   ${user.role_name == 'Đồng' ? "🥉" : user.role_name == 'Bạc' ? "🥈" : user.role_name == 'Vàng' ? "🥇" : "🏅"}  ${user.role_name}\n`;
@@ -120,3 +120,7 @@ export const getStartandEndOfMonth = (currentDate: Date | string) => {
     end_date,
   };
 }
+
+export const formatMessageReply = (message: string) => {
+  return '```' + message + '```';
+};

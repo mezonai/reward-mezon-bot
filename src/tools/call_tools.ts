@@ -151,7 +151,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: `🏆 Đã trao reward ${rewardName} cho @${userName}.`,
+                text: ` Đã trao 🏆 ${rewardName} cho @${userName}.` as string,
               },
             ],
           };
@@ -321,7 +321,7 @@ export const CallTools = async (request: any) => {
               content: [
                 {
                   type: "text",
-                  text: `🔥Role reward ${role_name} not found.`,
+                  text: `🏅Role reward ${role_name} not found.`,
                 },
               ],
             };
@@ -332,7 +332,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: ` 🔥Role reward ${role_name} deleted successfully.`,
+                text: ` 🏅Role reward ${role_name} deleted successfully.`,
               },
             ],
           };
@@ -349,7 +349,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: `🔥Role reward ${role_name} update successfully for users above score ${point_threshold}.`,
+                text: `🏅Role reward ${role_name} update successfully for users above score ${point_threshold}.`,
               },
             ],
           };
@@ -365,7 +365,7 @@ export const CallTools = async (request: any) => {
               content: [
                 {
                   type: "text",
-                  text: `🔥Role reward ${role_name} already exists.`,
+                  text: `🏅 Role reward ${role_name} already exists.`,
                 },
               ],
             };
@@ -379,7 +379,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: `✅Đã tạo role reward: ${role_name} với mốc điểm ${point_threshold}.`,
+                text: `🏅 Đã tạo Role Reward: ${role_name} với mốc điểm ${point_threshold}.`,
               },
             ],
           };

@@ -1,13 +1,16 @@
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
-import { EMarkdownType } from "mezon-sdk";
+import { ChannelMessageContent, EMarkdownType } from "mezon-sdk";
+import { formatLeaderboard, formatMessageReply } from "./constant";
+import { channel } from "diagnostics_channel";
+import { TextChannel } from "mezon-sdk/dist/cjs/mezon-client/structures/TextChannel";
+import { getMonth, getWeek, subDays } from "date-fns";
 
 
 
 export const sendMessage = async (
   channel: string,
   message: string,
-  message_id: string,
   server: string
 ) => {
   try {
@@ -19,7 +22,6 @@ export const sendMessage = async (
       arguments: {
         server: server,
         channel,
-        message_id,
         message,
       },
     });
@@ -37,11 +39,6 @@ export const crudTrophy = async (
   icon?: string,
   createdBy?: string
 ) => {
-  console.log("action 1", action);
-  console.log("name 1", name);
-  console.log("description 1", description);
-  console.log("points 1", points);
-  console.log("icon 1", icon);
   return await clientMCP.callTool({
     name: "crud-trophy",
     arguments: {
@@ -143,19 +140,64 @@ export const replyMessage = async (
 ) => {
   const fetchedChannel = await client.channels.fetch(channelId);
   const fetchedMessage = await fetchedChannel.messages.fetch(message_id);
-
-
-  console.log("fetchedMessage", message);
+  const repyMessage = formatMessageReply(message)
   await fetchedMessage.reply({
-    t: message,
+    t: repyMessage,
     mk: [
       {
         type: EMarkdownType.TRIPLE,
         s: 0,
-        e: message.length,
+        e: repyMessage.length,
       },
     ],
   })
 }
+
+
+export const showTopWeek = async () => {
+  const listClan = [...client.clans.values()]
+  const result = await topWeek();
+  const week = getWeek(subDays(new Date(), 1));
+  for (const clan of listClan) {
+    const listchannel = [...clan.channels.values()]
+    for (const channel of listchannel) {
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatLeaderboard(JSON.parse(result.content[0].text), `Tuần ${week}`);
+        await sendMessage(channel?.id!, text, clan.id);
+      } else {
+        await sendMessage(channel?.id!, " ⚠️ Lỗi: Không thể xử lý kết quả trả về.", clan.id);
+      }
+    }
+  }
+}
+
+export const showTopMonth = async () => {
+  const listClan = [...client.clans.values()]
+  const result = await topMonth();
+
+  const month = getMonth(subDays(new Date(), 1)) + 1;
+  for (const clan of listClan) {
+    const listchannel = [...clan.channels.values()]
+    for (const channel of listchannel) {
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatLeaderboard(JSON.parse(result.content[0].text), `Tháng ${month}`);
+        await sendMessage(channel?.id!, text, clan.id);
+      } else {
+        await sendMessage(channel?.id!, " ⚠️ Lỗi: Không thể xử lý kết quả trả về.", clan.id);
+      }
+    }
+  }
+
+}
+
+
 
 
