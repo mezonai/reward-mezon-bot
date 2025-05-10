@@ -44,6 +44,10 @@ export const ListTools = {
             type: "string",
             description: "Display name of the user",
           },
+          sender_id: {
+            type: "string",
+            description: "Display id of the user giver trophy"
+          }
         },
         required: ["userId", "rewardId"],
       },
@@ -164,6 +168,44 @@ export const ListTools = {
           date: {
             type: "string",
             description: "get total point of month",
+          },
+        }
+      }
+    },
+    {
+      name: "add-user",
+      description: "Add a user to the database",
+      inputSchema: {
+        type: "object",
+        properties: {
+          username: {
+            type: "string",
+            description: "name of user",
+          },
+          user_id: {
+            type: "string",
+            description: "id of user",
+          },
+          amount: {
+            type: "number",
+            description: "amount of user",
+          },
+        }
+      }
+    },
+    {
+      name: "rut",
+      description: "send token to account",
+      inputSchema: {
+        type: "object",
+        properties: {
+          receiver_id: {
+            type: "string",
+            description: "id of receiver",
+          },
+          amount: {
+            type: "number",
+            description: "amount of user",
           },
         }
       }
