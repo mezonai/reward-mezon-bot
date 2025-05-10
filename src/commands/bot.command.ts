@@ -1,4 +1,4 @@
-import { se } from "date-fns/locale";
+import { el, se } from "date-fns/locale";
 import {
   formatLeaderboard,
   formatListRole,
@@ -9,17 +9,21 @@ import {
   assignRoleOnScore,
   awardTrophy,
   crudTrophy,
+  kttkUser,
   listRoleRewards,
   listTrophy,
   rankReward,
   replyMessage,
   sendMessage,
+  sendToken,
   topMonth,
   topWeek,
   trophyUser,
 } from "../ultis/fn";
 import { ChannelMessage } from "mezon-sdk";
 import { getMonth, getWeek, subDays } from "date-fns";
+import { where } from "sequelize";
+import User from "../models/User";
 
 interface Action {
   action: "new" | "upd" | "del",
@@ -51,6 +55,8 @@ export const commands = {
       !reward upd | tên role name | điểm role reward - cập nhật role reward
       !top_week - Xem bảng xếp hạng trophy tuần này
       !top_month - Xem bảng xếp hạng trophy tháng này
+      !kttk - kiểm tra tài khoản
+      !rut - rút tiền
             `;
       await replyMessage(message.channel_id, helpText, message?.message_id!);
     },
@@ -99,7 +105,7 @@ export const commands = {
       const fullArg = args.join(" ");
       const [name, rewardName] = fullArg.split("|").map((s) => s.trim());
       const userName = name.replace("@", "").trim();
-      const result = await awardTrophy(user_id, rewardName, userName);
+      const result = await awardTrophy(user_id, rewardName, userName, message.sender_id);
       if (
         result &&
         Array.isArray(result.content) &&
@@ -189,11 +195,6 @@ export const commands = {
     ) => {
       const fullArg = args.join(" ");
       const [action, roleName, score] = fullArg.split("|").map((s) => s.trim());
-
-      console.log("action", action);
-      console.log("roleName", roleName);
-      console.log("score", score);
-
       const result = await assignRoleOnScore(action as Action["action"], roleName, +score || 0);
       if (
         result &&
@@ -273,6 +274,43 @@ export const commands = {
       }
     },
   },
+
+  kttk: {
+    description: "Kiểm tra tài khoản",
+    execute: async (
+      message: ChannelMessage,
+      user_id: string,
+      args: string[],
+
+    ) => {
+      await kttkUser(message)
+    }
+  },
+  rut: {
+    description: "rut token",
+    execute: async (
+      message: ChannelMessage,
+      user_id: string,
+      args: string[],
+
+    ) => {
+      let money = Number(args[0] || 0);
+      let user = await User.findOne({ where: { user_id: message.sender_id } });
+      if (!user || user.amount == 0 || money > user.amount) {
+        await replyMessage(
+          message.channel_id,
+          "💸Số dư của bạn không đủ để rút hoặc số tiền rút không hợp lệ ",
+          message.message_id!
+        );
+        return;
+      } else {
+        money = money == 0 ? user.amount : money
+      }
+
+
+      await sendToken(message, money)
+    }
+  }
 
 };
 

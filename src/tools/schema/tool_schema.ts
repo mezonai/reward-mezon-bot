@@ -28,9 +28,10 @@ export const AddUserRewardSchema = z.object({
 
 // New schema for awarding a trophy
 export const AwardTrophySchema = z.object({
-  userId: z.string().describe("Target user ID to award the trophy"),
+  userId: z.string().describe("User ID to award the trophy"),
   rewardName: z.string().describe("Name of the trophy to award"),
   userName: z.string().describe("Name of the user to award the trophy to"),
+  sender_id: z.string().describe("User ID give trophy")
 });
 
 
@@ -64,5 +65,13 @@ export const TopWeekSchema = z.object({
     .describe("Date to get the top week for")
 });
 
+export const AddUserSchema = z.object({
+  user_id: z.string().describe("User ID to add the reward to"),
+  username: z.string().describe("Username of the user to add the reward to"),
+  amount: z.number().describe("Amount of the reward to add"),
+})
 
-
+export const RutSchema = z.object({
+  receiver_id: z.string().describe("User ID give token"),
+  amount: z.number().describe("Amount of the reward to add"),
+})

@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { client, findChannel } from "../config/mezon-client";
 import {
+  AddUserSchema,
   AssignRoleOnScoreSchema,
   AwardTrophySchema,
   CrudRewardSchema,
   GetLeaderboardSchema,
+  RutSchema,
   SendMessageSchema,
   TopWeekSchema,
 } from "./schema/tool_schema";
@@ -14,6 +16,7 @@ import sequelize from "../config/database";
 import { QueryTypes } from "sequelize";
 import RoleReward from "../models/Role_rewards";
 import { addDate, afterDate, getMondayAndSunday, getStartandEndOfMonth } from "../ultis/constant";
+import User from "../models/User";
 
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
@@ -44,15 +47,15 @@ export const CallTools = async (request: any) => {
       }
 
       case "award-user": {
-        const { userId, rewardName, userName } = AwardTrophySchema.parse(args);
+        const { userId, rewardName, userName, sender_id } = AwardTrophySchema.parse(args);
         try {
-          let rewardId: any;
 
-          const result = await Reward.findOne({
+
+          const trophy = await Reward.findOne({
             where: { name: rewardName },
           });
 
-          if (!result) {
+          if (!trophy) {
             return {
               content: [
                 {
@@ -62,13 +65,59 @@ export const CallTools = async (request: any) => {
               ],
             };
           }
-          rewardId = result.id;
 
+          const UserReceiver = await User.findOne({
+            where: { user_id: userId }
+          })
+          if (!UserReceiver) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: ` found receiver !` as string,
+                },
+              ],
+            };
+          }
+
+
+          const UserGiveTrophy = await User.findOne({
+            where: { user_id: sender_id },
+          })
+          if (!UserGiveTrophy) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Not found User give trophy !` as string,
+                },
+              ],
+            };
+          }
+
+          if (UserGiveTrophy.amount < trophy.points) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `💸Số dư của bạn không đủ để trao thưởng hoặc số tiền rút không hợp lệ` as string,
+                },
+              ],
+            };
+          }
+
+          UserReceiver.amount = (Number(UserReceiver.amount) || 0) + Number(trophy.points)
+          UserGiveTrophy.amount = (Number(UserGiveTrophy.amount) || 0) - Number(trophy.points)
+          await UserGiveTrophy.save()
+          await UserReceiver.save()
           await UserReward.create({
-            reward_id: rewardId,
+            reward_id: trophy.id,
             user_id: userId,
             user_name: userName,
           });
+
+
+
 
           return {
             content: [
@@ -475,7 +524,6 @@ export const CallTools = async (request: any) => {
         };
       }
       case "top-month": {
-
         const { date } = TopWeekSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getStartandEndOfMonth(subdate);
@@ -526,6 +574,78 @@ export const CallTools = async (request: any) => {
           ],
         };
       }
+      case "add-user": {
+        try {
+          const { user_id, amount, username } = AddUserSchema.parse(args);
+          const existingUser = await User.findOne({ where: { user_id } });
+          if (existingUser) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `❌ User ${user_id} đã tồn tại trong cơ sở dữ liệu.`,
+                },
+              ],
+            };
+          }
+
+          const result = await User.create({
+            user_id,
+            username,
+            amount,
+          });
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: '✅ Đã thêm user vào cơ sở dữ liệu.',
+              },
+            ],
+          };
+        } catch (e: any) {
+          console.error("❌ Error creating user: ", e);
+          return {
+            content: [
+              {
+                type: "text",
+                text: `❌ Lỗi khi thêm user: ${e.message}`,
+              },
+            ],
+          };
+        }
+      }
+      case "rut": {
+        try {
+
+          const { receiver_id, amount } = RutSchema.parse(args);
+          const dataSendToken = {
+            sender_id: process.env.UTILITY_BOT_ID,
+            sender_name: process.env.BOT_KOMU_NAME,
+            receiver_id,
+            amount,
+          };
+          await client.sendToken(dataSendToken);
+          return {
+            content: [
+              {
+                type: "text",
+                text: '✅ Đã thêm user vào cơ sở dữ liệu.',
+              },
+            ],
+          };
+        } catch (e: any) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `❌ Lỗi khi thêm user: ${e.message}`,
+              },
+            ],
+          };
+        }
+      }
+
 
       default:
         throw new Error(`Unknown tool: ${name}`);

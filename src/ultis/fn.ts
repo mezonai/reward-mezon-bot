@@ -1,10 +1,11 @@
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
-import { ChannelMessageContent, EMarkdownType } from "mezon-sdk";
+import { ChannelMessage, ChannelMessageContent, EMarkdownType } from "mezon-sdk";
 import { formatLeaderboard, formatMessageReply } from "./constant";
 import { channel } from "diagnostics_channel";
 import { TextChannel } from "mezon-sdk/dist/cjs/mezon-client/structures/TextChannel";
 import { getMonth, getWeek, subDays } from "date-fns";
+import User from "../models/User";
 
 
 
@@ -55,7 +56,8 @@ export const crudTrophy = async (
 export const awardTrophy = async (
   userId: string,
   rewardName: string,
-  userName: string
+  userName: string,
+  sender_id: string
 ) => {
   return await clientMCP.callTool({
     name: "award-user",
@@ -63,6 +65,7 @@ export const awardTrophy = async (
       userId,
       rewardName,
       userName,
+      sender_id
     },
   });
 };
@@ -197,6 +200,59 @@ export const showTopMonth = async () => {
   }
 
 }
+
+export const addUser = (user_id: string, username: string, amount: number) => {
+  return clientMCP.callTool({
+    name: "add-user",
+    arguments: {
+      user_id,
+      username,
+      amount
+    }
+  })
+}
+
+
+
+
+
+export const sendToken = async (message: ChannelMessage, money: number) => {
+  try {
+    const dataSendToken = {
+      sender_id: process.env.BOT,
+      sender_name: process.env.BOT_NAME,
+      receiver_id: message.sender_id,
+      amount: +money,
+    };
+    await client.sendToken(dataSendToken);
+
+    const user = await User.findOne({ where: { user_id: message.sender_id } })
+
+    if (user) {
+      user.amount = Number(user.amount) - money
+      await user?.save()
+    }
+    await replyMessage(message.channel_id, `💸 Rút ${money} token thành công`, message.message_id!);
+  } catch (error) {
+    console.log(error)
+  }
+
+}
+
+
+export const kttkUser = async (message: ChannelMessage) => {
+  try {
+    const result = await User.findOne({ where: { user_id: message.sender_id } })
+    if (!result) {
+      await replyMessage(message.channel_id!, `User not found`, message?.message_id!)
+    }
+    await replyMessage(message.channel_id!, `💸Số dư của bạn là ${result?.amount} token`, message?.message_id!);
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+
 
 
 
