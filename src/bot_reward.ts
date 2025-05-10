@@ -4,7 +4,6 @@ import { sendMessage, showTopMonth, showTopWeek } from "./ultis/fn";
 import { commands } from "./commands/bot.command";
 import { connectClient } from "./config/connect";
 import { CronJob } from "cron";
-import { TextChannel } from "mezon-sdk/dist/cjs/mezon-client/structures/TextChannel";
 import { ChannelMessage } from "mezon-sdk";
 
 dotenv.config();
@@ -33,7 +32,7 @@ const checkNewMessages = async (data: ChannelMessage) => {
       return;
     } catch (err) {
 
-      await sendMessage(data.channel_id, "⚠️ Lỗi cú pháp vui lòng xem lại lệnh *help để thực thi.", data?.clan_id!);
+      await sendMessage(data.channel_id, "⚠️ Lỗi cú pháp vui lòng xem lại lệnh !help để thực thi.", data?.clan_id!);
       return;
     }
   }

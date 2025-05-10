@@ -52,100 +52,23 @@ export const CallTools = async (request: any) => {
             where: { name: rewardName },
           });
 
-          if (result) {
-            rewardId = result.id;
-          } else {
-            throw new Error(`Reward '${rewardName}' not found`);
+          if (!result) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `🏆 ${rewardName} not found in trophy` as string,
+                },
+              ],
+            };
           }
+          rewardId = result.id;
 
           await UserReward.create({
             reward_id: rewardId,
             user_id: userId,
             user_name: userName,
           });
-
-          const totalPointsResult: any = await sequelize.query(
-            `
-        SELECT SUM(r.points) AS total_points
-        FROM rewards r
-        JOIN user_rewards ur ON ur.reward_id = r.id
-        WHERE ur.user_id = :userId
-      `,
-            {
-              replacements: { userId },
-              type: QueryTypes.SELECT,
-            }
-          );
-
-
-          const totalPoints = parseInt(
-            totalPointsResult[0]?.total_points || "0",
-            10
-          );
-
-
-          const roleRewards: { point_threshold: number; role_name: string }[] =
-            await sequelize.query(
-              `
-          SELECT point_threshold, role_name
-          FROM role_rewards
-          ORDER BY point_threshold ASC
-        `,
-              {
-                type: QueryTypes.SELECT,
-              }
-            );
-
-          let newRole = null;
-          for (const role of roleRewards) {
-            if (totalPoints >= role.point_threshold) {
-              newRole = role.role_name;
-            }
-          }
-
-          if (newRole) {
-            const [existingRole] = await sequelize.query(
-              `
-          SELECT *
-          FROM user_roles
-          WHERE user_id = :userId 
-        `,
-              {
-                replacements: { userId },
-                type: QueryTypes.SELECT,
-              }
-            );
-
-            if (!existingRole) {
-              await sequelize.query(
-                `
-            INSERT INTO user_roles (user_id, role_name, total_point)
-            VALUES (:userId, :roleName, :totalPoints)
-          `,
-                {
-                  replacements: {
-                    userId,
-                    roleName: newRole,
-                    totalPoints,
-                  },
-                  type: QueryTypes.INSERT,
-                }
-              );
-            } else {
-              await sequelize.query(
-                `
-                      UPDATE user_roles
-                      SET total_point = :totalPoints,
-                      role_name = :roleName
-                      WHERE user_id = :userId
-                    `,
-                {
-                  replacements: { userId, totalPoints, roleName: newRole },
-                  type: QueryTypes.UPDATE,
-                }
-              );
-            }
-          }
 
           return {
             content: [
@@ -199,6 +122,19 @@ export const CallTools = async (request: any) => {
             };
           }
           if (action === "upd") {
+            const existingReward = await Reward.findOne({
+              where: { name },
+            });
+            if (!existingReward) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `\n 🏆 Trophy "${name}" not found.`,
+                  },
+                ],
+              };
+            }
 
             await Reward.update(
               { description, points, icon, createdBy },
@@ -279,14 +215,27 @@ export const CallTools = async (request: any) => {
       case "rank": {
         const { limit } = GetLeaderboardSchema.parse(args);
         const query = `
-          SELECT 
-          ur.user_name,
-          ul.role_name,
-          ul.total_point
-          FROM user_rewards ur
-          JOIN user_roles ul ON ul.user_id = ur.user_id
-          GROUP BY ur.user_name, ul.role_name, ul.total_point
-          LIMIT :limit
+            WITH user_total_points AS (
+            SELECT
+              ur.user_name,
+              SUM(r.points) AS total_point
+            FROM user_rewards ur
+            JOIN rewards r ON ur.reward_id = r.id
+            GROUP BY ur.user_name
+          )
+          SELECT
+            utp.user_name,
+            utp.total_point,
+            rr.role_name AS role_name
+          FROM user_total_points utp
+          JOIN LATERAL (
+            SELECT role_name
+            FROM role_rewards
+            WHERE point_threshold <= utp.total_point
+            LIMIT 1
+          ) rr ON true
+		      ORDER BY total_point DESC
+          Limit :limit;
   `;
 
         try {
@@ -339,6 +288,19 @@ export const CallTools = async (request: any) => {
 
         }
         if (action === "upd") {
+          const existingRole = await RoleReward.findOne({
+            where: { role_name },
+          });
+          if (!existingRole) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `🏅Role reward ${role_name} not found.`,
+                },
+              ],
+            };
+          }
           await RoleReward.update({
             point_threshold: point_threshold,
             role_name: role_name,
@@ -488,9 +450,9 @@ export const CallTools = async (request: any) => {
             SELECT role_name
             FROM role_rewards
             WHERE point_threshold <= utp.total_point
-            ORDER BY point_threshold DESC
             LIMIT 1
-          ) rr ON true
+            ) rr ON true
+          ORDER BY total_point DESC
           LIMIT 5;
                   `;
 
@@ -540,9 +502,9 @@ export const CallTools = async (request: any) => {
             SELECT role_name
             FROM role_rewards
             WHERE point_threshold <= utp.total_point
-            ORDER BY point_threshold DESC
             LIMIT 1
-          ) rr ON true
+            ) rr ON true
+            ORDER BY total_point DESC
           LIMIT 5;
                   `;
 

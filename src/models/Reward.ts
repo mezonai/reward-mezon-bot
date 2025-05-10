@@ -2,12 +2,12 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
 
 class Reward extends Model {
-  declare id: number;
-  declare title: string;
-  declare description: string;
-  declare points: number;
-  declare readonly createdAt: Date;
-  declare readonly updatedAt: Date;
+    declare id: number;
+    declare title: string;
+    declare description: string;
+    declare points: number;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 }
 
 Reward.init(
@@ -26,14 +26,14 @@ Reward.init(
             allowNull: false,
         },
         points: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             allowNull: false,
             validate: {
                 min: 1,
             }
         },
         icon: {
-            
+
             type: DataTypes.STRING(500),
             allowNull: true,
         },

@@ -38,9 +38,9 @@ export const commands = {
               🏆 **Reward - Help Menu:** 👑
        
       !help - Hiển thị danh sách lệnh
-      !trophy new tên trophy | mô tả | giá trị - Tạo trophy mới 
-      !trophy upd tên trophy | mô tả | giá trị - Cập nhật trophy
-      !trophy del tên trophy - xóa trophy
+      !trophy new | tên trophy | mô tả | giá trị - Tạo trophy mới 
+      !trophy upd | tên trophy | mô tả | giá trị - Cập nhật trophy
+      !trophy del | tên trophy - xóa trophy
       !list_trophy - Xem danh sách trophy
       !award @người dùng | Trophy Name - (Trao trophy cho người dùng)
       !rank  or !rank số hạng - Xem bảng xếp hạng reward 
@@ -97,8 +97,8 @@ export const commands = {
       args: string[],
     ) => {
       const fullArg = args.join(" ");
-      const [Name, rewardName] = fullArg.split("|").map((s) => s.trim());
-      const userName = Name.replace("@", "").trim();
+      const [name, rewardName] = fullArg.split("|").map((s) => s.trim());
+      const userName = name.replace("@", "").trim();
       const result = await awardTrophy(user_id, rewardName, userName);
       if (
         result &&
@@ -189,6 +189,11 @@ export const commands = {
     ) => {
       const fullArg = args.join(" ");
       const [action, roleName, score] = fullArg.split("|").map((s) => s.trim());
+
+      console.log("action", action);
+      console.log("roleName", roleName);
+      console.log("score", score);
+
       const result = await assignRoleOnScore(action as Action["action"], roleName, +score || 0);
       if (
         result &&
@@ -270,3 +275,5 @@ export const commands = {
   },
 
 };
+
+
