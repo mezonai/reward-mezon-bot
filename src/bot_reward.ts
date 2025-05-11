@@ -28,34 +28,34 @@ const checkNewMessages = async (data: ChannelMessage) => {
       );
       return;
     } catch (err: any) {
-      await sendMessage(data.channel_id, "⚠️ Lỗi cú pháp vui lòng xem lại lệnh !help để thực thi.", data?.clan_id!);
+      await sendMessage(
+        data.channel_id,
+        "⚠️ Lỗi cú pháp vui lòng xem lại lệnh !help để thực thi.",
+        data?.clan_id!
+      );
       return;
     }
   }
 };
 
-
-
 const weeklyJob = new CronJob(
-  '0 9 17 * * *',
+  "0 0 6 * * 1",
   async function () {
     await showTopWeek();
-
   },
   null,
   true,
-  'Asia/Ho_Chi_Minh'
+  "Asia/Ho_Chi_Minh"
 );
 
 const monthlyJob = new CronJob(
-  '0 0 6 1 * *',
+  "0 0 6 1 * *",
   async function () {
     await showTopMonth();
-
   },
   null,
   true,
-  'Asia/Ho_Chi_Minh'
+  "Asia/Ho_Chi_Minh"
 );
 
 async function main() {
@@ -70,24 +70,20 @@ async function main() {
 
     client.onTokenSend(async (data: TokenSentEvent) => {
       if (data.amount <= 0) return;
-      if (
-        data.receiver_id === process.env.BOT &&
-        data.sender_id
-      ) {
+      if (data.receiver_id === process.env.BOT && data.sender_id) {
         try {
           let user = await User.findOne({ where: { user_id: data.sender_id } });
 
           if (!user) {
             await addUser(data.sender_id, data.sender_name!, data.amount);
             user = await User.findOne({ where: { user_id: data.sender_id } });
-            if (!user) throw new Error('User creation failed');
+            if (!user) throw new Error("User creation failed");
           }
           user.amount = (Number(user.amount) || 0) + Number(data.amount);
           await user.save();
         } catch (e) {
-          console.error('Error handling TokenSentEvent:', e);
+          console.error("Error handling TokenSentEvent:", e);
         }
-
       }
     });
     client.onAddClanUser(async (data) => {

@@ -1,4 +1,3 @@
-import { el, se } from "date-fns/locale";
 import {
   formatLeaderboard,
   formatListRole,
@@ -22,11 +21,10 @@ import {
 } from "../ultis/fn";
 import { ChannelMessage } from "mezon-sdk";
 import { getMonth, getWeek, subDays } from "date-fns";
-import { where } from "sequelize";
 import User from "../models/User";
 
 interface Action {
-  action: "new" | "upd" | "del",
+  action: "new" | "upd" | "del";
 }
 
 export const commands = {
@@ -35,9 +33,8 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
-
       const helpText = `
               🏆 **Reward - Help Menu:** 👑
        
@@ -62,18 +59,17 @@ export const commands = {
     },
   },
 
-
   trophy: {
     description: "Tạo một trophy mới",
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
-
       const fullArg = args.join(" ");
-      const [action, name, description, points, icon] = fullArg.split("|").map((s) => s.trim());
-
+      const [action, name, description, points, icon] = fullArg
+        .split("|")
+        .map((s) => s.trim());
 
       const result = await crudTrophy(
         action as Action["action"],
@@ -88,9 +84,17 @@ export const commands = {
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        await replyMessage(message.channel_id, result.content[0].text, message?.message_id!);
+        await replyMessage(
+          message.channel_id,
+          result.content[0].text,
+          message?.message_id!
+        );
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -100,20 +104,33 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const fullArg = args.join(" ");
       const [name, rewardName] = fullArg.split("|").map((s) => s.trim());
       const userName = name.replace("@", "").trim();
-      const result = await awardTrophy(user_id, rewardName, userName, message.sender_id);
+      const result = await awardTrophy(
+        user_id,
+        rewardName,
+        userName,
+        message.sender_id
+      );
       if (
         result &&
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        await replyMessage(message.channel_id, result.content[0].text, message?.message_id!);
+        await replyMessage(
+          message.channel_id,
+          result.content[0].text,
+          message?.message_id!
+        );
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -123,7 +140,7 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const fullArg = args.join(" ");
       const result = await rankReward(+fullArg ? +fullArg : 10);
@@ -135,10 +152,13 @@ export const commands = {
       ) {
         const text = formatLeaderboard(JSON.parse(result.content[0].text));
 
-
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -148,7 +168,7 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const result = await trophyUser(user_id ? user_id : message?.sender_id!);
       if (
@@ -160,7 +180,11 @@ export const commands = {
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -170,7 +194,7 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const result = await listRoleRewards();
       if (
@@ -181,7 +205,11 @@ export const commands = {
         const text = formatListRole(JSON.parse(result.content[0].text));
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -191,19 +219,31 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const fullArg = args.join(" ");
       const [action, roleName, score] = fullArg.split("|").map((s) => s.trim());
-      const result = await assignRoleOnScore(action as Action["action"], roleName, +score || 0);
+      const result = await assignRoleOnScore(
+        action as Action["action"],
+        roleName,
+        +score || 0
+      );
       if (
         result &&
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        await replyMessage(message.channel_id, result.content[0]?.text, message?.message_id!);
+        await replyMessage(
+          message.channel_id,
+          result.content[0]?.text,
+          message?.message_id!
+        );
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -213,7 +253,7 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const result = await listTrophy();
       if (
@@ -225,7 +265,11 @@ export const commands = {
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -235,20 +279,27 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const result = await topWeek();
-      const week = getWeek(new Date())
+      const week = getWeek(new Date());
       if (
         result &&
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        const text = formatLeaderboard(JSON.parse(result.content[0].text), `Tuần ${week}`);
+        const text = formatLeaderboard(
+          JSON.parse(result.content[0].text),
+          `Tuần ${week}`
+        );
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -257,7 +308,7 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
+      args: string[]
     ) => {
       const result = await topMonth();
       const month = getMonth(new Date()) + 1;
@@ -266,11 +317,18 @@ export const commands = {
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        const text = formatLeaderboard(JSON.parse(result.content[0].text), `Tháng ${month}`);
+        const text = formatLeaderboard(
+          JSON.parse(result.content[0].text),
+          `Tháng ${month}`
+        );
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
-        await sendMessage(message.channel_id, "Lỗi: Không thể xử dý kết quả trả về.", message?.clan_id!);
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
       }
     },
   },
@@ -280,19 +338,17 @@ export const commands = {
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
-
+      args: string[]
     ) => {
-      await kttkUser(message)
-    }
+      await kttkUser(message);
+    },
   },
   rut: {
     description: "rut token",
     execute: async (
       message: ChannelMessage,
       user_id: string,
-      args: string[],
-
+      args: string[]
     ) => {
       let money = Number(args[0] || 0);
       let user = await User.findOne({ where: { user_id: message.sender_id } });
@@ -304,14 +360,10 @@ export const commands = {
         );
         return;
       } else {
-        money = money == 0 ? user.amount : money
+        money = money == 0 ? user.amount : money;
       }
 
-
-      await sendToken(message, money)
-    }
-  }
-
+      await sendToken(message, money);
+    },
+  },
 };
-
-

@@ -15,8 +15,14 @@ import UserReward from "../models/User_reward";
 import sequelize from "../config/database";
 import { QueryTypes } from "sequelize";
 import RoleReward from "../models/Role_rewards";
-import { addDate, afterDate, getMondayAndSunday, getStartandEndOfMonth } from "../ultis/constant";
+import {
+  addDate,
+  afterDate,
+  getMondayAndSunday,
+  getStartandEndOfMonth,
+} from "../ultis/constant";
 import User from "../models/User";
+import { EMarkdownType } from "mezon-sdk";
 
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
@@ -34,7 +40,15 @@ export const CallTools = async (request: any) => {
           throw new Error("Channel not found");
         }
         const sent = await channel.send(
-          typeof message === "string" ? { t: message } : message
+          typeof message === "string"
+            ? { t: message }
+            : {
+                ...message,
+                mk: message.mk?.map((m) => ({
+                  ...m,
+                  type: m.type as EMarkdownType,
+                })),
+              }
         );
         return {
           content: [
@@ -47,10 +61,9 @@ export const CallTools = async (request: any) => {
       }
 
       case "award-user": {
-        const { userId, rewardName, userName, sender_id } = AwardTrophySchema.parse(args);
+        const { userId, rewardName, userName, sender_id } =
+          AwardTrophySchema.parse(args);
         try {
-
-
           const trophy = await Reward.findOne({
             where: { name: rewardName },
           });
@@ -67,8 +80,8 @@ export const CallTools = async (request: any) => {
           }
 
           const UserReceiver = await User.findOne({
-            where: { user_id: userId }
-          })
+            where: { user_id: userId },
+          });
           if (!UserReceiver) {
             return {
               content: [
@@ -80,10 +93,9 @@ export const CallTools = async (request: any) => {
             };
           }
 
-
           const UserGiveTrophy = await User.findOne({
             where: { user_id: sender_id },
-          })
+          });
           if (!UserGiveTrophy) {
             return {
               content: [
@@ -106,18 +118,17 @@ export const CallTools = async (request: any) => {
             };
           }
 
-          UserReceiver.amount = (Number(UserReceiver.amount) || 0) + Number(trophy.points)
-          UserGiveTrophy.amount = (Number(UserGiveTrophy.amount) || 0) - Number(trophy.points)
-          await UserGiveTrophy.save()
-          await UserReceiver.save()
+          UserReceiver.amount =
+            (Number(UserReceiver.amount) || 0) + Number(trophy.points);
+          UserGiveTrophy.amount =
+            (Number(UserGiveTrophy.amount) || 0) - Number(trophy.points);
+          await UserGiveTrophy.save();
+          await UserReceiver.save();
           await UserReward.create({
             reward_id: trophy.id,
             user_id: userId,
             user_name: userName,
           });
-
-
-
 
           return {
             content: [
@@ -128,7 +139,6 @@ export const CallTools = async (request: any) => {
             ],
           };
         } catch (error) {
-
           console.error("Error awarding trophy:", error);
           return {
             content: [
@@ -149,7 +159,6 @@ export const CallTools = async (request: any) => {
             const deletedCount = await Reward.destroy({
               where: { name },
             });
-
 
             if (deletedCount === 0) {
               return {
@@ -200,9 +209,6 @@ export const CallTools = async (request: any) => {
             };
           }
 
-
-
-
           if (action === "new") {
             const existingReward = await Reward.findOne({
               where: { name },
@@ -245,9 +251,6 @@ export const CallTools = async (request: any) => {
               ],
             };
           }
-
-
-
         } catch (error: any) {
           throw new Error(`Error creating trophy: ${error.message}`);
         }
@@ -306,13 +309,16 @@ export const CallTools = async (request: any) => {
       }
 
       case "assign-role-on-score": {
-        const { role_name, point_threshold = 0, action } = AssignRoleOnScoreSchema.parse(args)
+        const {
+          role_name,
+          point_threshold = 0,
+          action,
+        } = AssignRoleOnScoreSchema.parse(args);
 
         if (action === "del") {
           const deletedCount = await RoleReward.destroy({
             where: { role_name },
           });
-
 
           if (deletedCount === 0) {
             return {
@@ -325,7 +331,6 @@ export const CallTools = async (request: any) => {
             };
           }
 
-
           return {
             content: [
               {
@@ -334,7 +339,6 @@ export const CallTools = async (request: any) => {
               },
             ],
           };
-
         }
         if (action === "upd") {
           const existingRole = await RoleReward.findOne({
@@ -350,12 +354,15 @@ export const CallTools = async (request: any) => {
               ],
             };
           }
-          await RoleReward.update({
-            point_threshold: point_threshold,
-            role_name: role_name,
-          }, {
-            where: { role_name },
-          })
+          await RoleReward.update(
+            {
+              point_threshold: point_threshold,
+              role_name: role_name,
+            },
+            {
+              where: { role_name },
+            }
+          );
           return {
             content: [
               {
@@ -364,8 +371,6 @@ export const CallTools = async (request: any) => {
               },
             ],
           };
-
-
         }
         if (action === "new") {
           const existingRole = await RoleReward.findOne({
@@ -395,8 +400,6 @@ export const CallTools = async (request: any) => {
             ],
           };
         }
-
-
       }
       case "list-role-rewards": {
         const result = await sequelize.query(
@@ -408,7 +411,6 @@ export const CallTools = async (request: any) => {
             type: QueryTypes.SELECT,
           }
         );
-
 
         return {
           content: [
@@ -430,7 +432,6 @@ export const CallTools = async (request: any) => {
             type: QueryTypes.SELECT,
           }
         );
-
 
         return {
           content: [
@@ -459,7 +460,6 @@ export const CallTools = async (request: any) => {
           }
         );
 
-
         return {
           content: [
             {
@@ -471,27 +471,27 @@ export const CallTools = async (request: any) => {
       }
 
       case "top-week": {
-
         const { date } = TopWeekSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getMondayAndSunday(subdate);
         const endDate = addDate(end_date, 1);
 
-
         const sqlQuery = `
           WITH user_total_points AS (
             SELECT 
               ur.user_name,
+              ur.user_id,
               SUM(r.points) AS total_point
             FROM user_rewards ur
             JOIN rewards r ON ur.reward_id = r.id
             WHERE ur."createdAt" >= DATE :start_date
               AND ur."createdAt" < DATE :end_date
-            GROUP BY ur.user_name
+            GROUP BY ur.user_name, ur.user_id
           )
 
           SELECT 
             utp.user_name,
+            utp.user_id,
             utp.total_point,
             rr.role_name AS role_name
           FROM user_total_points utp
@@ -502,23 +502,21 @@ export const CallTools = async (request: any) => {
             LIMIT 1
             ) rr ON true
           ORDER BY total_point DESC
-          LIMIT 5;
+          LIMIT 3;
                   `;
 
-        const result = await sequelize.query(
-          sqlQuery,
-          {
-            replacements: { start_date, end_date: endDate },
-            type: QueryTypes.SELECT,
-          }
-        );
-
+        const result = await sequelize.query(sqlQuery, {
+          replacements: { start_date, end_date: endDate },
+          type: QueryTypes.SELECT,
+        });
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(result, null, 2) || "👑 Top week is not available",
+              text:
+                JSON.stringify(result, null, 2) ||
+                "👑 Top week is not available",
             },
           ],
         };
@@ -533,16 +531,18 @@ export const CallTools = async (request: any) => {
           WITH user_total_points AS (
             SELECT 
               ur.user_name,
+               ur.user_id,
               SUM(r.points) AS total_point
             FROM user_rewards ur
             JOIN rewards r ON ur.reward_id = r.id
             WHERE ur."createdAt" >= DATE :start_date
               AND ur."createdAt" < DATE :end_date
-            GROUP BY ur.user_name
+            GROUP BY ur.user_name , ur.user_id
           )
 
           SELECT 
             utp.user_name,
+            utp.user_id,
             utp.total_point,
             rr.role_name AS role_name
           FROM user_total_points utp
@@ -556,20 +556,18 @@ export const CallTools = async (request: any) => {
           LIMIT 5;
                   `;
 
-        const result = await sequelize.query(
-          sqlQuery,
-          {
-            replacements: { start_date, end_date: endDate },
-            type: QueryTypes.SELECT,
-          }
-        );
-
+        const result = await sequelize.query(sqlQuery, {
+          replacements: { start_date, end_date: endDate },
+          type: QueryTypes.SELECT,
+        });
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(result, null, 2) || " 👑 Top month is not available",
+              text:
+                JSON.stringify(result, null, 2) ||
+                " 👑 Top month is not available",
             },
           ],
         };
@@ -599,7 +597,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: '✅ Đã thêm user vào cơ sở dữ liệu.',
+                text: "✅ Đã thêm user vào cơ sở dữ liệu.",
               },
             ],
           };
@@ -617,7 +615,6 @@ export const CallTools = async (request: any) => {
       }
       case "rut": {
         try {
-
           const { receiver_id, amount } = RutSchema.parse(args);
           const dataSendToken = {
             sender_id: process.env.UTILITY_BOT_ID,
@@ -630,7 +627,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: '✅ Đã thêm user vào cơ sở dữ liệu.',
+                text: "✅ Đã thêm user vào cơ sở dữ liệu.",
               },
             ],
           };
@@ -645,7 +642,6 @@ export const CallTools = async (request: any) => {
           };
         }
       }
-
 
       default:
         throw new Error(`Unknown tool: ${name}`);

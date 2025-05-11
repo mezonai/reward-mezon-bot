@@ -29,8 +29,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) =>
   CallTools(request)
 );
 
-
-
 async function main() {
   try {
     try {
@@ -39,7 +37,7 @@ async function main() {
       await sequelize.sync({ alter: true });
       const transport = new StdioServerTransport();
       await server.connect(transport);
-      await client.login()
+      await client.login();
       console.log("Mezon MCP Clan running on stdio");
     } catch (error) {
       process.exit(1);

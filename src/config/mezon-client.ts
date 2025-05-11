@@ -1,4 +1,3 @@
-// ====== src/mezon/client.ts ======
 import dotenv from "dotenv";
 import { MezonClient } from "mezon-sdk";
 import { TextChannel } from "mezon-sdk/dist/cjs/mezon-client/structures/TextChannel";
@@ -16,7 +15,6 @@ client.once("ready", () => {
 });
 
 async function findClan(clanId?: string) {
-
   if (!clanId) {
     if (client.clans.size === 1) {
       return client.clans.first()!;
@@ -73,7 +71,7 @@ export async function findChannel(
         channel instanceof TextChannel &&
         (channel.name?.toLowerCase() === channelId.toLowerCase() ||
           channel.name?.toLowerCase() ===
-          channelId.toLowerCase().replace("#", ""))
+            channelId.toLowerCase().replace("#", ""))
     );
 
     if (channels.size === 0) {
