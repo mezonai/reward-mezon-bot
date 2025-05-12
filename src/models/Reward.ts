@@ -1,5 +1,6 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database";
+import UserReward from "./User_reward";
 
 class Reward extends Model {
   declare id: number;

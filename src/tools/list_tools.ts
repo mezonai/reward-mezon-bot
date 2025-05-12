@@ -228,22 +228,5 @@ export const ListTools = {
         },
       },
     },
-    {
-      name: "rut",
-      description: "send token to account",
-      inputSchema: {
-        type: "object",
-        properties: {
-          receiver_id: {
-            type: "string",
-            description: "id of receiver",
-          },
-          amount: {
-            type: "number",
-            description: "amount of user",
-          },
-        },
-      },
-    },
   ],
 };

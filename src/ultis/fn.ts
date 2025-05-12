@@ -1,10 +1,6 @@
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
-import {
-  ChannelMessage,
-  ChannelMessageContent,
-  EMarkdownType,
-} from "mezon-sdk";
+import { ChannelMessage, EMarkdownType } from "mezon-sdk";
 import { formatLeaderboard, formatMessageReply } from "./constant";
 import { getMonth, getWeek, subDays } from "date-fns";
 import User from "../models/User";
@@ -66,7 +62,7 @@ export const awardTrophy = async (
   });
 };
 
-export const rankReward = async (limit: number = 10) => {
+export const rankReward = async (limit: number = 5) => {
   return await clientMCP.callTool({
     name: "rank",
     arguments: {

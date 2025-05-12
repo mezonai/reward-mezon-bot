@@ -6,6 +6,7 @@ import { connectClient } from "./config/connect";
 import { CronJob } from "cron";
 import { ChannelMessage, TokenSentEvent } from "mezon-sdk";
 import User from "./models/User";
+import "./models";
 
 dotenv.config();
 

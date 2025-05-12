@@ -1,12 +1,11 @@
 import { z } from "zod";
-import { client, findChannel } from "../config/mezon-client";
+import { findChannel } from "../config/mezon-client";
 import {
   AddUserSchema,
   AssignRoleOnScoreSchema,
   AwardTrophySchema,
   CrudRewardSchema,
   GetLeaderboardSchema,
-  RutSchema,
   SendMessageSchema,
   TopWeekSchema,
 } from "./schema/tool_schema";
@@ -64,6 +63,16 @@ export const CallTools = async (request: any) => {
         const { userId, rewardName, userName, sender_id } =
           AwardTrophySchema.parse(args);
         try {
+          if (userId === sender_id || userId === process.env.BOT) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `🏆 Cannot award prizes to self and Bot` as string,
+                },
+              ],
+            };
+          }
           const trophy = await Reward.findOne({
             where: { name: rewardName },
           });
@@ -117,11 +126,20 @@ export const CallTools = async (request: any) => {
               ],
             };
           }
+          console.error(
+            "amount receiver ",
+            (Number(UserReceiver.amount) || 0) - Number(trophy.points)
+          );
 
           UserReceiver.amount =
-            (Number(UserReceiver.amount) || 0) + Number(trophy.points);
+            Number(UserReceiver.amount) + Number(trophy.points);
+
+          console.error(
+            "amount sender ",
+            (Number(UserGiveTrophy.amount) || 0) - Number(trophy.points)
+          );
           UserGiveTrophy.amount =
-            (Number(UserGiveTrophy.amount) || 0) - Number(trophy.points);
+            Number(UserGiveTrophy.amount) - Number(trophy.points);
           await UserGiveTrophy.save();
           await UserReceiver.save();
           await UserReward.create({
@@ -603,35 +621,6 @@ export const CallTools = async (request: any) => {
           };
         } catch (e: any) {
           console.error("❌ Error creating user: ", e);
-          return {
-            content: [
-              {
-                type: "text",
-                text: `❌ Lỗi khi thêm user: ${e.message}`,
-              },
-            ],
-          };
-        }
-      }
-      case "rut": {
-        try {
-          const { receiver_id, amount } = RutSchema.parse(args);
-          const dataSendToken = {
-            sender_id: process.env.UTILITY_BOT_ID,
-            sender_name: process.env.BOT_KOMU_NAME,
-            receiver_id,
-            amount,
-          };
-          await client.sendToken(dataSendToken);
-          return {
-            content: [
-              {
-                type: "text",
-                text: "✅ Đã thêm user vào cơ sở dữ liệu.",
-              },
-            ],
-          };
-        } catch (e: any) {
           return {
             content: [
               {

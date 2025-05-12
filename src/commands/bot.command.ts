@@ -45,7 +45,7 @@ export const commands = {
       !list_trophy - Xem danh sách trophy
       !award @người dùng | Trophy Name - (Trao trophy cho người dùng)
       !rank  or !rank số hạng - Xem bảng xếp hạng reward 
-      !trophys or !trophys user - Xem danh sách trophy của người dùng hoặc của bản thân
+      !trophies or !trophies user - Xem danh sách trophy của người dùng hoặc của bản thân
       !list - Xem danh sách role rewards 
       !reward del | tên role name - xóa role reward
       !reward new | tên role name | điểm role reward - tạo role reward
@@ -163,7 +163,7 @@ export const commands = {
     },
   },
 
-  trophys: {
+  trophies: {
     description: "Xem danh sách trophy của người dùng",
     execute: async (
       message: ChannelMessage,

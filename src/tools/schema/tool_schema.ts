@@ -78,8 +78,3 @@ export const AddUserSchema = z.object({
   username: z.string().describe("Username of the user to add the reward to"),
   amount: z.number().describe("Amount of the reward to add"),
 });
-
-export const RutSchema = z.object({
-  receiver_id: z.string().describe("User ID give token"),
-  amount: z.number().describe("Amount of the reward to add"),
-});
