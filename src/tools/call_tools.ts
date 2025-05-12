@@ -7,7 +7,7 @@ import {
   CrudRewardSchema,
   GetLeaderboardSchema,
   SendMessageSchema,
-  TopWeekSchema,
+  TopSchema,
 } from "./schema/tool_schema";
 import Reward from "../models/Reward";
 import UserReward from "../models/User_reward";
@@ -487,9 +487,57 @@ export const CallTools = async (request: any) => {
           ],
         };
       }
+      case "top-day": {
+        const { date } = TopSchema.parse(args);
+        const subdate = afterDate(date, 1);
+
+        const sqlQuery = `
+         WITH user_total_points AS (
+            SELECT 
+              ur.user_name,
+              ur.user_id,
+              SUM(r.points) AS total_point
+            FROM user_rewards ur
+            JOIN rewards r ON ur.reward_id = r.id
+           WHERE ur."createdAt" >= DATE :date
+  			AND ur."createdAt" <  DATE :date + INTERVAL '1 day' 
+            GROUP BY ur.user_name, ur.user_id
+          )
+          SELECT 
+            utp.user_name,
+            utp.user_id,
+            utp.total_point,
+            rr.role_name AS role_name
+          FROM user_total_points utp
+          JOIN LATERAL (
+            SELECT role_name
+            FROM role_rewards
+            WHERE point_threshold <= utp.total_point
+            LIMIT 1
+            ) rr ON true
+          ORDER BY total_point DESC
+          LIMIT 1;
+                  `;
+
+        const result = await sequelize.query(sqlQuery, {
+          replacements: { date: subdate },
+          type: QueryTypes.SELECT,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text:
+                JSON.stringify(result, null, 2) ||
+                "👑 Top week is not available",
+            },
+          ],
+        };
+      }
 
       case "top-week": {
-        const { date } = TopWeekSchema.parse(args);
+        const { date } = TopSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getMondayAndSunday(subdate);
         const endDate = addDate(end_date, 1);
@@ -540,7 +588,7 @@ export const CallTools = async (request: any) => {
         };
       }
       case "top-month": {
-        const { date } = TopWeekSchema.parse(args);
+        const { date } = TopSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getStartandEndOfMonth(subdate);
         const endDate = addDate(end_date, 1);

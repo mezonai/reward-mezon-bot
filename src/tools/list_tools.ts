@@ -182,6 +182,19 @@ export const ListTools = {
       description: "get the list of trophies",
     },
     {
+      name: "top-day",
+      description: "Get the leaderboard of users by trophy points this day",
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            description: "get total point of day",
+          },
+        },
+      },
+    },
+    {
       name: "top-week",
       description: "Get the leaderboard of users by trophy points this week",
       inputSchema: {

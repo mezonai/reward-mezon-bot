@@ -69,7 +69,7 @@ export const AssignRoleOnScoreSchema = z.object({
   role_name: z.string().describe("role name"),
 });
 
-export const TopWeekSchema = z.object({
+export const TopSchema = z.object({
   date: z.string().describe("Date to get the top week for"),
 });
 

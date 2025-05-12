@@ -11,6 +11,7 @@ const sequelize = new Sequelize({
   password: (process.env.DB_PASSWORD as string)!,
   database: process.env.DB_NAME as string,
   logging: false,
+  timezone: "+07:00",
 });
 
 export default sequelize;

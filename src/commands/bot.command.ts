@@ -15,12 +15,13 @@ import {
   replyMessage,
   sendMessage,
   sendToken,
+  topDay,
   topMonth,
   topWeek,
   trophyUser,
 } from "../ultis/fn";
 import { ChannelMessage } from "mezon-sdk";
-import { getMonth, getWeek, subDays } from "date-fns";
+import { format, getMonth, getWeek } from "date-fns";
 import User from "../models/User";
 
 interface Action {
@@ -50,6 +51,7 @@ export const commands = {
       !reward del | tên role name - xóa role reward
       !reward new | tên role name | điểm role reward - tạo role reward
       !reward upd | tên role name | điểm role reward - cập nhật role reward
+      !top - Xem bảng xếp hạng trophy trong ngày
       !top_week - Xem bảng xếp hạng trophy tuần này
       !top_month - Xem bảng xếp hạng trophy tháng này
       !kttk - kiểm tra tài khoản
@@ -262,6 +264,36 @@ export const commands = {
         typeof result.content[0]?.text === "string"
       ) {
         const text = formatListTrophy(JSON.parse(result.content[0].text));
+
+        await replyMessage(message.channel_id, text, message?.message_id!);
+      } else {
+        await sendMessage(
+          message.channel_id,
+          "Lỗi: Không thể xử dý kết quả trả về.",
+          message?.clan_id!
+        );
+      }
+    },
+  },
+
+  top: {
+    description: "Xem danh sách top reward ngày",
+    execute: async (
+      message: ChannelMessage,
+      user_id: string,
+      args: string[]
+    ) => {
+      const result = await topDay();
+      const day = format(new Date(), "yyyy-MM-dd");
+      if (
+        result &&
+        Array.isArray(result.content) &&
+        typeof result.content[0]?.text === "string"
+      ) {
+        const text = formatLeaderboard(
+          JSON.parse(result.content[0].text),
+          `ngày ${day}`
+        );
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {

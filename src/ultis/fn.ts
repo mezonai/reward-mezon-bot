@@ -1,8 +1,8 @@
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
 import { ChannelMessage, EMarkdownType } from "mezon-sdk";
-import { formatLeaderboard, formatMessageReply } from "./constant";
-import { getMonth, getWeek, subDays } from "date-fns";
+import { afterDate, formatLeaderboard, formatMessageReply } from "./constant";
+import { format, getMonth, getWeek, subDays } from "date-fns";
 import User from "../models/User";
 
 export const sendMessage = async (
@@ -106,6 +106,16 @@ export const listTrophy = async () => {
     name: "list-trophy",
   });
 };
+
+export const topDay = async () => {
+  return await clientMCP.callTool({
+    name: "top-day",
+    arguments: {
+      date: new Date().toISOString().split("T")[0],
+    },
+  });
+};
+
 export const topWeek = async () => {
   return await clientMCP.callTool({
     name: "top-week",
@@ -144,98 +154,98 @@ export const replyMessage = async (
   });
 };
 
+export const showTopGeneric = async (
+  message: string,
+  arrayUser: string[],
+  rewardAmounts: number[],
+  type: string
+) => {
+  try {
+    const listClan = [...client.clans.values()];
+    for (const clan of listClan) {
+      const listchannel = [...clan.channels.values()];
+      for (const channel of listchannel) {
+        await sendMessage(
+          channel?.id!,
+          {
+            t: message,
+            mk: [
+              {
+                type: EMarkdownType.TRIPLE,
+                s: 0,
+                e: message.length,
+              },
+            ],
+          },
+          clan.id
+        );
+      }
+    }
+    await giveToken(arrayUser, listClan, type, rewardAmounts);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const showTopDay = async () => {
+  const result = await topDay();
+  const day = format(new Date(), "yyyy-MM-dd");
+  const subdate = afterDate(day, 1);
+  const rewardAmounts = [10000];
+  let arrayUser: string[] = [];
+  if (
+    result &&
+    Array.isArray(result.content) &&
+    typeof result.content[0]?.text === "string"
+  ) {
+    const text = formatLeaderboard(
+      JSON.parse(result.content[0].text),
+      `ngày ${subdate}`
+    );
+    arrayUser = JSON.parse(result.content[0].text);
+    const message = formatMessageReply(text);
+    showTopGeneric(message, arrayUser, rewardAmounts, `ngày ${subdate}`);
+  }
+};
+
 export const showTopWeek = async () => {
-  const listClan = [...client.clans.values()];
   const result = await topWeek();
   const week = getWeek(subDays(new Date(), 1));
   const rewardAmounts = [15000, 10000, 5000];
-  let arrayUser: any[] = [];
-  for (const clan of listClan) {
-    const listchannel = [...clan.channels.values()];
-    for (const channel of listchannel) {
-      if (
-        result &&
-        Array.isArray(result.content) &&
-        typeof result.content[0]?.text === "string"
-      ) {
-        const text = formatLeaderboard(
-          JSON.parse(result.content[0].text),
-          `Tuần ${week}`
-        );
-        arrayUser = JSON.parse(result.content[0].text);
-
-        const message = formatMessageReply(text);
-        await sendMessage(
-          channel?.id!,
-          {
-            t: message,
-            mk: [
-              {
-                type: EMarkdownType.TRIPLE,
-                s: 0,
-                e: message.length,
-              },
-            ],
-          },
-          clan.id
-        );
-      } else {
-        await sendMessage(
-          channel?.id!,
-          " ⚠️ Lỗi: Không thể xử lý kết quả trả về.",
-          clan.id
-        );
-      }
-    }
+  let arrayUser: string[] = [];
+  if (
+    result &&
+    Array.isArray(result.content) &&
+    typeof result.content[0]?.text === "string"
+  ) {
+    const text = formatLeaderboard(
+      JSON.parse(result.content[0].text),
+      `Tuần ${week}`
+    );
+    arrayUser = JSON.parse(result.content[0].text);
+    const message = formatMessageReply(text);
+    showTopGeneric(message, arrayUser, rewardAmounts, `Tuần ${week}`);
   }
-  await giveToken(arrayUser, listClan, "Tuần", rewardAmounts);
 };
 
 export const showTopMonth = async () => {
-  const listClan = [...client.clans.values()];
   const result = await topMonth();
   const month = getMonth(subDays(new Date(), 1)) + 1;
-  let arrayUser: any[] = [];
-  const rewardAmounts = [50000, 30000, 15000];
-
-  for (const clan of listClan) {
-    const listchannel = [...clan.channels.values()];
-    for (const channel of listchannel) {
-      if (
-        result &&
-        Array.isArray(result.content) &&
-        typeof result.content[0]?.text === "string"
-      ) {
-        const text = formatLeaderboard(
-          JSON.parse(result.content[0].text),
-          `Tháng ${month}`
-        );
-        arrayUser = JSON.parse(result.content[0].text);
-        const message = formatMessageReply(text);
-        await sendMessage(
-          channel?.id!,
-          {
-            t: message,
-            mk: [
-              {
-                type: EMarkdownType.TRIPLE,
-                s: 0,
-                e: message.length,
-              },
-            ],
-          },
-          clan.id
-        );
-      } else {
-        await sendMessage(
-          channel?.id!,
-          " ⚠️ Lỗi: Không thể xử lý kết quả trả về.",
-          clan.id
-        );
-      }
-    }
+  let arrayUser: string[] = [];
+  const rewardAmounts: number[] = [50000, 30000, 15000];
+  if (
+    result &&
+    Array.isArray(result.content) &&
+    typeof result.content[0]?.text === "string"
+  ) {
+    const text = formatLeaderboard(
+      JSON.parse(result.content[0].text),
+      `Tháng ${month}`
+    );
+    arrayUser = JSON.parse(result.content[0].text);
+    const message = formatMessageReply(text);
+    showTopGeneric(message, arrayUser, rewardAmounts, `Tháng ${month}`);
   }
-  await giveToken(arrayUser, listClan, "Tháng", rewardAmounts);
 };
 
 export const addUser = (user_id: string, username: string, amount: number) => {
