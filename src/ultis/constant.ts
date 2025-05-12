@@ -1,13 +1,33 @@
-import { format, parse, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
+import {
+  format,
+  parse,
+  subDays,
+  addDays,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+} from "date-fns";
 
 export function formatLeaderboard(data: any[], title?: string): string {
   if (data.length === 0) {
-    return "❌ Không có 👤 nào trong danh sách.";
+    return `🏆 Không có người chơi nào trong bảng xếp hạng ${
+      title ? title : ""
+    } `;
   }
-  let leaderboard = `🏆 Bảng xếp hạng ${title ? title : ''} :\n`;
+  let leaderboard = `🏆 Bảng xếp hạng ${title ? title : ""} :\n`;
   data.forEach((user, index) => {
-    leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${user.total_point
-      } 💰 -   ${user.role_name == 'Đồng' ? "🥉" : user.role_name == 'Bạc' ? "🥈" : user.role_name == 'Vàng' ? "🥇" : "🏅"}  ${user.role_name}\n`;
+    leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${
+      user.total_point
+    } 💰 -   ${
+      user.role_name == "Đồng"
+        ? "🥉"
+        : user.role_name == "Bạc"
+        ? "🥈"
+        : user.role_name == "Vàng"
+        ? "🥇"
+        : "🏅"
+    }  ${user.role_name}\n`;
   });
 
   return leaderboard.trim();
@@ -19,13 +39,13 @@ export function formatListTrophy(data: any[]): string {
   }
   let leaderboard = "📝 Danh sách trophy 🏆:\n";
   data.forEach((item, index) => {
-    leaderboard += `${index + 1}. 🏆 ${item?.name} - ${item.description
-      } -  💰 ${item.points}\n`;
+    leaderboard += `${index + 1}. 🏆 ${item?.name} - ${
+      item.description
+    } -  💰 ${item.points}\n`;
   });
 
   return leaderboard.trim();
 }
-
 
 export function formatListTrophyUser(data: any[]): string {
   if (data.length === 0) {
@@ -45,7 +65,15 @@ export function formatListRole(data: any[]): string {
   }
   let leaderboardRole = `🌟 👑 List role Rewards  🌟:\n`;
   data.forEach((item) => {
-    leaderboardRole += ` ${item.role_name == 'Đồng' ? "🥉" : item.role_name == 'Bạc' ? "🥈" : item.role_name == 'Vàng' ? "🥇" : "🏅"} ${item.role_name} - ${item.point_threshold} 💰 \n`;
+    leaderboardRole += ` ${
+      item.role_name == "Đồng"
+        ? "🥉"
+        : item.role_name == "Bạc"
+        ? "🥈"
+        : item.role_name == "Vàng"
+        ? "🥇"
+        : "🏅"
+    } ${item.role_name} - ${item.point_threshold} 💰 \n`;
   });
 
   return leaderboardRole.trim();
@@ -60,7 +88,6 @@ export function getFirstDayOfMonth(date = new Date()) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
-
 export const afterDate = (
   dateString: string,
   numberDate: number,
@@ -72,14 +99,11 @@ export const afterDate = (
   return formattedDate;
 };
 
-
 export const addDate = (
   dateString: string,
   numberDate: number,
   formatString: string = "yyyy-MM-dd"
 ): string => {
-
-
   const date = parse(dateString, formatString, new Date());
   const adday = addDays(date, numberDate);
   const formattedDate = format(adday, formatString);
@@ -87,7 +111,6 @@ export const addDate = (
 };
 
 export const getMondayAndSunday = (currentDate: Date | string) => {
-
   if (typeof currentDate === "string") {
     currentDate = parse(currentDate, "yyyy-MM-dd", new Date());
   }
@@ -99,13 +122,11 @@ export const getMondayAndSunday = (currentDate: Date | string) => {
     start_date,
     end_date,
   };
-
 };
 
 export const isFirstDayOfMonth = (date = new Date()): boolean => {
   return date.getDate() === 1;
 };
-
 
 export const getStartandEndOfMonth = (currentDate: Date | string) => {
   if (typeof currentDate === "string") {
@@ -119,8 +140,8 @@ export const getStartandEndOfMonth = (currentDate: Date | string) => {
     start_date,
     end_date,
   };
-}
+};
 
 export const formatMessageReply = (message: string) => {
-  return '```' + message + '```';
+  return "```" + message + "```";
 };

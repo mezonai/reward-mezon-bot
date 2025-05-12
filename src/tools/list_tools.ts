@@ -1,4 +1,3 @@
-
 export const ListTools = {
   tools: [
     {
@@ -18,8 +17,45 @@ export const ListTools = {
           },
 
           message: {
-            type: "string",
-            description: "Message content to send",
+            oneOf: [
+              {
+                type: "string",
+                description: "Plain text message",
+              },
+              {
+                type: "object",
+                description: "Formatted message with markdown metadata",
+                properties: {
+                  t: {
+                    type: "string",
+                    description: "Message text content",
+                  },
+                  mk: {
+                    type: "array",
+                    description: "Markdown formatting metadata",
+                    items: {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          desscription: "type message ",
+                        },
+                        s: {
+                          type: "number",
+                          description: "Start index",
+                        },
+                        e: {
+                          type: "number",
+                          description: "End index",
+                        },
+                      },
+                      required: ["type", "s", "e"],
+                    },
+                  },
+                },
+                required: ["t", "mk"],
+              },
+            ],
           },
         },
         required: ["channel", "message", "message_id"],
@@ -43,6 +79,10 @@ export const ListTools = {
           userName: {
             type: "string",
             description: "Display name of the user",
+          },
+          sender_id: {
+            type: "string",
+            description: "Display id of the user giver trophy",
           },
         },
         required: ["userId", "rewardId"],
@@ -136,7 +176,6 @@ export const ListTools = {
     {
       name: "list-role-rewards",
       description: "Get the list of role rewards for a specific user",
-
     },
     {
       name: "list-trophy",
@@ -152,8 +191,8 @@ export const ListTools = {
             type: "string",
             description: "get total point of week",
           },
-        }
-      }
+        },
+      },
     },
     {
       name: "top-month",
@@ -165,10 +204,46 @@ export const ListTools = {
             type: "string",
             description: "get total point of month",
           },
-        }
-      }
-    }
-
-
+        },
+      },
+    },
+    {
+      name: "add-user",
+      description: "Add a user to the database",
+      inputSchema: {
+        type: "object",
+        properties: {
+          username: {
+            type: "string",
+            description: "name of user",
+          },
+          user_id: {
+            type: "string",
+            description: "id of user",
+          },
+          amount: {
+            type: "number",
+            description: "amount of user",
+          },
+        },
+      },
+    },
+    {
+      name: "rut",
+      description: "send token to account",
+      inputSchema: {
+        type: "object",
+        properties: {
+          receiver_id: {
+            type: "string",
+            description: "id of receiver",
+          },
+          amount: {
+            type: "number",
+            description: "amount of user",
+          },
+        },
+      },
+    },
   ],
 };

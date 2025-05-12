@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { client, findChannel } from "../config/mezon-client";
 import {
+  AddUserSchema,
   AssignRoleOnScoreSchema,
   AwardTrophySchema,
   CrudRewardSchema,
   GetLeaderboardSchema,
+  RutSchema,
   SendMessageSchema,
   TopWeekSchema,
 } from "./schema/tool_schema";
@@ -13,7 +15,14 @@ import UserReward from "../models/User_reward";
 import sequelize from "../config/database";
 import { QueryTypes } from "sequelize";
 import RoleReward from "../models/Role_rewards";
-import { addDate, afterDate, getMondayAndSunday, getStartandEndOfMonth } from "../ultis/constant";
+import {
+  addDate,
+  afterDate,
+  getMondayAndSunday,
+  getStartandEndOfMonth,
+} from "../ultis/constant";
+import User from "../models/User";
+import { EMarkdownType } from "mezon-sdk";
 
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
@@ -31,7 +40,15 @@ export const CallTools = async (request: any) => {
           throw new Error("Channel not found");
         }
         const sent = await channel.send(
-          typeof message === "string" ? { t: message } : message
+          typeof message === "string"
+            ? { t: message }
+            : {
+                ...message,
+                mk: message.mk?.map((m) => ({
+                  ...m,
+                  type: m.type as EMarkdownType,
+                })),
+              }
         );
         return {
           content: [
@@ -44,108 +61,74 @@ export const CallTools = async (request: any) => {
       }
 
       case "award-user": {
-        const { userId, rewardName, userName } = AwardTrophySchema.parse(args);
+        const { userId, rewardName, userName, sender_id } =
+          AwardTrophySchema.parse(args);
         try {
-          let rewardId: any;
-
-          const result = await Reward.findOne({
+          const trophy = await Reward.findOne({
             where: { name: rewardName },
           });
 
-          if (result) {
-            rewardId = result.id;
-          } else {
-            throw new Error(`Reward '${rewardName}' not found`);
+          if (!trophy) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `🏆 ${rewardName} not found in trophy` as string,
+                },
+              ],
+            };
           }
 
+          const UserReceiver = await User.findOne({
+            where: { user_id: userId },
+          });
+          if (!UserReceiver) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: ` found receiver !` as string,
+                },
+              ],
+            };
+          }
+
+          const UserGiveTrophy = await User.findOne({
+            where: { user_id: sender_id },
+          });
+          if (!UserGiveTrophy) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Not found User give trophy !` as string,
+                },
+              ],
+            };
+          }
+
+          if (UserGiveTrophy.amount < trophy.points) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `💸Số dư của bạn không đủ để trao thưởng hoặc số tiền rút không hợp lệ` as string,
+                },
+              ],
+            };
+          }
+
+          UserReceiver.amount =
+            (Number(UserReceiver.amount) || 0) + Number(trophy.points);
+          UserGiveTrophy.amount =
+            (Number(UserGiveTrophy.amount) || 0) - Number(trophy.points);
+          await UserGiveTrophy.save();
+          await UserReceiver.save();
           await UserReward.create({
-            reward_id: rewardId,
+            reward_id: trophy.id,
             user_id: userId,
             user_name: userName,
           });
-
-          const totalPointsResult: any = await sequelize.query(
-            `
-        SELECT SUM(r.points) AS total_points
-        FROM rewards r
-        JOIN user_rewards ur ON ur.reward_id = r.id
-        WHERE ur.user_id = :userId
-      `,
-            {
-              replacements: { userId },
-              type: QueryTypes.SELECT,
-            }
-          );
-
-
-          const totalPoints = parseInt(
-            totalPointsResult[0]?.total_points || "0",
-            10
-          );
-
-
-          const roleRewards: { point_threshold: number; role_name: string }[] =
-            await sequelize.query(
-              `
-          SELECT point_threshold, role_name
-          FROM role_rewards
-          ORDER BY point_threshold ASC
-        `,
-              {
-                type: QueryTypes.SELECT,
-              }
-            );
-
-          let newRole = null;
-          for (const role of roleRewards) {
-            if (totalPoints >= role.point_threshold) {
-              newRole = role.role_name;
-            }
-          }
-
-          if (newRole) {
-            const [existingRole] = await sequelize.query(
-              `
-          SELECT *
-          FROM user_roles
-          WHERE user_id = :userId 
-        `,
-              {
-                replacements: { userId },
-                type: QueryTypes.SELECT,
-              }
-            );
-
-            if (!existingRole) {
-              await sequelize.query(
-                `
-            INSERT INTO user_roles (user_id, role_name, total_point)
-            VALUES (:userId, :roleName, :totalPoints)
-          `,
-                {
-                  replacements: {
-                    userId,
-                    roleName: newRole,
-                    totalPoints,
-                  },
-                  type: QueryTypes.INSERT,
-                }
-              );
-            } else {
-              await sequelize.query(
-                `
-                      UPDATE user_roles
-                      SET total_point = :totalPoints,
-                      role_name = :roleName
-                      WHERE user_id = :userId
-                    `,
-                {
-                  replacements: { userId, totalPoints, roleName: newRole },
-                  type: QueryTypes.UPDATE,
-                }
-              );
-            }
-          }
 
           return {
             content: [
@@ -156,7 +139,6 @@ export const CallTools = async (request: any) => {
             ],
           };
         } catch (error) {
-
           console.error("Error awarding trophy:", error);
           return {
             content: [
@@ -178,7 +160,6 @@ export const CallTools = async (request: any) => {
               where: { name },
             });
 
-
             if (deletedCount === 0) {
               return {
                 content: [
@@ -199,6 +180,19 @@ export const CallTools = async (request: any) => {
             };
           }
           if (action === "upd") {
+            const existingReward = await Reward.findOne({
+              where: { name },
+            });
+            if (!existingReward) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `\n 🏆 Trophy "${name}" not found.`,
+                  },
+                ],
+              };
+            }
 
             await Reward.update(
               { description, points, icon, createdBy },
@@ -214,9 +208,6 @@ export const CallTools = async (request: any) => {
               ],
             };
           }
-
-
-
 
           if (action === "new") {
             const existingReward = await Reward.findOne({
@@ -260,9 +251,6 @@ export const CallTools = async (request: any) => {
               ],
             };
           }
-
-
-
         } catch (error: any) {
           throw new Error(`Error creating trophy: ${error.message}`);
         }
@@ -279,14 +267,27 @@ export const CallTools = async (request: any) => {
       case "rank": {
         const { limit } = GetLeaderboardSchema.parse(args);
         const query = `
-          SELECT 
-          ur.user_name,
-          ul.role_name,
-          ul.total_point
-          FROM user_rewards ur
-          JOIN user_roles ul ON ul.user_id = ur.user_id
-          GROUP BY ur.user_name, ul.role_name, ul.total_point
-          LIMIT :limit
+            WITH user_total_points AS (
+            SELECT
+              ur.user_name,
+              SUM(r.points) AS total_point
+            FROM user_rewards ur
+            JOIN rewards r ON ur.reward_id = r.id
+            GROUP BY ur.user_name
+          )
+          SELECT
+            utp.user_name,
+            utp.total_point,
+            rr.role_name AS role_name
+          FROM user_total_points utp
+          JOIN LATERAL (
+            SELECT role_name
+            FROM role_rewards
+            WHERE point_threshold <= utp.total_point
+            LIMIT 1
+          ) rr ON true
+		      ORDER BY total_point DESC
+          Limit :limit;
   `;
 
         try {
@@ -308,13 +309,16 @@ export const CallTools = async (request: any) => {
       }
 
       case "assign-role-on-score": {
-        const { role_name, point_threshold = 0, action } = AssignRoleOnScoreSchema.parse(args)
+        const {
+          role_name,
+          point_threshold = 0,
+          action,
+        } = AssignRoleOnScoreSchema.parse(args);
 
         if (action === "del") {
           const deletedCount = await RoleReward.destroy({
             where: { role_name },
           });
-
 
           if (deletedCount === 0) {
             return {
@@ -327,7 +331,6 @@ export const CallTools = async (request: any) => {
             };
           }
 
-
           return {
             content: [
               {
@@ -336,15 +339,30 @@ export const CallTools = async (request: any) => {
               },
             ],
           };
-
         }
         if (action === "upd") {
-          await RoleReward.update({
-            point_threshold: point_threshold,
-            role_name: role_name,
-          }, {
+          const existingRole = await RoleReward.findOne({
             where: { role_name },
-          })
+          });
+          if (!existingRole) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `🏅Role reward ${role_name} not found.`,
+                },
+              ],
+            };
+          }
+          await RoleReward.update(
+            {
+              point_threshold: point_threshold,
+              role_name: role_name,
+            },
+            {
+              where: { role_name },
+            }
+          );
           return {
             content: [
               {
@@ -353,8 +371,6 @@ export const CallTools = async (request: any) => {
               },
             ],
           };
-
-
         }
         if (action === "new") {
           const existingRole = await RoleReward.findOne({
@@ -384,8 +400,6 @@ export const CallTools = async (request: any) => {
             ],
           };
         }
-
-
       }
       case "list-role-rewards": {
         const result = await sequelize.query(
@@ -397,7 +411,6 @@ export const CallTools = async (request: any) => {
             type: QueryTypes.SELECT,
           }
         );
-
 
         return {
           content: [
@@ -419,7 +432,6 @@ export const CallTools = async (request: any) => {
             type: QueryTypes.SELECT,
           }
         );
-
 
         return {
           content: [
@@ -448,7 +460,6 @@ export const CallTools = async (request: any) => {
           }
         );
 
-
         return {
           content: [
             {
@@ -460,27 +471,27 @@ export const CallTools = async (request: any) => {
       }
 
       case "top-week": {
-
         const { date } = TopWeekSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getMondayAndSunday(subdate);
         const endDate = addDate(end_date, 1);
 
-
         const sqlQuery = `
           WITH user_total_points AS (
             SELECT 
               ur.user_name,
+              ur.user_id,
               SUM(r.points) AS total_point
             FROM user_rewards ur
             JOIN rewards r ON ur.reward_id = r.id
             WHERE ur."createdAt" >= DATE :start_date
               AND ur."createdAt" < DATE :end_date
-            GROUP BY ur.user_name
+            GROUP BY ur.user_name, ur.user_id
           )
 
           SELECT 
             utp.user_name,
+            utp.user_id,
             utp.total_point,
             rr.role_name AS role_name
           FROM user_total_points utp
@@ -488,32 +499,29 @@ export const CallTools = async (request: any) => {
             SELECT role_name
             FROM role_rewards
             WHERE point_threshold <= utp.total_point
-            ORDER BY point_threshold DESC
             LIMIT 1
-          ) rr ON true
-          LIMIT 5;
+            ) rr ON true
+          ORDER BY total_point DESC
+          LIMIT 3;
                   `;
 
-        const result = await sequelize.query(
-          sqlQuery,
-          {
-            replacements: { start_date, end_date: endDate },
-            type: QueryTypes.SELECT,
-          }
-        );
-
+        const result = await sequelize.query(sqlQuery, {
+          replacements: { start_date, end_date: endDate },
+          type: QueryTypes.SELECT,
+        });
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(result, null, 2) || "👑 Top week is not available",
+              text:
+                JSON.stringify(result, null, 2) ||
+                "👑 Top week is not available",
             },
           ],
         };
       }
       case "top-month": {
-
         const { date } = TopWeekSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getStartandEndOfMonth(subdate);
@@ -523,16 +531,18 @@ export const CallTools = async (request: any) => {
           WITH user_total_points AS (
             SELECT 
               ur.user_name,
+               ur.user_id,
               SUM(r.points) AS total_point
             FROM user_rewards ur
             JOIN rewards r ON ur.reward_id = r.id
             WHERE ur."createdAt" >= DATE :start_date
               AND ur."createdAt" < DATE :end_date
-            GROUP BY ur.user_name
+            GROUP BY ur.user_name , ur.user_id
           )
 
           SELECT 
             utp.user_name,
+            utp.user_id,
             utp.total_point,
             rr.role_name AS role_name
           FROM user_total_points utp
@@ -540,29 +550,97 @@ export const CallTools = async (request: any) => {
             SELECT role_name
             FROM role_rewards
             WHERE point_threshold <= utp.total_point
-            ORDER BY point_threshold DESC
             LIMIT 1
-          ) rr ON true
+            ) rr ON true
+            ORDER BY total_point DESC
           LIMIT 5;
                   `;
 
-        const result = await sequelize.query(
-          sqlQuery,
-          {
-            replacements: { start_date, end_date: endDate },
-            type: QueryTypes.SELECT,
-          }
-        );
-
+        const result = await sequelize.query(sqlQuery, {
+          replacements: { start_date, end_date: endDate },
+          type: QueryTypes.SELECT,
+        });
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(result, null, 2) || " 👑 Top month is not available",
+              text:
+                JSON.stringify(result, null, 2) ||
+                " 👑 Top month is not available",
             },
           ],
         };
+      }
+      case "add-user": {
+        try {
+          const { user_id, amount, username } = AddUserSchema.parse(args);
+          const existingUser = await User.findOne({ where: { user_id } });
+          if (existingUser) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `❌ User ${user_id} đã tồn tại trong cơ sở dữ liệu.`,
+                },
+              ],
+            };
+          }
+
+          const result = await User.create({
+            user_id,
+            username,
+            amount,
+          });
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: "✅ Đã thêm user vào cơ sở dữ liệu.",
+              },
+            ],
+          };
+        } catch (e: any) {
+          console.error("❌ Error creating user: ", e);
+          return {
+            content: [
+              {
+                type: "text",
+                text: `❌ Lỗi khi thêm user: ${e.message}`,
+              },
+            ],
+          };
+        }
+      }
+      case "rut": {
+        try {
+          const { receiver_id, amount } = RutSchema.parse(args);
+          const dataSendToken = {
+            sender_id: process.env.UTILITY_BOT_ID,
+            sender_name: process.env.BOT_KOMU_NAME,
+            receiver_id,
+            amount,
+          };
+          await client.sendToken(dataSendToken);
+          return {
+            content: [
+              {
+                type: "text",
+                text: "✅ Đã thêm user vào cơ sở dữ liệu.",
+              },
+            ],
+          };
+        } catch (e: any) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `❌ Lỗi khi thêm user: ${e.message}`,
+              },
+            ],
+          };
+        }
       }
 
       default:

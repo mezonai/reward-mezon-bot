@@ -1,11 +1,11 @@
 import dotenv from "dotenv";
 import { client } from "./config/mezon-client";
-import { sendMessage, showTopMonth, showTopWeek } from "./ultis/fn";
+import { addUser, sendMessage, showTopMonth, showTopWeek } from "./ultis/fn";
 import { commands } from "./commands/bot.command";
 import { connectClient } from "./config/connect";
 import { CronJob } from "cron";
-import { TextChannel } from "mezon-sdk/dist/cjs/mezon-client/structures/TextChannel";
-import { ChannelMessage } from "mezon-sdk";
+import { ChannelMessage, TokenSentEvent } from "mezon-sdk";
+import User from "./models/User";
 
 dotenv.config();
 
@@ -18,12 +18,8 @@ const checkNewMessages = async (data: ChannelMessage) => {
   ) {
     const args = data?.content?.t.slice(1).trim().split(/ +/);
     const command = args.shift()?.toLowerCase();
-
-
     const user_id = data?.mentions?.[0]?.user_id ?? null;
-
     if (!command || !(command in commands)) return;
-
     try {
       await commands[command as keyof typeof commands].execute(
         data,
@@ -31,34 +27,35 @@ const checkNewMessages = async (data: ChannelMessage) => {
         args
       );
       return;
-    } catch (err) {
-
-      await sendMessage(data.channel_id, "⚠️ Lỗi cú pháp vui lòng xem lại lệnh *help để thực thi.", data?.clan_id!);
+    } catch (err: any) {
+      await sendMessage(
+        data.channel_id,
+        "⚠️ Lỗi cú pháp vui lòng xem lại lệnh !help để thực thi.",
+        data?.clan_id!
+      );
       return;
     }
   }
 };
 
-
-
 const weeklyJob = new CronJob(
-  '0 0 6 * * 1',
+  "0 0 6 * * 1",
   async function () {
     await showTopWeek();
   },
   null,
   true,
-  'Asia/Ho_Chi_Minh'
+  "Asia/Ho_Chi_Minh"
 );
 
 const monthlyJob = new CronJob(
-  '0 0 6 1 * *',
+  "0 0 6 1 * *",
   async function () {
     await showTopMonth();
   },
   null,
   true,
-  'Asia/Ho_Chi_Minh'
+  "Asia/Ho_Chi_Minh"
 );
 
 async function main() {
@@ -66,8 +63,31 @@ async function main() {
     await client.login();
     await connectClient();
     client.onChannelMessage(async (data: ChannelMessage) => {
+      await addUser(data?.sender_id, data?.username!, 0);
       if (data?.sender_id! === process.env.BOT) return;
       checkNewMessages(data);
+    });
+
+    client.onTokenSend(async (data: TokenSentEvent) => {
+      if (data.amount <= 0) return;
+      if (data.receiver_id === process.env.BOT && data.sender_id) {
+        try {
+          let user = await User.findOne({ where: { user_id: data.sender_id } });
+
+          if (!user) {
+            await addUser(data.sender_id, data.sender_name!, data.amount);
+            user = await User.findOne({ where: { user_id: data.sender_id } });
+            if (!user) throw new Error("User creation failed");
+          }
+          user.amount = (Number(user.amount) || 0) + Number(data.amount);
+          await user.save();
+        } catch (e) {
+          console.error("Error handling TokenSentEvent:", e);
+        }
+      }
+    });
+    client.onAddClanUser(async (data) => {
+      await addUser(data?.user.user_id, data?.user.username!, 0);
     });
     monthlyJob.start();
     weeklyJob.start();
