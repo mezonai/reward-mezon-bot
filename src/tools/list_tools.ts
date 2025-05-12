@@ -182,6 +182,19 @@ export const ListTools = {
       description: "get the list of trophies",
     },
     {
+      name: "top-day",
+      description: "Get the leaderboard of users by trophy points this day",
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            description: "get total point of day",
+          },
+        },
+      },
+    },
+    {
       name: "top-week",
       description: "Get the leaderboard of users by trophy points this week",
       inputSchema: {
@@ -220,23 +233,6 @@ export const ListTools = {
           user_id: {
             type: "string",
             description: "id of user",
-          },
-          amount: {
-            type: "number",
-            description: "amount of user",
-          },
-        },
-      },
-    },
-    {
-      name: "rut",
-      description: "send token to account",
-      inputSchema: {
-        type: "object",
-        properties: {
-          receiver_id: {
-            type: "string",
-            description: "id of receiver",
           },
           amount: {
             type: "number",

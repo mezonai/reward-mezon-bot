@@ -1,11 +1,18 @@
 import dotenv from "dotenv";
 import { client } from "./config/mezon-client";
-import { addUser, sendMessage, showTopMonth, showTopWeek } from "./ultis/fn";
+import {
+  addUser,
+  sendMessage,
+  showTopDay,
+  showTopMonth,
+  showTopWeek,
+} from "./ultis/fn";
 import { commands } from "./commands/bot.command";
 import { connectClient } from "./config/connect";
 import { CronJob } from "cron";
 import { ChannelMessage, TokenSentEvent } from "mezon-sdk";
 import User from "./models/User";
+import "./models";
 
 dotenv.config();
 
@@ -37,6 +44,16 @@ const checkNewMessages = async (data: ChannelMessage) => {
     }
   }
 };
+
+const dailyJob = new CronJob(
+  "0 0 6 * * *",
+  async function () {
+    await showTopDay();
+  },
+  null,
+  true,
+  "Asia/Ho_Chi_Minh"
+);
 
 const weeklyJob = new CronJob(
   "0 0 6 * * 1",
@@ -91,6 +108,7 @@ async function main() {
     });
     monthlyJob.start();
     weeklyJob.start();
+    dailyJob.start();
   } catch (error) {
     process.exit(1);
   }

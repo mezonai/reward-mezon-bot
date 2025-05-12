@@ -69,17 +69,12 @@ export const AssignRoleOnScoreSchema = z.object({
   role_name: z.string().describe("role name"),
 });
 
-export const TopWeekSchema = z.object({
+export const TopSchema = z.object({
   date: z.string().describe("Date to get the top week for"),
 });
 
 export const AddUserSchema = z.object({
   user_id: z.string().describe("User ID to add the reward to"),
   username: z.string().describe("Username of the user to add the reward to"),
-  amount: z.number().describe("Amount of the reward to add"),
-});
-
-export const RutSchema = z.object({
-  receiver_id: z.string().describe("User ID give token"),
   amount: z.number().describe("Amount of the reward to add"),
 });
