@@ -6,6 +6,7 @@ interface UserAttributes {
   user_id: string;
   username: string;
   amount: number;
+  countmessage: number;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "id"> {}
@@ -18,6 +19,7 @@ class User
   declare user_id: string;
   declare username: string;
   declare amount: number;
+  declare countmessage: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -39,6 +41,11 @@ User.init(
       allowNull: false,
     },
     amount: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    countmessage: {
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0,

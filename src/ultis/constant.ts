@@ -33,6 +33,24 @@ export function formatLeaderboard(data: any[], title?: string): string {
   return leaderboard.trim();
 }
 
+export function formatLeaderboardMessage(data: any[], title?: string): string {
+  if (data.length === 0) {
+    return `🏆 Không có người chơi nào trong bảng xếp hạng ${
+      title ? title : ""
+    } `;
+  }
+  let leaderboard = `🏆 Bảng xếp hạng thành viên tích cực trong ${
+    title ? title : ""
+  } :\n`;
+  data.forEach((user, index) => {
+    leaderboard += `${index + 1}. 🧑 @${user?.username} - ${
+      user.countmessage
+    } message \n`;
+  });
+
+  return leaderboard.trim();
+}
+
 export function formatListTrophy(data: any[]): string {
   if (data.length === 0) {
     return "🏆 Không có trophy trong 📝.";

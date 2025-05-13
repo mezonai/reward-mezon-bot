@@ -80,7 +80,7 @@ async function main() {
     await client.login();
     await connectClient();
     client.onChannelMessage(async (data: ChannelMessage) => {
-      await addUser(data?.sender_id, data?.username!, 0);
+      await addUser(data?.sender_id, data?.username!, 0, 0);
       if (data?.sender_id! === process.env.BOT) return;
       checkNewMessages(data);
     });
@@ -89,10 +89,24 @@ async function main() {
       if (data.amount <= 0) return;
       if (data.receiver_id === process.env.BOT && data.sender_id) {
         try {
-          let user = await User.findOne({ where: { user_id: data.sender_id } });
+          let [user, bot] = await Promise.all([
+            User.findOne({ where: { user_id: data.sender_id } }),
+            User.findOne({ where: { user_id: process.env.BOT } }),
+          ]);
+          if (bot) {
+            bot.amount = (Number(bot.amount) || 0) + Number(data.amount);
+            await bot.save();
+          } else {
+            await addUser(
+              process.env.BOT,
+              process.env.BOT_NAME!,
+              data.amount,
+              0
+            );
+          }
 
           if (!user) {
-            await addUser(data.sender_id, data.sender_name!, data.amount);
+            await addUser(data.sender_id, data.sender_name!, data.amount, 0);
             user = await User.findOne({ where: { user_id: data.sender_id } });
             if (!user) throw new Error("User creation failed");
           }
@@ -104,12 +118,13 @@ async function main() {
       }
     });
     client.onAddClanUser(async (data) => {
-      await addUser(data?.user.user_id, data?.user.username!, 0);
+      await addUser(data?.user.user_id, data?.user.username!, 0, 0);
     });
     monthlyJob.start();
     weeklyJob.start();
     dailyJob.start();
   } catch (error) {
+    console.error(error);
     process.exit(1);
   }
 }

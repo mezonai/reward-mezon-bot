@@ -1,5 +1,6 @@
 import {
   formatLeaderboard,
+  formatLeaderboardMessage,
   formatListRole,
   formatListTrophy,
   formatListTrophyUser,
@@ -51,7 +52,7 @@ export const commands = {
       !reward del | tên role name - xóa role reward
       !reward new | tên role name | điểm role reward - tạo role reward
       !reward upd | tên role name | điểm role reward - cập nhật role reward
-      !top - Xem bảng xếp hạng trophy trong ngày
+      !top - Xem bảng xếp hạng hạng thành viên tích cực trong ngày
       !top_week - Xem bảng xếp hạng trophy tuần này
       !top_month - Xem bảng xếp hạng trophy tháng này
       !kttk - kiểm tra tài khoản
@@ -290,7 +291,7 @@ export const commands = {
         Array.isArray(result.content) &&
         typeof result.content[0]?.text === "string"
       ) {
-        const text = formatLeaderboard(
+        const text = formatLeaderboardMessage(
           JSON.parse(result.content[0].text),
           `ngày ${day}`
         );
