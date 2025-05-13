@@ -4,6 +4,9 @@ import { ChannelMessage, EMarkdownType } from "mezon-sdk";
 import { afterDate, formatLeaderboard, formatMessageReply } from "./constant";
 import { format, getMonth, getWeek, subDays } from "date-fns";
 import User from "../models/User";
+import dotenv from "dotenv";
+import { Op } from "sequelize";
+dotenv.config();
 
 export const sendMessage = async (
   channel: string,
@@ -188,23 +191,51 @@ export const showTopGeneric = async (
 };
 
 export const showTopDay = async () => {
-  const result = await topDay();
-  const day = format(new Date(), "yyyy-MM-dd");
-  const subdate = afterDate(day, 1);
-  const rewardAmounts = [10000];
-  let arrayUser: string[] = [];
-  if (
-    result &&
-    Array.isArray(result.content) &&
-    typeof result.content[0]?.text === "string"
-  ) {
-    const text = formatLeaderboard(
-      JSON.parse(result.content[0].text),
-      `ngày ${subdate}`
-    );
-    arrayUser = JSON.parse(result.content[0].text);
-    const message = formatMessageReply(text);
-    showTopGeneric(message, arrayUser, rewardAmounts, `ngày ${subdate}`);
+  const trophy = "Most active member";
+  const subdate = format(subDays(new Date(), 1), "yyyy-MM-dd");
+  const topUsers = await User.findAll({
+    where: {
+      user_id: { [Op.ne]: process.env.BOT as string },
+    },
+    order: [["countmessage", "DESC"]],
+    limit: 10,
+  });
+  const plainUsers = topUsers.map((user) => user.toJSON());
+  const randomNumber = Math.floor(Math.random() * topUsers.length);
+  const user = plainUsers[randomNumber];
+  if (user && process.env.BOT) {
+    await awardTrophy(user.user_id, trophy, user.username, process.env.BOT);
+    const listClan = [...client.clans.values()];
+    const message =
+      "```" +
+      " Đã trao 🏆 " +
+      trophy +
+      " cho @" +
+      user.username +
+      " người may mắn nằm trong top 10 thành viên tích cực trong ngày " +
+      subdate +
+      "```";
+    for (const clan of listClan) {
+      const listchannel = [...clan.channels.values()];
+      for (const channel of listchannel) {
+        await sendMessage(
+          channel?.id!,
+          {
+            t: message,
+            mk: [
+              {
+                type: EMarkdownType.TRIPLE,
+                s: 0,
+                e: message.length,
+              },
+            ],
+          },
+          clan.id
+        );
+      }
+    }
+    await User.update({ countmessage: 0 }, { where: {} });
+    return;
   }
 };
 
@@ -248,13 +279,19 @@ export const showTopMonth = async () => {
   }
 };
 
-export const addUser = (user_id: string, username: string, amount: number) => {
+export const addUser = (
+  user_id: string,
+  username: string,
+  amount: number,
+  countmessage: number
+) => {
   return clientMCP.callTool({
     name: "add-user",
     arguments: {
       user_id,
       username,
       amount,
+      countmessage,
     },
   });
 };
@@ -309,7 +346,7 @@ export const giveToken = async (
   leaderboard: any[],
   listClan: any[],
   description: string,
-  rewardAmounts: any[]
+  rewardAmounts: number[]
 ) => {
   let rank = 0;
   for (let i = 0; i < leaderboard.length; i++) {
@@ -320,6 +357,11 @@ export const giveToken = async (
     if (user) {
       user.amount = (Number(user.amount) || 0) + reward;
       await user.save();
+      await User.increment("amount", {
+        by: -Number(reward),
+        where: { user_id: process.env.BOT },
+      });
+
       const message =
         "```" +
         "🎉Chúc mừng " +

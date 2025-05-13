@@ -126,18 +126,9 @@ export const CallTools = async (request: any) => {
               ],
             };
           }
-          console.error(
-            "amount receiver ",
-            (Number(UserReceiver.amount) || 0) - Number(trophy.points)
-          );
 
           UserReceiver.amount =
             Number(UserReceiver.amount) + Number(trophy.points);
-
-          console.error(
-            "amount sender ",
-            (Number(UserGiveTrophy.amount) || 0) - Number(trophy.points)
-          );
           UserGiveTrophy.amount =
             Number(UserGiveTrophy.amount) - Number(trophy.points);
           await UserGiveTrophy.save();
@@ -213,7 +204,7 @@ export const CallTools = async (request: any) => {
             }
 
             await Reward.update(
-              { description, points, icon, createdBy },
+              { description, points, icon, createdBy, updatedAt: new Date() },
               { where: { name } }
             );
 
@@ -443,7 +434,7 @@ export const CallTools = async (request: any) => {
       case "list-trophy": {
         const result = await sequelize.query(
           `
-         select name, description, points from rewards 	ORDER BY points DESC;
+         select *  from rewards	ORDER BY points DESC;
         `,
           {
             replacements: {},
@@ -489,38 +480,15 @@ export const CallTools = async (request: any) => {
       }
       case "top-day": {
         const { date } = TopSchema.parse(args);
-        const subdate = afterDate(date, 1);
-
         const sqlQuery = `
-         WITH user_total_points AS (
-            SELECT 
-              ur.user_name,
-              ur.user_id,
-              SUM(r.points) AS total_point
-            FROM user_rewards ur
-            JOIN rewards r ON ur.reward_id = r.id
-           WHERE ur."createdAt" >= DATE :date
-  			AND ur."createdAt" <  DATE :date + INTERVAL '1 day' 
-            GROUP BY ur.user_name, ur.user_id
-          )
-          SELECT 
-            utp.user_name,
-            utp.user_id,
-            utp.total_point,
-            rr.role_name AS role_name
-          FROM user_total_points utp
-          JOIN LATERAL (
-            SELECT role_name
-            FROM role_rewards
-            WHERE point_threshold <= utp.total_point
-            LIMIT 1
-            ) rr ON true
-          ORDER BY total_point DESC
-          LIMIT 1;
-                  `;
+          SELECT * FROM users
+          WHERE user_id <> :BOT
+          ORDER BY countmessage DESC
+          LIMIT 10
+        `;
 
         const result = await sequelize.query(sqlQuery, {
-          replacements: { date: subdate },
+          replacements: { BOT: process.env.BOT! },
           type: QueryTypes.SELECT,
         });
 
@@ -640,23 +608,31 @@ export const CallTools = async (request: any) => {
       }
       case "add-user": {
         try {
-          const { user_id, amount, username } = AddUserSchema.parse(args);
-          const existingUser = await User.findOne({ where: { user_id } });
+          const {
+            user_id: userId,
+            amount,
+            username,
+          } = AddUserSchema.parse(args);
+          const existingUser = await User.findOne({
+            where: { user_id: userId },
+          });
           if (existingUser) {
+            existingUser.countmessage += 1;
+            await existingUser.save();
             return {
               content: [
                 {
                   type: "text",
-                  text: `❌ User ${user_id} đã tồn tại trong cơ sở dữ liệu.`,
+                  text: `❌ User ${userId} đã tồn tại trong cơ sở dữ liệu.`,
                 },
               ],
             };
           }
-
-          const result = await User.create({
-            user_id,
+          await User.create({
+            user_id: userId,
             username,
             amount,
+            countmessage: 1,
           });
 
           return {

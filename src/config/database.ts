@@ -11,7 +11,10 @@ const sequelize = new Sequelize({
   password: (process.env.DB_PASSWORD as string)!,
   database: process.env.DB_NAME as string,
   logging: false,
-  timezone: "+07:00",
 });
+
+// sequelize.addHook("afterConnect", async (connection: any, config: any) => {
+//   await connection.query(`SET TIME ZONE 'Asia/Ho_Chi_Minh'`);
+// });
 
 export default sequelize;
