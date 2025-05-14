@@ -17,6 +17,7 @@ import RoleReward from "../models/Role_rewards";
 import {
   addDate,
   afterDate,
+  enumBot,
   getMondayAndSunday,
   getStartandEndOfMonth,
 } from "../ultis/constant";
@@ -616,6 +617,17 @@ export const CallTools = async (request: any) => {
           const existingUser = await User.findOne({
             where: { user_id: userId },
           });
+          if (enumBot.some((bot: string) => username.includes(bot))) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `❌ User ${userId} là bot, không thể thêm..`,
+                },
+              ],
+            };
+          }
+
           if (existingUser) {
             existingUser.countmessage += 1;
             await existingUser.save();
@@ -623,7 +635,7 @@ export const CallTools = async (request: any) => {
               content: [
                 {
                   type: "text",
-                  text: `❌ User ${userId} đã tồn tại trong cơ sở dữ liệu.`,
+                  text: `❌ User ${userId} đã tồn tại trong cơ sở dữ liệu hoặc là bot .`,
                 },
               ],
             };

@@ -1,11 +1,12 @@
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
 import { ChannelMessage, EMarkdownType } from "mezon-sdk";
-import { afterDate, formatLeaderboard, formatMessageReply } from "./constant";
+import { formatLeaderboard, formatMessageReply } from "./constant";
 import { format, getMonth, getWeek, subDays } from "date-fns";
 import User from "../models/User";
 import dotenv from "dotenv";
 import { Op } from "sequelize";
+import { Reward } from "../models";
 dotenv.config();
 
 export const sendMessage = async (
@@ -200,6 +201,15 @@ export const showTopDay = async () => {
     order: [["countmessage", "DESC"]],
     limit: 10,
   });
+
+  let trophies = await Reward.findOne({ where: { name: trophy } });
+  if (!trophies) {
+    trophies = await Reward.create({
+      name: trophies,
+      description: "thành viên tích cực",
+      points: 10000,
+    });
+  }
   const plainUsers = topUsers.map((user) => user.toJSON());
   const randomNumber = Math.floor(Math.random() * topUsers.length);
   const user = plainUsers[randomNumber];

@@ -163,3 +163,5 @@ export const getStartandEndOfMonth = (currentDate: Date | string) => {
 export const formatMessageReply = (message: string) => {
   return "```" + message + "```";
 };
+
+export const enumBot = ["KOMU", "CheckIn", "System", "Fumo"];
