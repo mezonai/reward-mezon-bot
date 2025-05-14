@@ -410,3 +410,17 @@ export const giveToken = async (
     }
   }
 };
+
+export const updateMessage = async (
+  message: any,
+  channel_id: string,
+  message_id: string
+) => {
+  try {
+    const Channel = await client.channels.fetch(channel_id);
+    const fetchedMessage = await Channel.messages.fetch(message_id);
+    await fetchedMessage.update(message);
+  } catch (error) {
+    console.log(error);
+  }
+};

@@ -233,17 +233,6 @@ export const CallTools = async (request: any) => {
                 ],
               };
             }
-            if (existingReward) {
-              return {
-                content: [
-                  {
-                    type: "text",
-                    text: `\n 🏆 Trophy "${name}" already exists.`,
-                  },
-                ],
-              };
-            }
-
             await Reward.create({
               name,
               description,
