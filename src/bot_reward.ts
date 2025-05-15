@@ -9,7 +9,7 @@ import { MezonBotListener } from "./event/mezon.event";
 dotenv.config();
 
 const dailyJob = new CronJob(
-  "0 40 15 * * *",
+  "0 0 19 * * *",
   async function () {
     await showTopDay();
   },
