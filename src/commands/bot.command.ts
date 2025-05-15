@@ -24,6 +24,10 @@ import {
 import { ChannelMessage } from "mezon-sdk";
 import { format, getMonth, getWeek } from "date-fns";
 import User from "../models/User";
+import { client } from "../config/mezon-client";
+import { components, embedReward, embedTrophy } from "../ultis/form";
+import { Reward } from "../models";
+import RoleReward from "../models/Role_rewards";
 
 interface Action {
   action: "new" | "upd" | "del";
@@ -41,8 +45,8 @@ export const commands = {
               🏆 **Reward - Help Menu:** 👑
        
       !help - Hiển thị danh sách lệnh
-      !trophy new | tên trophy | mô tả | giá trị - Tạo trophy mới 
-      !trophy upd | tên trophy | mô tả | giá trị - Cập nhật trophy
+      !trophy new  - Tạo trophy mới 
+      !trophy upd | tên trophy - Cập nhật trophy
       !trophy del | tên trophy - xóa trophy
       !list_trophy - Xem danh sách trophy
       !award @người dùng | Trophy Name - (Trao trophy cho người dùng)
@@ -50,8 +54,8 @@ export const commands = {
       !trophies or !trophies user - Xem danh sách trophy của người dùng hoặc của bản thân
       !list - Xem danh sách role rewards 
       !reward del | tên role name - xóa role reward
-      !reward new | tên role name | điểm role reward - tạo role reward
-      !reward upd | tên role name | điểm role reward - cập nhật role reward
+      !reward new - tạo role reward
+      !reward upd | tên role name  - cập nhật role reward
       !top - Xem bảng xếp hạng hạng thành viên tích cực trong ngày
       !top_week - Xem bảng xếp hạng trophy tuần này
       !top_month - Xem bảng xếp hạng trophy tháng này
@@ -70,34 +74,68 @@ export const commands = {
       args: string[]
     ) => {
       const fullArg = args.join(" ");
-      const [action, name, description, points, icon] = fullArg
+      const [action, name, description, points] = fullArg
         .split("|")
         .map((s) => s.trim());
 
-      const result = await crudTrophy(
-        action as Action["action"],
-        name,
-        description,
-        +points,
-        icon,
-        message?.sender_id
+      const fetchedChannel = await client.channels.fetch(message.channel_id);
+      const fetchedMessage = await fetchedChannel.messages.fetch(
+        message?.message_id!
       );
-      if (
-        result &&
-        Array.isArray(result.content) &&
-        typeof result.content[0]?.text === "string"
-      ) {
-        await replyMessage(
-          message.channel_id,
-          result.content[0].text,
-          message?.message_id!
+
+      if (action === "del") {
+        const result = await crudTrophy(
+          action as Action["action"],
+          name,
+          description,
+          +points,
+          message?.sender_id
         );
-      } else {
-        await sendMessage(
-          message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
-        );
+        if (
+          result &&
+          Array.isArray(result.content) &&
+          typeof result.content[0]?.text === "string"
+        ) {
+          await replyMessage(
+            message.channel_id,
+            result.content[0].text,
+            message?.message_id!
+          );
+          return;
+        } else {
+          await sendMessage(
+            message.channel_id,
+            "Lỗi: Không thể xử dý kết quả trả về.",
+            message?.clan_id!
+          );
+        }
+      }
+
+      if (action === "upd") {
+        const trophy = await Reward.findOne({ where: { name } });
+
+        if (!trophy) {
+          await replyMessage(
+            message.channel_id,
+            "Not found trophy",
+            message?.message_id!
+          );
+          return;
+        }
+
+        await fetchedMessage.reply({
+          embed: embedTrophy("trophy", action, trophy?.dataValues),
+          components: components("trophy", action, trophy?.dataValues),
+        });
+
+        return;
+      }
+
+      if (action === "new") {
+        await fetchedMessage.reply({
+          embed: embedTrophy("trophy", action),
+          components: components("trophy", action),
+        });
       }
     },
   },
@@ -218,7 +256,7 @@ export const commands = {
   },
 
   reward: {
-    description: "Gán role khi đạt điểm",
+    description: "Mốc điểm cho point",
     execute: async (
       message: ChannelMessage,
       user_id: string,
@@ -226,27 +264,64 @@ export const commands = {
     ) => {
       const fullArg = args.join(" ");
       const [action, roleName, score] = fullArg.split("|").map((s) => s.trim());
-      const result = await assignRoleOnScore(
-        action as Action["action"],
-        roleName,
-        +score || 0
+
+      const fetchedChannel = await client.channels.fetch(message.channel_id);
+      const fetchedMessage = await fetchedChannel.messages.fetch(
+        message?.message_id!
       );
-      if (
-        result &&
-        Array.isArray(result.content) &&
-        typeof result.content[0]?.text === "string"
-      ) {
-        await replyMessage(
-          message.channel_id,
-          result.content[0]?.text,
-          message?.message_id!
+
+      if (action === "del") {
+        const result = await assignRoleOnScore(
+          action as Action["action"],
+          roleName,
+          +score || 0
         );
-      } else {
-        await sendMessage(
-          message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
-        );
+        if (
+          result &&
+          Array.isArray(result.content) &&
+          typeof result.content[0]?.text === "string"
+        ) {
+          await replyMessage(
+            message.channel_id,
+            result.content[0]?.text,
+            message?.message_id!
+          );
+        } else {
+          await sendMessage(
+            message.channel_id,
+            "Lỗi: Không thể xử dý kết quả trả về.",
+            message?.clan_id!
+          );
+        }
+      }
+
+      if (action === "upd") {
+        const reward = await RoleReward.findOne({
+          where: { role_name: roleName },
+        });
+
+        if (!reward) {
+          await replyMessage(
+            message.channel_id,
+            "Not found reward",
+            message?.message_id!
+          );
+          return;
+        }
+
+        await fetchedMessage.reply({
+          embed: embedReward("reward", action, reward?.dataValues),
+          components: components("reward", action, reward?.dataValues),
+        });
+
+        return;
+      }
+
+      if (action === "new") {
+        await fetchedMessage.reply({
+          embed: embedReward("reward", action),
+          components: components("reward", action),
+        });
       }
     },
   },

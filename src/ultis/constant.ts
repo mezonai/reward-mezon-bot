@@ -163,3 +163,16 @@ export const getStartandEndOfMonth = (currentDate: Date | string) => {
 export const formatMessageReply = (message: string) => {
   return "```" + message + "```";
 };
+
+export const enumBot = ["KOMU", "CheckIn", "System", "Fumo", "Utility"];
+
+export const MEZON_IMAGE_URL =
+  "https://cdn.mezon.vn/1837043892743049216/1840654271217930240/1827994776956309500/857_0246x0w.webp";
+
+export const MEZON_EMBED_FOOTER = {
+  text: "Powered by Mezon",
+  icon_url: MEZON_IMAGE_URL,
+};
+
+export const ERROR_TOKEN =
+  "💸Số dư của bạn không đủ để trao thưởng hoặc số tiền rút không hợp lệ";

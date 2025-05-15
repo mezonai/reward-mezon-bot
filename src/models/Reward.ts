@@ -32,10 +32,6 @@ Reward.init(
         min: 1,
       },
     },
-    icon: {
-      type: DataTypes.STRING(500),
-      allowNull: true,
-    },
     createdBy: {
       type: DataTypes.STRING,
       allowNull: false,

@@ -1,52 +1,15 @@
 import dotenv from "dotenv";
 import { client } from "./config/mezon-client";
-import {
-  addUser,
-  sendMessage,
-  showTopDay,
-  showTopMonth,
-  showTopWeek,
-} from "./ultis/fn";
-import { commands } from "./commands/bot.command";
+import { showTopDay, showTopMonth, showTopWeek } from "./ultis/fn";
 import { connectClient } from "./config/connect";
 import { CronJob } from "cron";
-import { ChannelMessage, TokenSentEvent } from "mezon-sdk";
-import User from "./models/User";
 import "./models";
+import { MezonBotListener } from "./event/mezon.event";
 
 dotenv.config();
 
-const checkNewMessages = async (data: ChannelMessage) => {
-  if (data?.sender_id! === process.env.BOT) return;
-
-  if (
-    typeof data?.content?.t === "string" &&
-    data?.content?.t.startsWith("!")
-  ) {
-    const args = data?.content?.t.slice(1).trim().split(/ +/);
-    const command = args.shift()?.toLowerCase();
-    const user_id = data?.mentions?.[0]?.user_id ?? null;
-    if (!command || !(command in commands)) return;
-    try {
-      await commands[command as keyof typeof commands].execute(
-        data,
-        user_id!,
-        args
-      );
-      return;
-    } catch (err: any) {
-      await sendMessage(
-        data.channel_id,
-        "⚠️ Lỗi cú pháp vui lòng xem lại lệnh !help để thực thi.",
-        data?.clan_id!
-      );
-      return;
-    }
-  }
-};
-
 const dailyJob = new CronJob(
-  "0 0 6 * * *",
+  "0 40 15 * * *",
   async function () {
     await showTopDay();
   },
@@ -79,47 +42,8 @@ async function main() {
   try {
     await client.login();
     await connectClient();
-    client.onChannelMessage(async (data: ChannelMessage) => {
-      await addUser(data?.sender_id, data?.username!, 0, 0);
-      if (data?.sender_id! === process.env.BOT) return;
-      checkNewMessages(data);
-    });
-
-    client.onTokenSend(async (data: TokenSentEvent) => {
-      if (data.amount <= 0) return;
-      if (data.receiver_id === process.env.BOT && data.sender_id) {
-        try {
-          let [user, bot] = await Promise.all([
-            User.findOne({ where: { user_id: data.sender_id } }),
-            User.findOne({ where: { user_id: process.env.BOT } }),
-          ]);
-          if (bot) {
-            bot.amount = (Number(bot.amount) || 0) + Number(data.amount);
-            await bot.save();
-          } else {
-            await addUser(
-              process.env.BOT,
-              process.env.BOT_NAME!,
-              data.amount,
-              0
-            );
-          }
-
-          if (!user) {
-            await addUser(data.sender_id, data.sender_name!, data.amount, 0);
-            user = await User.findOne({ where: { user_id: data.sender_id } });
-            if (!user) throw new Error("User creation failed");
-          }
-          user.amount = (Number(user.amount) || 0) + Number(data.amount);
-          await user.save();
-        } catch (e) {
-          console.error("Error handling TokenSentEvent:", e);
-        }
-      }
-    });
-    client.onAddClanUser(async (data) => {
-      await addUser(data?.user.user_id, data?.user.username!, 0, 0);
-    });
+    const botListener = new MezonBotListener(client);
+    botListener.register();
     monthlyJob.start();
     weeklyJob.start();
     dailyJob.start();

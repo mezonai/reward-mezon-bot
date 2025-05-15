@@ -28,7 +28,6 @@ export const SendMessageSchema = z.object({
 export const CrudRewardSchema = z.object({
   name: z.string().describe("Name of the reward"),
   description: z.string().optional().describe("Description of the reward"),
-  icon: z.string().optional().describe("Icon of the reward"),
   points: z.number().optional().describe("Points of the reward"),
   createdBy: z.string().describe("User ID of the creator"),
   action: z.enum(["del", "upd", "new"]).describe("action to perform"),
