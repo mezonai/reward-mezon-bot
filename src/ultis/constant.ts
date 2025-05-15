@@ -173,3 +173,6 @@ export const MEZON_EMBED_FOOTER = {
   text: "Powered by Mezon",
   icon_url: MEZON_IMAGE_URL,
 };
+
+export const ERROR_TOKEN =
+  "💸Số dư của bạn không đủ để trao thưởng hoặc số tiền rút không hợp lệ";

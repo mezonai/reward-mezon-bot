@@ -1,7 +1,7 @@
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
 import { ChannelMessage, EMarkdownType } from "mezon-sdk";
-import { formatLeaderboard, formatMessageReply } from "./constant";
+import { ERROR_TOKEN, formatLeaderboard, formatMessageReply } from "./constant";
 import { format, getMonth, getWeek, subDays } from "date-fns";
 import User from "../models/User";
 import dotenv from "dotenv";
@@ -33,7 +33,6 @@ export const crudTrophy = async (
   name: string,
   description: string,
   points: number,
-  icon?: string,
   createdBy?: string
 ) => {
   return await clientMCP.callTool({
@@ -42,7 +41,6 @@ export const crudTrophy = async (
       name,
       description,
       points: points || 0,
-      icon,
       createdBy,
       action,
     },
@@ -192,60 +190,78 @@ export const showTopGeneric = async (
 };
 
 export const showTopDay = async () => {
-  const trophy = "Most active member";
-  const subdate = format(subDays(new Date(), 1), "yyyy-MM-dd");
-  const topUsers = await User.findAll({
-    where: {
-      user_id: { [Op.ne]: process.env.BOT as string },
-    },
-    order: [["countmessage", "DESC"]],
-    limit: 10,
-  });
-
-  let trophies = await Reward.findOne({ where: { name: trophy } });
-  if (!trophies) {
-    trophies = await Reward.create({
-      name: trophies,
-      description: "thành viên tích cực",
-      points: 10000,
+  try {
+    let message;
+    const points = 10000;
+    const trophy = "Most active member";
+    const subdate = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    const topUsers = await User.findAll({
+      where: {
+        user_id: { [Op.ne]: process.env.BOT as string },
+      },
+      order: [["countmessage", "DESC"]],
+      limit: 10,
     });
-  }
-  const plainUsers = topUsers.map((user) => user.toJSON());
-  const randomNumber = Math.floor(Math.random() * topUsers.length);
-  const user = plainUsers[randomNumber];
-  if (user && process.env.BOT) {
-    await awardTrophy(user.user_id, trophy, user.username, process.env.BOT);
-    const listClan = [...client.clans.values()];
-    const message =
-      "```" +
-      " Đã trao 🏆 " +
-      trophy +
-      " cho @" +
-      user.username +
-      " người may mắn nằm trong top 10 thành viên tích cực trong ngày " +
-      subdate +
-      "```";
-    for (const clan of listClan) {
-      const listchannel = [...clan.channels.values()];
-      for (const channel of listchannel) {
-        await sendMessage(
-          channel?.id!,
-          {
-            t: message,
-            mk: [
-              {
-                type: EMarkdownType.TRIPLE,
-                s: 0,
-                e: message.length,
-              },
-            ],
-          },
-          clan.id
-        );
-      }
+    let trophies = await Reward.findOne({ where: { name: trophy } });
+    if (!trophies) {
+      trophies = await Reward.create({
+        name: trophy,
+        description: "thành viên tích cực",
+        points: points,
+        createdBy: process.env.BOT,
+      });
     }
-    await User.update({ countmessage: 0 }, { where: {} });
-    return;
+    const plainUsers = topUsers.map((user) => user.toJSON());
+    const randomNumber = Math.floor(Math.random() * topUsers.length);
+    const user = plainUsers[randomNumber];
+    if (user && process.env.BOT && trophies.dataValues.name === trophy) {
+      const award = await awardTrophy(
+        user.user_id,
+        trophy,
+        user.username,
+        process.env.BOT
+      );
+      if (
+        Array.isArray(award.content) &&
+        typeof award.content[0]?.text === "string"
+      ) {
+        if (award.content[0]?.text === ERROR_TOKEN) {
+          message = formatMessageReply(award.content[0]?.text);
+        } else {
+          message =
+            "```" +
+            award.content[0]?.text +
+            " là người may mắn nằm trong top 10 thành viên tích cực trong ngày " +
+            subdate +
+            "```";
+        }
+        const listClan = [...client.clans.values()];
+        for (const clan of listClan) {
+          const listchannel = [...clan.channels.values()];
+          for (const channel of listchannel) {
+            await sendMessage(
+              channel?.id!,
+              {
+                t: message,
+                mk: [
+                  {
+                    type: EMarkdownType.TRIPLE,
+                    s: 0,
+                    e: message.length,
+                  },
+                ],
+              },
+              clan.id
+            );
+          }
+        }
+        await User.update({ countmessage: 0 }, { where: {} });
+      }
+
+      return;
+    }
+  } catch (error) {
+    console.error(error);
   }
 };
 

@@ -106,10 +106,7 @@ export const ListTools = {
             type: "integer",
             description: "Points of the trophy",
           },
-          icon: {
-            type: "string",
-            description: "Emoji or Icon (optional)",
-          },
+
           createdBy: {
             type: "string",
             description: "User ID of the creator",

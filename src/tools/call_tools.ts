@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { findChannel } from "../config/mezon-client";
+import { client } from "../config/mezon-client";
 import {
   AddUserSchema,
   AssignRoleOnScoreSchema,
@@ -18,6 +18,7 @@ import {
   addDate,
   afterDate,
   enumBot,
+  ERROR_TOKEN,
   getMondayAndSunday,
   getStartandEndOfMonth,
 } from "../ultis/constant";
@@ -35,7 +36,11 @@ export const CallTools = async (request: any) => {
           channel: channelId,
           message,
         } = SendMessageSchema.parse(args);
-        const channel = await findChannel(channelId, serverId);
+        if (!serverId || !channelId) {
+          throw new Error("Server or channel not found");
+        }
+        const channel = await client.channels.fetch(channelId);
+
         if (!channel) {
           throw new Error("Channel not found");
         }
@@ -117,12 +122,15 @@ export const CallTools = async (request: any) => {
             };
           }
 
-          if (UserGiveTrophy.amount < trophy.points) {
+          if (
+            UserGiveTrophy.amount < trophy.points &&
+            sender_id !== process.env.BOT
+          ) {
             return {
               content: [
                 {
                   type: "text",
-                  text: `💸Số dư của bạn không đủ để trao thưởng hoặc số tiền rút không hợp lệ` as string,
+                  text: ERROR_TOKEN,
                 },
               ],
             };
@@ -162,7 +170,7 @@ export const CallTools = async (request: any) => {
       }
 
       case "crud-trophy": {
-        const { name, description, points, icon, createdBy, action } =
+        const { name, description, points, createdBy, action } =
           CrudRewardSchema.parse(args);
         try {
           if (action === "del") {
@@ -205,7 +213,7 @@ export const CallTools = async (request: any) => {
             }
 
             await Reward.update(
-              { description, points, icon, createdBy, updatedAt: new Date() },
+              { description, points, createdBy, updatedAt: new Date() },
               { where: { name } }
             );
 
@@ -237,7 +245,6 @@ export const CallTools = async (request: any) => {
               name,
               description,
               points,
-              icon,
               createdBy,
             });
 

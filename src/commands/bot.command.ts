@@ -74,7 +74,7 @@ export const commands = {
       args: string[]
     ) => {
       const fullArg = args.join(" ");
-      const [action, name, description, points, icon] = fullArg
+      const [action, name, description, points] = fullArg
         .split("|")
         .map((s) => s.trim());
 
@@ -89,7 +89,6 @@ export const commands = {
           name,
           description,
           +points,
-          icon,
           message?.sender_id
         );
         if (
