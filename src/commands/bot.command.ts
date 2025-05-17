@@ -5,22 +5,7 @@ import {
   formatListTrophy,
   formatListTrophyUser,
 } from "../ultis/constant";
-import {
-  assignRoleOnScore,
-  awardTrophy,
-  crudTrophy,
-  kttkUser,
-  listRoleRewards,
-  listTrophy,
-  rankReward,
-  replyMessage,
-  sendMessage,
-  sendToken,
-  topDay,
-  topMonth,
-  topWeek,
-  trophyUser,
-} from "../ultis/fn";
+
 import { ChannelMessage } from "mezon-sdk";
 import { format, getMonth, getWeek } from "date-fns";
 import User from "../models/User";
@@ -28,6 +13,9 @@ import { client } from "../config/mezon-client";
 import { components, embedReward, embedTrophy } from "../ultis/form";
 import { Reward } from "../models";
 import RoleReward from "../models/Role_rewards";
+import { replyMessage, sendMessage } from "../ultis/message";
+import { kttkUser, sendToken } from "../ultis/fn";
+import { rewardToolService } from "../ultis/call-tool";
 
 interface Action {
   action: "new" | "upd" | "del";
@@ -62,7 +50,7 @@ export const commands = {
       !kttk - kiểm tra tài khoản
       !rut - rút tiền
             `;
-      await replyMessage(message.channel_id, helpText, message?.message_id!);
+      await replyMessage(message?.channel_id!, helpText, message?.message_id!);
     },
   },
 
@@ -84,7 +72,7 @@ export const commands = {
       );
 
       if (action === "del") {
-        const result = await crudTrophy(
+        const result = await rewardToolService.crudTrophy(
           action as Action["action"],
           name,
           description,
@@ -105,8 +93,7 @@ export const commands = {
         } else {
           await sendMessage(
             message.channel_id,
-            "Lỗi: Không thể xử dý kết quả trả về.",
-            message?.clan_id!
+            "Lỗi: Không thể xử dý kết quả trả về."
           );
         }
       }
@@ -150,7 +137,7 @@ export const commands = {
       const fullArg = args.join(" ");
       const [name, rewardName] = fullArg.split("|").map((s) => s.trim());
       const userName = name.replace("@", "").trim();
-      const result = await awardTrophy(
+      const result = await rewardToolService.awardTrophy(
         user_id,
         rewardName,
         userName,
@@ -169,8 +156,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },
@@ -184,7 +170,7 @@ export const commands = {
       args: string[]
     ) => {
       const fullArg = args.join(" ");
-      const result = await rankReward(+fullArg ? +fullArg : 10);
+      const result = await rewardToolService.rankReward(+fullArg ? +fullArg : 10);
 
       if (
         result &&
@@ -197,8 +183,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },
@@ -211,7 +196,7 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const result = await trophyUser(user_id ? user_id : message?.sender_id!);
+      const result = await rewardToolService.trophyUser(user_id ? user_id : message?.sender_id!);
       if (
         result &&
         Array.isArray(result.content) &&
@@ -223,8 +208,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },
@@ -237,7 +221,7 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const result = await listRoleRewards();
+      const result = await rewardToolService.listRoleRewards();
       if (
         result &&
         Array.isArray(result.content) &&
@@ -248,8 +232,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },
@@ -271,7 +254,7 @@ export const commands = {
       );
 
       if (action === "del") {
-        const result = await assignRoleOnScore(
+        const result = await rewardToolService.assignRoleOnScore(
           action as Action["action"],
           roleName,
           +score || 0
@@ -289,8 +272,7 @@ export const commands = {
         } else {
           await sendMessage(
             message.channel_id,
-            "Lỗi: Không thể xử dý kết quả trả về.",
-            message?.clan_id!
+            "Lỗi: Không thể xử dý kết quả trả về."
           );
         }
       }
@@ -333,7 +315,7 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const result = await listTrophy();
+      const result = await rewardToolService.listTrophy();
       if (
         result &&
         Array.isArray(result.content) &&
@@ -345,8 +327,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },
@@ -359,7 +340,7 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const result = await topDay();
+      const result = await rewardToolService.topDay();
       const day = format(new Date(), "yyyy-MM-dd");
       if (
         result &&
@@ -375,8 +356,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },
@@ -389,7 +369,7 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const result = await topWeek();
+      const result = await rewardToolService.topWeek();
       const week = getWeek(new Date());
       if (
         result &&
@@ -405,8 +385,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },
@@ -418,7 +397,7 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const result = await topMonth();
+      const result = await rewardToolService.topMonth();
       const month = getMonth(new Date()) + 1;
       if (
         result &&
@@ -434,8 +413,7 @@ export const commands = {
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về.",
-          message?.clan_id!
+          "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
     },

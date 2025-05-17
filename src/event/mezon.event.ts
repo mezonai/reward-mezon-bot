@@ -4,11 +4,12 @@ import {
   MezonClient,
   TokenSentEvent,
 } from "mezon-sdk";
-import { addUser, sendMessage, updateMessage } from "../ultis/fn";
+import { addUser } from "../ultis/fn";
 import User from "../models/User";
 import { commands } from "../commands/bot.command";
 import Reward from "../models/Reward";
 import RoleReward from "../models/Role_rewards";
+import { sendMessage, updateMessage } from "../ultis/message";
 
 export class MezonBotListener {
   constructor(private readonly client: MezonClient) {}
@@ -42,9 +43,8 @@ export class MezonBotListener {
         );
       } catch (err) {
         await sendMessage(
-          data.channel_id,
-          "⚠️ Lỗi cú pháp, vui lòng xem lại lệnh `!help`.",
-          data.clan_id!
+          data?.channel_id,
+          "⚠️ Lỗi cú pháp, vui lòng xem lại lệnh `!help`."
         );
       }
     }
@@ -88,13 +88,8 @@ export class MezonBotListener {
     const [action, name, handle, id] = data.button_id.split("_");
 
     if (action === "cancel") {
-      const textDailySuccess =
-        "```" + "The " + name + " has been cancelled" + "```";
-      const message = {
-        t: textDailySuccess,
-        mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: textDailySuccess.length }],
-      };
-      await updateMessage(message, data.channel_id, data?.message_id!);
+      const message: string = "The " + name + " has been cancelled";
+      await updateMessage(message, data?.channel_id, data?.message_id!);
     }
 
     if (!data?.extra_data) {
@@ -106,22 +101,11 @@ export class MezonBotListener {
       if (name === "trophy") {
         if (handle === "new") {
           const existingReward = await Reward.findOne({
-            where: { name: dataForm.name },
+            where: { name: dataForm?.name },
           });
-
           if (existingReward) {
-            const text =
-              "```" +
-              "🏆 The " +
-              name +
-              " " +
-              dataForm.name +
-              " already exists" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message: string =
+              "🏆 The " + name + " " + dataForm.name + " already exists";
             await updateMessage(message, data.channel_id, data?.message_id!);
             return;
           }
@@ -132,33 +116,17 @@ export class MezonBotListener {
               points: dataForm.points,
               createdBy: data.user_id,
             });
-            const text =
-              "```" +
-              "🏆 The " +
-              name +
-              " " +
-              dataForm.name +
-              " create successfully" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message: string =
+              "🏆 The " + name + " " + dataForm.name + " create successfully";
             await updateMessage(message, data.channel_id, data?.message_id!);
           } else {
-            const text =
-              "```" +
-              "Value must be a positive integer greater than or equal to 0" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message =
+              "Value must be a positive integer greater than or equal to 0";
+
             await updateMessage(message, data.channel_id, data?.message_id!);
           }
         }
         if (handle === "upd") {
-          console.log(id);
           if (!id) return;
           if (Number.isInteger(+dataForm.points) && +dataForm.points >= 0) {
             await Reward.update(
@@ -171,28 +139,13 @@ export class MezonBotListener {
               },
               { where: { id } }
             );
-            const text =
-              "```" +
-              "🏆 The " +
-              name +
-              " " +
-              dataForm.name +
-              " update successfully" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message =
+              "🏆 The " + name + " " + dataForm.name + " update successfully";
+
             await updateMessage(message, data.channel_id, data?.message_id!);
           } else {
-            const text =
-              "```" +
-              "Value must be a positive integer greater than or equal to 0" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message =
+              "Value must be a positive integer greater than or equal to 0";
             await updateMessage(message, data.channel_id, data?.message_id!);
           }
         }
@@ -205,18 +158,9 @@ export class MezonBotListener {
           });
 
           if (existingReward) {
-            const text =
-              "```" +
-              "🏆 The " +
-              name +
-              " " +
-              dataForm.role_name +
-              " already exists" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message =
+              "🏆 The " + name + " " + dataForm.role_name + " already exists";
+
             await updateMessage(message, data.channel_id, data?.message_id!);
             return;
           }
@@ -228,28 +172,17 @@ export class MezonBotListener {
               role_name: dataForm.role_name,
               point_threshold: dataForm.point_threshold,
             });
-            const text =
-              "```" +
+            const message =
               "🏆 The " +
               name +
               " " +
               dataForm.role_name +
-              " create successfully" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+              " create successfully";
+
             await updateMessage(message, data.channel_id, data?.message_id!);
           } else {
-            const text =
-              "```" +
-              "Value must be a positive integer greater than or equal to 0" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message =
+              "Value must be a positive integer greater than or equal to 0";
             await updateMessage(message, data.channel_id, data?.message_id!);
           }
         }
@@ -267,28 +200,18 @@ export class MezonBotListener {
               },
               { where: { id } }
             );
-            const text =
-              "```" +
+            const message =
               "🏆 The " +
               name +
               " " +
               dataForm.role_name +
-              " update successfully" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+              " update successfully";
+
             await updateMessage(message, data.channel_id, data?.message_id!);
           } else {
-            const text =
-              "```" +
-              "Value must be a positive integer greater than or equal to 0" +
-              "```";
-            const message = {
-              t: text,
-              mk: [{ type: EMarkdownType.TRIPLE, s: 0, e: text.length }],
-            };
+            const message =
+              "Value must be a positive integer greater than or equal to 0";
+
             await updateMessage(message, data.channel_id, data?.message_id!);
           }
         }
