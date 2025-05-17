@@ -38,8 +38,6 @@ async function main() {
       await sequelize.query(`SET TIME ZONE 'Asia/Ho_Chi_Minh';`);
       const transport = new StdioServerTransport();
       await server.connect(transport);
-      await client.login();
-      console.log("Mezon MCP Clan running on stdio");
     } catch (error) {
       console.error("error server", error);
       process.exit(1);
