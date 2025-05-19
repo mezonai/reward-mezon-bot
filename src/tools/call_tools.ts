@@ -2,10 +2,12 @@ import { z } from "zod";
 import { client } from "../config/mezon-client";
 import {
   AddUserSchema,
+  AskGeminiSchema,
   AssignRoleOnScoreSchema,
   AwardTrophySchema,
   CrudRewardSchema,
   GetLeaderboardSchema,
+  ReadMessagesSchema,
   SendMessageSchema,
   TopSchema,
 } from "./schema/tool_schema";
@@ -21,9 +23,11 @@ import {
   ERROR_TOKEN,
   getMondayAndSunday,
   getStartandEndOfMonth,
+  startsWithSpecialChar,
 } from "../ultis/constant";
 import User from "../models/User";
 import { EMarkdownType } from "mezon-sdk";
+import { sendMessageAndGetResponse } from "../gemini/gemini_reward";
 
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
@@ -31,15 +35,16 @@ export const CallTools = async (request: any) => {
   try {
     switch (name) {
       case "send-message": {
-        const {
-          server: serverId,
-          channel: channelId,
-          message,
-        } = SendMessageSchema.parse(args);
-        if (!serverId || !channelId) {
-          throw new Error("Server or channel not found");
+        const { message_id, channe_id, message } =
+          SendMessageSchema.parse(args);
+        if (!message_id || !channe_id) {
+          throw new Error("message_id or channel not found");
         }
-        const channel = await client.channels.fetch(channelId);
+        const channel = await client.channels.fetch(channe_id);
+        const fetchMJessage = await channel.messages.fetch(message_id);
+
+        console.error("log channel", channel);
+        console.error("log message", fetchMJessage);
 
         if (!channel) {
           throw new Error("Channel not found");
@@ -60,6 +65,54 @@ export const CallTools = async (request: any) => {
             {
               type: "text",
               text: `Message sent successfully to #${channel.name} in ${channel.clan.name}. Message ID: ${sent.message_id}`,
+            },
+          ],
+        };
+      }
+
+      case "read-messages": {
+        const {
+          message_id: message_id,
+          channel: channel_id,
+          limit,
+        } = ReadMessagesSchema.parse(args);
+        const channel = await client.channels.fetch(channel_id);
+        const messages = channel.messages.values();
+        const formattedMessages = Array.from(messages).map((msg) => ({
+          channel: `${channel.name}`,
+          message_id: message_id,
+          author: msg.sender_id,
+          content: msg.content,
+          channel_id: channel.id,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(formattedMessages, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "ask-gemini": {
+        const { clan_id, channel_id, question, messages, message_id } =
+          AskGeminiSchema.parse(args);
+
+        // const channelMessages = messages.slice(0, -1);
+        const response = await sendMessageAndGetResponse(
+          channel_id,
+          message_id,
+          question,
+          []
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: response,
             },
           ],
         };
@@ -609,7 +662,9 @@ export const CallTools = async (request: any) => {
             user_id: userId,
             amount,
             username,
+            message,
           } = AddUserSchema.parse(args);
+
           const existingUser = await User.findOne({
             where: { user_id: userId },
           });
@@ -625,13 +680,25 @@ export const CallTools = async (request: any) => {
           }
 
           if (existingUser) {
-            existingUser.countmessage += 1;
-            await existingUser.save();
+            if (!startsWithSpecialChar(message)) {
+              existingUser.countmessage += 1;
+              await existingUser.save();
+            }
             return {
               content: [
                 {
                   type: "text",
                   text: `❌ User ${userId} đã tồn tại trong cơ sở dữ liệu hoặc là bot .`,
+                },
+              ],
+            };
+          }
+          if (username === "Anonymous") {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `❌ User  là Anonymous , không thể thêm..`,
                 },
               ],
             };

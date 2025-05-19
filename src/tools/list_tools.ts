@@ -6,7 +6,7 @@ export const ListTools = {
       inputSchema: {
         type: "object",
         properties: {
-          server: {
+          message_id: {
             type: "string",
             description:
               "Clan name or ID (optional if bot is only in one server)",
@@ -59,6 +59,63 @@ export const ListTools = {
           },
         },
         required: ["channel", "message", "message_id"],
+      },
+    },
+    {
+      name: "read-messages",
+      description: "Read recent messages from a Mezon channel",
+      inputSchema: {
+        type: "object",
+        properties: {
+          message_id: {
+            type: "string",
+            description: "message ID ",
+          },
+          channel: {
+            type: "string",
+            description: 'Channel name (e.g., "general") or ID',
+          },
+        },
+        required: ["channel", "message_id"],
+      },
+    },
+
+    {
+      name: "ask-gemini",
+      description: "Ask Gemini AI about infomation in a channel",
+      inputSchema: {
+        type: "object",
+        properties: {
+          clan_id: {
+            type: "string",
+            description:
+              "Clan name or ID (optional if bot is only in one server)",
+          },
+          channel_id: {
+            type: "string",
+            description: "Channel name or ID",
+          },
+          message_id: {
+            type: "string",
+            description: "Message name or ID",
+          },
+
+          question: {
+            type: "string",
+            description: "The question to ask Gemini",
+          },
+          messages: {
+            type: "array",
+            description: "List of messages to use as context",
+          },
+          required: [
+            "channel_id",
+            "question",
+            "messages",
+            "clan_id",
+            "message_id",
+          ],
+        },
       },
     },
 
@@ -238,6 +295,10 @@ export const ListTools = {
           amount: {
             type: "number",
             description: "amount of user",
+          },
+          message: {
+            type: "string",
+            description: "message user",
           },
         },
       },

@@ -1,3 +1,4 @@
+import { ChannelMessage } from "mezon-sdk";
 import { clientMCP } from "../config/connect";
 
 export class RewardToolService {
@@ -111,6 +112,23 @@ export class RewardToolService {
         points: points || 0,
         createdBy,
         action,
+      },
+    });
+  }
+
+  async askTool(
+    message: ChannelMessage,
+    question: string,
+    historyMessage?: string[]
+  ) {
+    return await clientMCP.callTool({
+      name: "ask-gemini",
+      arguments: {
+        clan_id: message?.id,
+        channel_id: message?.channel_id,
+        message_id: message?.message_id,
+        question,
+        message: historyMessage,
       },
     });
   }

@@ -10,7 +10,8 @@ export const addUser = (
   user_id: string,
   username: string,
   amount: number,
-  countmessage: number
+  countmessage: number,
+  message?: string
 ) => {
   return clientMCP.callTool({
     name: "add-user",
@@ -19,6 +20,7 @@ export const addUser = (
       username,
       amount,
       countmessage,
+      message,
     },
   });
 };

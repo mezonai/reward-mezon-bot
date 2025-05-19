@@ -170,7 +170,9 @@ export const commands = {
       args: string[]
     ) => {
       const fullArg = args.join(" ");
-      const result = await rewardToolService.rankReward(+fullArg ? +fullArg : 10);
+      const result = await rewardToolService.rankReward(
+        +fullArg ? +fullArg : 10
+      );
 
       if (
         result &&
@@ -196,7 +198,9 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      const result = await rewardToolService.trophyUser(user_id ? user_id : message?.sender_id!);
+      const result = await rewardToolService.trophyUser(
+        user_id ? user_id : message?.sender_id!
+      );
       if (
         result &&
         Array.isArray(result.content) &&
@@ -330,6 +334,23 @@ export const commands = {
           "Lỗi: Không thể xử dý kết quả trả về."
         );
       }
+    },
+  },
+
+  ask: {
+    description: "hỏi bot reward",
+    execute: async (
+      message: ChannelMessage,
+      user_id: string,
+      args: string[]
+    ) => {
+      // try {
+      //   const question = args[0];
+      //   console.log("question", question);
+      //   const result = await rewardToolService.askTool(message, question, []);
+      // } catch (error) {
+      //   console.log(error);
+      // }
     },
   },
 

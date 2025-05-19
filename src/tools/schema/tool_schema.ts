@@ -1,11 +1,8 @@
 import { z } from "zod";
 
 export const SendMessageSchema = z.object({
-  server: z
-    .string()
-    .optional()
-    .describe("Clan name or ID (optional if bot is only in one server)"),
-  channel: z.string().describe('Channel name (e.g., "general") or ID'),
+  message_id: z.string().optional().describe("message ID"),
+  channe_id: z.string().describe("Channel  ID"),
   message: z.union([
     z.string().describe("Plain text message"),
     z
@@ -23,6 +20,23 @@ export const SendMessageSchema = z.object({
       })
       .describe("Formatted message object"),
   ]),
+});
+
+export const ReadMessagesSchema = z.object({
+  message_id: z.string().optional().describe("message ID "),
+  channel: z.string().describe("Channel ID"),
+  limit: z.number().min(1).max(100).default(50),
+});
+
+export const AskGeminiSchema = z.object({
+  clan_id: z
+    .string()
+    .optional()
+    .describe("Clan name or ID (optional if bot is only in one server)"),
+  channel_id: z.string().describe("Channel ID"),
+  message_id: z.string().describe("Message ID"),
+  question: z.string().describe("The question to ask Gemini"),
+  messages: z.any().describe("List of messages to use as context"),
 });
 
 export const CrudRewardSchema = z.object({
@@ -77,4 +91,5 @@ export const AddUserSchema = z.object({
   username: z.string().describe("Username of the user to add the reward to"),
   amount: z.number().describe("Amount of the reward to add"),
   countmessage: z.number().optional().describe("number message in clan"),
+  message: z.string().optional().describe("message user send"),
 });

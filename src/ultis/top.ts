@@ -30,7 +30,9 @@ export class TopService {
       for (const clan of listClan) {
         const listchannel = [...clan.channels.values()];
         for (const channel of listchannel) {
-          await sendMessage(channel?.id as string, message);
+          if (channel?.name === "welcome") {
+            await sendMessage(channel?.id as string, message);
+          }
         }
       }
       await giveToken(arrayUser, listClan, type, rewardAmounts);
@@ -98,21 +100,8 @@ export class TopService {
           for (const clan of listClan) {
             const listchannel = [...clan.channels.values()];
             for (const channel of listchannel) {
-              await sendMessage(channel?.id as string, message);
-
-              //   channel?.id!,
-              //   {
-              //     t: message,
-              //     mk: [
-              //       {
-              //         type: EMarkdownType.TRIPLE,
-              //         s: 0,
-              //         e: message.length,
-              //       },
-              //     ],
-              //   },
-              //   clan.id
-              // );
+              if (channel?.name === "welcome")
+                await sendMessage(channel?.id as string, message);
             }
           }
           await User.update({ countmessage: 0 }, { where: {} });
