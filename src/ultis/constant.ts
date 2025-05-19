@@ -160,7 +160,7 @@ export const getStartandEndOfMonth = (currentDate: Date | string) => {
   };
 };
 
-export const formatMessageReply = (message: string) => {
+export const formatMessage = (message: string) => {
   return "```" + message + "```";
 };
 
@@ -176,3 +176,11 @@ export const MEZON_EMBED_FOOTER = {
 
 export const ERROR_TOKEN =
   "💸Số dư của bạn không đủ để trao thưởng hoặc số tiền rút không hợp lệ";
+
+export const TROPY_MOST_ACTIVE_MEMBER = "Most active member";
+
+export function startsWithSpecialChar(str?: string): boolean {
+  if (!str) return false;
+  const regex = /^[@#$%^&*!]/;
+  return regex.test(str);
+}

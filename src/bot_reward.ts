@@ -1,15 +1,15 @@
 import dotenv from "dotenv";
 import { client } from "./config/mezon-client";
-import { showTopDay, showTopMonth, showTopWeek } from "./ultis/fn";
 import { connectClient } from "./config/connect";
 import { CronJob } from "cron";
 import "./models";
 import { MezonBotListener } from "./event/mezon.event";
+import { showTopDay, showTopMonth, showTopWeek } from "./ultis/top";
 
 dotenv.config();
 
 const dailyJob = new CronJob(
-  "0 0 19 * * *",
+  "0 0 6 * * *",
   async function () {
     await showTopDay();
   },
