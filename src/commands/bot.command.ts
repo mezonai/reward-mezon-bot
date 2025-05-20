@@ -163,7 +163,7 @@ export const commands = {
   },
 
   rank: {
-    description: "Xem bảng xếp hạng người dùng",
+    description: "Xem bảng xếp hạng reward của người dùng",
     execute: async (
       message: ChannelMessage,
       user_id: string,
@@ -344,13 +344,23 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      // try {
-      //   const question = args[0];
-      //   console.log("question", question);
-      //   const result = await rewardToolService.askTool(message, question, []);
-      // } catch (error) {
-      //   console.log(error);
-      // }
+      try {
+        const question = args.join(" ");
+        const result = await rewardToolService.sendMessage(message, question);
+        if (
+          result &&
+          Array.isArray(result.content) &&
+          typeof result.content[0]?.text === "string"
+        ) {
+          await replyMessage(
+            message.channel_id,
+            result.content[0].text,
+            message?.message_id!
+          );
+        }
+      } catch (error) {
+        console.log(error);
+      }
     },
   },
 

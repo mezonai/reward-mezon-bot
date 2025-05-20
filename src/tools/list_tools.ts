@@ -6,59 +6,20 @@ export const ListTools = {
       inputSchema: {
         type: "object",
         properties: {
-          message_id: {
+          channel_id: {
             type: "string",
-            description:
-              "Clan name or ID (optional if bot is only in one server)",
+            description: "Channel id",
           },
-          channel: {
+          context: {
+            type: "array",
+            description: "Context of the message",
+          },
+          question: {
             type: "string",
-            description: 'Channel name (e.g., "general") or ID',
-          },
-
-          message: {
-            oneOf: [
-              {
-                type: "string",
-                description: "Plain text message",
-              },
-              {
-                type: "object",
-                description: "Formatted message with markdown metadata",
-                properties: {
-                  t: {
-                    type: "string",
-                    description: "Message text content",
-                  },
-                  mk: {
-                    type: "array",
-                    description: "Markdown formatting metadata",
-                    items: {
-                      type: "object",
-                      properties: {
-                        type: {
-                          type: "string",
-                          desscription: "type message ",
-                        },
-                        s: {
-                          type: "number",
-                          description: "Start index",
-                        },
-                        e: {
-                          type: "number",
-                          description: "End index",
-                        },
-                      },
-                      required: ["type", "s", "e"],
-                    },
-                  },
-                },
-                required: ["t", "mk"],
-              },
-            ],
+            description: "The question to ask Ge  mini",
           },
         },
-        required: ["channel", "message", "message_id"],
+        required: ["channel_id", "message", "question"],
       },
     },
     {
@@ -67,16 +28,16 @@ export const ListTools = {
       inputSchema: {
         type: "object",
         properties: {
-          message_id: {
+          channel_id: {
             type: "string",
-            description: "message ID ",
+            description: "Channel id",
           },
-          channel: {
-            type: "string",
-            description: 'Channel name (e.g., "general") or ID',
+          limit: {
+            type: "number",
+            description: "Limit of messages to read",
           },
         },
-        required: ["channel", "message_id"],
+        required: ["channel_id", "limit"],
       },
     },
 

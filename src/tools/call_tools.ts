@@ -2,7 +2,6 @@ import { z } from "zod";
 import { client } from "../config/mezon-client";
 import {
   AddUserSchema,
-  AskGeminiSchema,
   AssignRoleOnScoreSchema,
   AwardTrophySchema,
   CrudRewardSchema,
@@ -26,7 +25,6 @@ import {
   startsWithSpecialChar,
 } from "../ultis/constant";
 import User from "../models/User";
-import { EMarkdownType } from "mezon-sdk";
 import { sendMessageAndGetResponse } from "../gemini/gemini_reward";
 
 export const CallTools = async (request: any) => {
@@ -34,78 +32,37 @@ export const CallTools = async (request: any) => {
 
   try {
     switch (name) {
-      case "send-message": {
-        const { message_id, channe_id, message } =
-          SendMessageSchema.parse(args);
-        if (!message_id || !channe_id) {
-          throw new Error("message_id or channel not found");
-        }
-        const channel = await client.channels.fetch(channe_id);
-        const fetchMJessage = await channel.messages.fetch(message_id);
-
-        console.error("log channel", channel);
-        console.error("log message", fetchMJessage);
-
-        if (!channel) {
-          throw new Error("Channel not found");
-        }
-        const sent = await channel.send(
-          typeof message === "string"
-            ? { t: message }
-            : {
-                ...message,
-                mk: message.mk?.map((m) => ({
-                  ...m,
-                  type: m.type as EMarkdownType,
-                })),
-              }
-        );
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Message sent successfully to #${channel.name} in ${channel.clan.name}. Message ID: ${sent.message_id}`,
-            },
-          ],
-        };
-      }
-
       case "read-messages": {
-        const {
-          message_id: message_id,
-          channel: channel_id,
-          limit,
-        } = ReadMessagesSchema.parse(args);
+        await client.login();
+        const { channel_id, limit } = ReadMessagesSchema.parse(args);
         const channel = await client.channels.fetch(channel_id);
         const messages = channel.messages.values();
-        const formattedMessages = Array.from(messages).map((msg) => ({
-          channel: `${channel.name}`,
-          message_id: message_id,
+        const context = Array.from(messages).map((msg) => ({
           author: msg.sender_id,
-          content: msg.content,
-          channel_id: channel.id,
+          content: msg.content?.t,
+          channel_id: channel_id,
+          sender_id: msg.sender_id,
         }));
+        await client.closeSocket();
+
+        const limitContext = context.slice(0, limit);
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(formattedMessages, null, 2),
+              text: JSON.stringify(limitContext, null, 2),
             },
           ],
         };
       }
 
-      case "ask-gemini": {
-        const { clan_id, channel_id, question, messages, message_id } =
-          AskGeminiSchema.parse(args);
-
-        // const channelMessages = messages.slice(0, -1);
+      case "send-message": {
+        const { question, channel_id, context } = SendMessageSchema.parse(args);
         const response = await sendMessageAndGetResponse(
-          channel_id,
-          message_id,
           question,
-          []
+          context,
+          channel_id
         );
 
         return {

@@ -10,6 +10,7 @@ import { commands } from "../commands/bot.command";
 import Reward from "../models/Reward";
 import RoleReward from "../models/Role_rewards";
 import { sendMessage, updateMessage } from "../ultis/message";
+import { rewardToolService } from "../ultis/call-tool";
 
 export class MezonBotListener {
   constructor(private readonly client: MezonClient) {}
@@ -24,7 +25,6 @@ export class MezonBotListener {
   private async onChannelMessage(data: ChannelMessage) {
     await addUser(data.sender_id, data.username!, 0, 0, data?.content?.t!);
     if (data.sender_id === process.env.BOT) return;
-
     if (
       typeof data?.content?.t === "string" &&
       data.content.t.startsWith("@bot-reward")

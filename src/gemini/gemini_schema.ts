@@ -6,43 +6,37 @@ export const SendMessageFunctionDeclaration = {
   parameters: {
     type: Type.OBJECT,
     properties: {
-      channe_id: {
+      channel_id: {
         type: Type.STRING,
-        description: 'Channel name (e.g., "general") or ID',
+        description: "Channel ID",
       },
-      message_id: {
+      question: {
         type: Type.STRING,
-        description: "message ID ",
+        description: "The question or channel ID",
       },
-      message: {
+      username: {
         type: Type.STRING,
-        description: "Message content to send",
+        description: "Username",
       },
     },
-    required: ["channe_id", "message", "message_id"],
+    required: ["channel_id", "question", "username"],
   },
 };
 
-export const ReadMessageFunctionDeclaration = {
+export const ReadMessagesFunctionDeclaration = {
   name: "read-message",
   description: "Read recent messages from a channel",
   parameters: {
     type: Type.OBJECT,
     properties: {
-      server: {
+      channel_id: {
         type: Type.STRING,
-        description: "Clan name or ID (optional if bot is only in one server)",
-      },
-      channel: {
-        type: Type.STRING,
-        description: 'Channel name (e.g., "general") or ID',
+        description: "Channel ID",
       },
       limit: {
         type: Type.NUMBER,
-        description: "Number of messages to fetch (max 100)",
-        default: 50,
       },
     },
-    required: ["channel"],
+    required: ["channel_id", "limit"],
   },
 };

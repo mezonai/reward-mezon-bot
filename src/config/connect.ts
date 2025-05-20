@@ -5,7 +5,7 @@ export const clientMCP = new Client({
   name: "mezon-bot",
   version: "1.0.0",
   capabilities: {
-    tools: ["send-message"],
+    tools: ["send-message", "read-message"],
   },
 });
 
