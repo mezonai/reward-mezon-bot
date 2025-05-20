@@ -141,7 +141,7 @@ export class RewardToolService {
 
   async readMessage(channel_id: string, limit: number = 50) {
     return await clientMCP.callTool({
-      name: "read-messages",
+      name: "read-message",
       arguments: {
         channel_id,
         limit,

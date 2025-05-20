@@ -10,7 +10,6 @@ import { commands } from "../commands/bot.command";
 import Reward from "../models/Reward";
 import RoleReward from "../models/Role_rewards";
 import { sendMessage, updateMessage } from "../ultis/message";
-import { rewardToolService } from "../ultis/call-tool";
 
 export class MezonBotListener {
   constructor(private readonly client: MezonClient) {}

@@ -1,5 +1,4 @@
 import { ContentListUnion } from "@google/genai";
-import { ChannelMessage } from "mezon-sdk";
 
 interface Message {
   author: string;
@@ -35,15 +34,16 @@ export async function content_gemini(
   question?: string,
   context?: any,
   channe_id?: string
-): Promise<ContentListUnion> {
-  const systemPrompt = `Bạn là một trợ lý ảo tên **Bot Reward** hoạt động trong các kênh chat có id là ${channe_id} 
-  Vai trò của bạn bao gồm:
-  - Tóm tắt hoặc hiểu nội dung tin nhắn trước đó.
-  - Trả lời tin nhắn của người dùng một cách tự nhiên và phù hợp ngữ cảnh.
-  Lưu ý:
-  - channel_id là ${channe_id} của kênh chat. và limit tối đa là 50 tin nhắn.
-  - Nếu được yêu cầu gọi công cụ read-message, bạn cần phản hồi tiếp sau khi đã nhận được nội dung.
-  Hãy phản hồi như một trợ lý AI thông minh và hiểu ngữ cảnh tốt.`;
+): Promise<any[]> {
+  const systemPrompt = `Bạn là một trợ lý ảo tên **Bot Reward**, hoạt động trong kênh chat có ID là ${channe_id}.
+
+Nhiệm vụ của bạn:
+- Hiểu và tóm tắt nội dung các tin nhắn trước đó, sử dụng các công cụ \`read-message\` và \`send-message\` khi cần.
+- Phản hồi người dùng một cách tự nhiên, ngắn gọn, phù hợp ngữ cảnh, KHÔNG hỏi lại yêu cầu và KHÔNG giải thích quá mức.
+Lưu ý:
+- \`channel_id\` là ${channe_id}, và số lượng tin nhắn tối đa có thể đọc là 50.
+- Khi sử dụng công cụ \`read-message\`, bạn phải đợi nội dung phản hồi, sau đó tiếp tục phản hồi lại người dùng dựa trên dữ liệu đã đọc.
+Hãy phản hồi như một trợ lý AI thông minh, hiểu rõ ngữ cảnh và chủ động hỗ trợ.`;
 
   let currentContents: Content[] = [
     {

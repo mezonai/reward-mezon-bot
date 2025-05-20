@@ -23,7 +23,7 @@ export const ListTools = {
       },
     },
     {
-      name: "read-messages",
+      name: "read-message",
       description: "Read recent messages from a Mezon channel",
       inputSchema: {
         type: "object",

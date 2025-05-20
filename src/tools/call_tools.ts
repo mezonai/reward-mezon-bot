@@ -32,7 +32,7 @@ export const CallTools = async (request: any) => {
 
   try {
     switch (name) {
-      case "read-messages": {
+      case "read-message": {
         await client.login();
         const { channel_id, limit } = ReadMessagesSchema.parse(args);
         const channel = await client.channels.fetch(channel_id);
@@ -43,7 +43,6 @@ export const CallTools = async (request: any) => {
           channel_id: channel_id,
           sender_id: msg.sender_id,
         }));
-        await client.closeSocket();
 
         const limitContext = context.slice(0, limit);
 
