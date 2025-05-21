@@ -484,7 +484,7 @@ export const CallTools = async (request: any) => {
         const { date } = TopSchema.parse(args);
         const sqlQuery = `
           SELECT * FROM users
-          WHERE user_id <> :BOT
+          WHERE user_id <> :BOT and countmessage > 0
           ORDER BY countmessage DESC
           LIMIT 10
         `;

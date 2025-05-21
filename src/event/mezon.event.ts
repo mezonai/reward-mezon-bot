@@ -14,6 +14,8 @@ export class MezonBotListener {
     this.client.onTokenSend(this.onTokenSend.bind(this));
     this.client.onAddClanUser(this.onAddClanUser.bind(this));
     this.client.onMessageButtonClicked(this.onMessageButtonClicked.bind(this));
+    this.client.onRoleAssign(this.onRoleAssign.bind(this));
+    this.client.onRoleEvent(this.onRoleEvent.bind(this));
   }
 
   private async onChannelMessage(data: ChannelMessage) {
@@ -230,4 +232,8 @@ export class MezonBotListener {
       );
     }
   }
+
+  private async onRoleAssign(data: any) {}
+
+  private async onRoleEvent(data: any) {}
 }

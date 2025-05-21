@@ -121,32 +121,44 @@ class GeminiRewardService {
 
             const secondPart =
               secondResult?.candidates?.[0]?.content?.parts?.[0];
-
-            if (secondPart?.functionCall?.name === "send-message") {
-              const { channel, message } = secondPart.functionCall.args as {
-                channel: string;
-                message: string;
-                server: string;
-              };
-
-              return `Đã gửi tin nhắn: "${message}" tới kênh ${channel}`;
-            }
-
             if ("text" in (secondPart || {})) {
               return secondPart?.text;
             }
-
             return "Không thể xử lý phản hồi sau khi đọc tin nhắn.";
           }
 
           case "send-message": {
-            const { channel, message } = args as {
-              channel: string;
-              message: string;
-              server: string;
+            const { channel_id, question } = args as {
+              channel_id: string;
+              question: string;
             };
 
-            return `Đã gửi tin nhắn: "${message}" tới kênh ${channel}`;
+            currentContents.push(
+              { role: "model", parts: [{ functionCall: part.functionCall }] },
+              {
+                role: "function",
+                parts: [
+                  {
+                    functionResponse: {
+                      name,
+                      response: { content: question },
+                    },
+                  },
+                ],
+              }
+            );
+
+            const sendResult = await this.genAI.models.generateContent({
+              model: "gemini-2.0-flash-001",
+              contents: currentContents,
+              config: {
+                tools: [
+                  { functionDeclarations: [SendMessageFunctionDeclaration] },
+                ],
+              },
+            });
+
+            return sendResult?.candidates?.[0]?.content?.parts?.[0]?.text;
           }
 
           default:

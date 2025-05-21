@@ -4,7 +4,7 @@
   "description": "A mezon bot using Model Context Protocol with TypeScript",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node build/bot_reward.js",
+    "start": "tsc && node build/bot_reward.js",
     "dev": "nodemon --watch src --ext ts,js --exec \"npm start\"",
     "bot": " tsc && node build/bot_reward.js",
     "dev:bot": "nodemon --watch src --ext ts,js --exec \"npm run bot\"",

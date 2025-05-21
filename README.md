@@ -1,102 +1,132 @@
 # Reward Mezon Bot
 
-A powerful bot for managing server rewards and trophies using Model Context Protocol with TypeScript.
+Hệ thống quản lý phần thưởng (reward) và danh hiệu (trophy) cho người dùng Mezon, sử dụng Mezon SDK và Model Context Protocol.
 
-## 🌟 Features
+## 🌟 Tính năng
 
-### Trophy Management
+### Quản lý Danh hiệu (Trophy)
 
-- Create and customize trophies for your server users
-- Award different value trophies for your servers
-- Set custom name, description, points, etc. to your trophies
-- View a leaderboard of the trophies you have earned
+- Tạo và tùy chỉnh danh hiệu cho người dùng trong server
+- Trao danh hiệu với các giá trị điểm khác nhau cho người dùng
+- Tùy chỉnh tên, mô tả, điểm cho danh hiệu
+- Xem bảng xếp hạng người dùng đạt được danh hiệu
 
-### Role Management
+### Quản lý Role Reward
 
-- Customize role rewards for users when they reach certain scores
-- Automatically assign roles based on trophy achievements
+- Tùy chỉnh phần thưởng role reward cho người dùng khi đạt đến điểm số nhất định
+- Tự động gán role reward dựa trên thành tích đạt được
 
-### Server Customization
+### Bảng xếp hạng
 
-- Change special settings for your server on how the bot works
-- Simple to use and easy to understand interface
+- Hiển thị bảng xếp hạng theo ngày, tuần, tháng
+- Theo dõi và hiển thị người dùng tích cực
 
-## 🚀 Getting Started
+### Tích hợp tài khoản
 
-### Prerequisites
+- Kiểm tra tài khoản
+- Rút token
 
-- Node.js (v16 or higher)
+## 🚀 Bắt đầu
+
+### Yêu cầu
+
+- Node.js (v16 trở lên)
 - PostgreSQL database
-- Bot Token
-- Google AI API Key (for MCP integration)
+- Mezon Bot Token
 
-### Installation
+### Cài đặt
 
-1. Clone the repository:
+1. Clone repository:
 
 ```bash
 git clone https://github.com/yourusername/reward-mezon-bot.git
 cd reward-mezon-bot
 ```
 
-2. Install dependencies:
+2. Cài đặt dependencies:
 
 ```bash
 npm install
 ```
 
-3. Create a `.env` file in the root directory with the following variables:
+3. Tạo file `.env` ở thư mục gốc với các biến sau:
 
 ```env
-BOT_TOKEN=your_bot_token
-DATABASE_URL=your_postgresql_connection_string
-GOOGLE_API_KEY=your_google_ai_api_key
+# Mezon Bot Configuration
+MEZON_TOKEN=your_mezon_bot_token
+BOT=your_bot_user_id
+BOT_NAME=your_bot_display_name
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_database_password
+DB_NAME=your_database_name
+
+# API Keys
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-4. Build the project:
+4. Build project:
 
 ```bash
 npm run build
 ```
 
-5. Start the bot:
+5. Khởi động bot:
 
 ```bash
 npm start
 ```
 
-For development:
+Cho môi trường phát triển:
 
 ```bash
 npm run dev
 ```
 
-## 📝 Bot Commands
+## 📝 Lệnh Bot
 
-### Trophy Commands
+### Lệnh Danh hiệu (Trophy)
 
-- `/trophy create` - Create a new trophy
-- `/trophy award` - Award a trophy to a user
-- `/trophy list` - List all available trophies
-- `/trophy leaderboard` - View trophy leaderboard
+- `!trophy new` - Tạo danh hiệu mới
+- `!trophy upd | tên trophy` - Cập nhật danh hiệu
+- `!trophy del | tên trophy` - Xóa danh hiệu
+- `!list_trophy` - Xem danh sách danh hiệu
+- `!award @người dùng | Trophy Name` - Trao danh hiệu cho người dùng
+- `!trophies` hoặc `!trophies user` - Xem danh sách danh hiệu của người dùng
 
-### Role Commands
+### Lệnh Role
 
-- `/role set` - Set up role rewards
-- `/role list` - List all role rewards
+- `!list` - Xem danh sách role reward
+- `!reward new` - Tạo role reward mới
+- `!reward upd | tên role name` - Cập nhật role reward
+- `!reward del | tên role name` - Xóa phần role reward
 
-### Settings Commands
+### Lệnh Bảng xếp hạng
 
-- `/settings view` - View current server settings
-- `/settings update` - Update server settings
+- `!rank` hoặc `!rank số hạng` - Xem bảng xếp hạng reward
+- `!top` - Xem bảng xếp hạng thành viên tích cực trong ngày
+- `!top_week` - Xem bảng xếp hạng trophy tuần này
+- `!top_month` - Xem bảng xếp hạng trophy tháng này
 
-## 🛠️ Technologies Used
+### Lệnh Khác
+
+- `!help` - Hiển thị danh sách các lệnh có sẵn
+- `!kttk` - Kiểm tra tài khoản
+- `!rut` - Rút tiền
+- `@bot-reward` - Hỏi bot trong channel
+
+## 🛠️ Công nghệ sử dụng
 
 - TypeScript
 - PostgreSQL
 - Sequelize ORM
 - Model Context Protocol (MCP)
-- Google AI
+- Mezon SDK
+- Redis
+- Cron (lịch trình tự động)
 
 ## 📄 License
 

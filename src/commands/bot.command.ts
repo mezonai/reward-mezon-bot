@@ -49,6 +49,7 @@ export const commands = {
       !top_month - Xem bảng xếp hạng trophy tháng này
       !kttk - kiểm tra tài khoản
       !rut - rút tiền
+      @bot-reward - hỏi bot trong channel 
             `;
       await replyMessage(message?.channel_id!, helpText, message?.message_id!);
     },
