@@ -163,7 +163,7 @@ export const commands = {
   },
 
   rank: {
-    description: "Xem bảng xếp hạng người dùng",
+    description: "Xem bảng xếp hạng reward của người dùng",
     execute: async (
       message: ChannelMessage,
       user_id: string,
@@ -326,7 +326,6 @@ export const commands = {
         typeof result.content[0]?.text === "string"
       ) {
         const text = formatListTrophy(JSON.parse(result.content[0].text));
-
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
         await sendMessage(
@@ -344,13 +343,23 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
-      // try {
-      //   const question = args[0];
-      //   console.log("question", question);
-      //   const result = await rewardToolService.askTool(message, question, []);
-      // } catch (error) {
-      //   console.log(error);
-      // }
+      try {
+        const question = args.join(" ");
+        const result = await rewardToolService.sendMessage(message, question);
+        if (
+          result &&
+          Array.isArray(result.content) &&
+          typeof result.content[0]?.text === "string"
+        ) {
+          await replyMessage(
+            message.channel_id,
+            result.content[0].text,
+            message?.message_id!
+          );
+        }
+      } catch (error) {
+        console.log(error);
+      }
     },
   },
 
@@ -361,6 +370,14 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
+      const channel = await client.channels.fetch("1840686830249316352");
+      const messages = channel.messages.values();
+      const context = Array.from(messages).map((msg) => ({
+        author: msg.sender_id,
+        content: msg.content?.t,
+        sender_id: msg.sender_id,
+      }));
+
       const result = await rewardToolService.topDay();
       const day = format(new Date(), "yyyy-MM-dd");
       if (

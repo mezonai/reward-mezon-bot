@@ -1,5 +1,6 @@
 import { ChannelMessage } from "mezon-sdk";
 import { clientMCP } from "../config/connect";
+import { client } from "../config/mezon-client";
 
 export class RewardToolService {
   private client = clientMCP;
@@ -116,19 +117,31 @@ export class RewardToolService {
     });
   }
 
-  async askTool(
-    message: ChannelMessage,
-    question: string,
-    historyMessage?: string[]
-  ) {
+  async sendMessage(message: ChannelMessage, question: string) {
+    const channel = await client.channels.fetch(message?.channel_id!);
+    const messages = channel.messages.values();
+    const context = Array.from(messages).map((msg) => ({
+      author: msg.sender_id,
+      content: msg.content?.t,
+      channel_id: message?.channel_id,
+      sender_id: msg.sender_id,
+    }));
     return await clientMCP.callTool({
-      name: "ask-gemini",
+      name: "send-message",
       arguments: {
-        clan_id: message?.id,
         channel_id: message?.channel_id,
-        message_id: message?.message_id,
         question,
-        message: historyMessage,
+        context: context,
+      },
+    });
+  }
+
+  async readMessage(channel_id: string, limit: number = 50) {
+    return await clientMCP.callTool({
+      name: "read-message",
+      arguments: {
+        channel_id,
+        limit,
       },
     });
   }

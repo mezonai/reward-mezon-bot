@@ -1,167 +1,170 @@
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import {
-  ReadMessageFunctionDeclaration,
+  ReadMessagesFunctionDeclaration,
   SendMessageFunctionDeclaration,
 } from "./gemini_schema";
 import { content_gemini } from "./gemini_context";
-import { formatMessage } from "../ultis/constant";
-import { replyMessage } from "../ultis/message";
 dotenv.config();
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+class GeminiRewardService {
+  private genAI: GoogleGenAI;
+  constructor() {
+    this.genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+  }
 
-export async function sendMessageAndGetResponse(
-  channe_id: string,
-  message_id: string,
-  question: string,
-  context?: any
-) {
-  try {
-    const content = await content_gemini(question, context);
-    console.error("content_gemini", JSON.stringify(content));
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash-001",
-      contents: content,
-      config: {
-        tools: [
-          { functionDeclarations: [SendMessageFunctionDeclaration] },
-          // { functionDeclarations: [ReadMessageFunctionDeclaration] },
-        ],
-      },
-    });
+  async sendMessageAndGetResponse(
+    question: string,
+    context?: any[],
+    channe_id?: string
+  ) {
+    try {
+      if (!process.env.GEMINI_API_KEY) {
+        return "GEMINI_API_KEY is not defined in .env file.";
+      }
 
-    if (
-      result.candidates &&
-      result.candidates.length > 0 &&
-      result.candidates[0].content
-    ) {
-      const candidate = result.candidates[0];
-      const candidateContent = candidate.content;
+      const currentContents = await content_gemini(
+        question,
+        context,
+        channe_id
+      );
 
-      if (
-        candidateContent &&
-        candidateContent.parts &&
-        candidateContent.parts[0] &&
-        candidateContent.parts[0].functionCall
-      ) {
-        const functionCall = candidateContent.parts[0].functionCall;
-        const { name, args } = functionCall;
+      if (currentContents.length > 51) {
+        const systemPrompt = currentContents[0];
+        const recentMessages = currentContents.slice(-50);
+        currentContents.length = 0;
+        currentContents.push(systemPrompt, ...recentMessages);
+      }
+
+      const result = await this.genAI.models.generateContent({
+        model: "gemini-2.0-flash-001",
+        contents: currentContents,
+        config: {
+          tools: [
+            { functionDeclarations: [SendMessageFunctionDeclaration] },
+            { functionDeclarations: [ReadMessagesFunctionDeclaration] },
+          ],
+        },
+      });
+
+      const candidateContent = result?.candidates?.[0]?.content;
+      const part = candidateContent?.parts?.[0];
+
+      if (part?.functionCall) {
+        const { name, args } = part.functionCall;
 
         switch (name) {
-          case "send-message": {
-            const { message_id, channel, message } = args as {
-              message_id: string;
-              channel: string;
-              message: string;
+          case "read-message": {
+            const { channel_id, limit } = args as {
+              channel_id: string;
+              limit: number;
             };
 
-            //   await sendMessage(channel, message, message_id);
+            let responseText = "Không thể đọc tin nhắn hoặc kênh trống.";
+
+            try {
+              const contextMessages = [];
+
+              for (const content of currentContents) {
+                if (content.role === "user" && content.parts?.[0]?.text) {
+                  const text = content.parts[0].text;
+                  const match = text.match(
+                    /Từ người dùng (.*?) tại  ID channel (.*?) :(.*)/s
+                  );
+                  if (match) {
+                    const [_, author, channelId, messageContent] = match;
+                    contextMessages.push({
+                      author,
+                      sender_id: author,
+                      channel_id: channelId.trim(),
+                      content: messageContent.trim(),
+                    });
+                  }
+                }
+              }
+
+              const messagesArray = contextMessages.slice(-limit);
+
+              if (messagesArray.length > 0) {
+                responseText = `Đã đọc được ${
+                  messagesArray.length
+                } tin nhắn:\n${JSON.stringify(messagesArray, null, 2)}`;
+              }
+            } catch (error) {
+              responseText = "Lỗi khi xử lý dữ liệu tin nhắn.";
+            }
+
+            currentContents.push(
+              { role: "model", parts: [{ functionCall: part.functionCall }] },
+              {
+                role: "function",
+                parts: [
+                  {
+                    functionResponse: {
+                      name,
+                      response: { content: responseText },
+                    },
+                  },
+                ],
+              }
+            );
+
+            const secondResult = await this.genAI.models.generateContent({
+              model: "gemini-2.0-flash-001",
+              contents: currentContents,
+              config: {
+                tools: [
+                  { functionDeclarations: [SendMessageFunctionDeclaration] },
+                ],
+              },
+            });
+
+            const secondPart =
+              secondResult?.candidates?.[0]?.content?.parts?.[0];
+
+            if (secondPart?.functionCall?.name === "send-message") {
+              const { channel, message } = secondPart.functionCall.args as {
+                channel: string;
+                message: string;
+                server: string;
+              };
+
+              return `Đã gửi tin nhắn: "${message}" tới kênh ${channel}`;
+            }
+
+            if ("text" in (secondPart || {})) {
+              return secondPart?.text;
+            }
+
+            return "Không thể xử lý phản hồi sau khi đọc tin nhắn.";
           }
 
-          // case "read-message": {
-          //   const { message_id, channel, limit } = args as {
-          //     message_id: string;
-          //     channel: string;
-          //     limit: number;
-          //   };
+          case "send-message": {
+            const { channel, message } = args as {
+              channel: string;
+              message: string;
+              server: string;
+            };
 
-          //   const readResult = await readMessages(channel, limit, server);
-          //   let responseText = "Không thể đọc tin nhắn hoặc kênh trống.";
-
-          //   if (readResult && typeof readResult === "object") {
-          //     try {
-          //       if (
-          //         readResult.content &&
-          //         Array.isArray(readResult.content) &&
-          //         readResult.content[0]?.text
-          //       ) {
-          //         const messagesArray = JSON.parse(readResult.content[0].text);
-          //         responseText = `Đã đọc được ${
-          //           messagesArray.length
-          //         } tin nhắn:\n${JSON.stringify(messagesArray, null, 2)}`;
-          //       }
-          //     } catch (error) {
-          //       responseText = "Lỗi khi xử lý dữ liệu tin nhắn đọc được.";
-          //     }
-          //   }
-
-          //   currentContents.push({
-          //     role: "model",
-          //     parts: [
-          //       {
-          //         functionCall: {
-          //           name: functionCall.name || "",
-          //           args: functionCall.args || {},
-          //         },
-          //       },
-          //     ],
-          //   });
-          //   currentContents.push({
-          //     role: "function",
-          //     parts: [
-          //       {
-          //         functionResponse: {
-          //           name: "read-message",
-          //           response: { content: responseText },
-          //         },
-          //       },
-          //     ],
-          //   });
-
-          //   const secondResult = await genAI.models.generateContent({
-          //     model: "gemini-2.0-flash-001",
-          //     contents: currentContents,
-          //     config: {
-          //       tools: [
-          //         { functionDeclarations: [SendMessageFunctionDeclaration] },
-          //       ],
-          //     },
-          //   });
-
-          //   if (
-          //     secondResult.functionCalls &&
-          //     secondResult.functionCalls.length > 0
-          //   ) {
-          //     const secondFunctionCall = secondResult.functionCalls[0];
-          //     if (secondFunctionCall.name === "send-message") {
-          //       const { server, channel, message } =
-          //         secondFunctionCall.args as any;
-          //       await sendMessage(channel, message, server);
-          //       return "send-message";
-          //     }
-          //   } else if (secondResult.text) {
-          //     return secondResult.text;
-          //   }
-
-          //   return "Không thể xử lý phản hồi sau khi đọc tin nhắn.";
-          // }
-
-          default: {
-            return `command ${name} not supported.`;
+            return `Đã gửi tin nhắn: "${message}" tới kênh ${channel}`;
           }
+
+          default:
+            return `Command "${name}" không được hỗ trợ.`;
         }
-      } else if (
-        candidateContent &&
-        candidateContent.parts &&
-        candidateContent.parts[0] &&
-        "text" in candidateContent.parts[0] &&
-        candidateContent.parts[0].text
-      ) {
-        await replyMessage(
-          channe_id,
-          candidateContent.parts[0].text,
-          message_id
-        );
       }
-    }
 
-    return "Bot không thể tạo phản hồi.";
-  } catch (err) {
-    console.error("Lỗi trong sendMessageAndGetResponse:", err);
-    if (err instanceof Error) {
-      return `Đã xảy ra lỗi: ${err.message}`;
+      if (part?.text) {
+        return part.text;
+      }
+
+      return "Bot không thể tạo phản hồi.";
+    } catch (err) {
+      return err instanceof Error
+        ? `Đã xảy ra lỗi: ${err.message}`
+        : "Lỗi không xác định.";
     }
-    return "Đã xảy ra lỗi không xác định khi xử lý yêu cầu của bạn.";
   }
 }
+
+export const geminiRewardService = new GeminiRewardService();

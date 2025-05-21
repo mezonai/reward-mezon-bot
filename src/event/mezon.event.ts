@@ -1,9 +1,4 @@
-import {
-  ChannelMessage,
-  EMarkdownType,
-  MezonClient,
-  TokenSentEvent,
-} from "mezon-sdk";
+import { ChannelMessage, MezonClient, TokenSentEvent } from "mezon-sdk";
 import { addUser } from "../ultis/fn";
 import User from "../models/User";
 import { commands } from "../commands/bot.command";
