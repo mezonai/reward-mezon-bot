@@ -1,9 +1,4 @@
-import {
-  ChannelMessage,
-  EMarkdownType,
-  MezonClient,
-  TokenSentEvent,
-} from "mezon-sdk";
+import { ChannelMessage, MezonClient, TokenSentEvent } from "mezon-sdk";
 import { addUser } from "../ultis/fn";
 import User from "../models/User";
 import { commands } from "../commands/bot.command";
@@ -24,6 +19,7 @@ export class MezonBotListener {
   private async onChannelMessage(data: ChannelMessage) {
     await addUser(data.sender_id, data.username!, 0, 0, data?.content?.t!);
     if (data.sender_id === process.env.BOT) return;
+
     if (
       typeof data?.content?.t === "string" &&
       data.content.t.startsWith("@bot-reward")

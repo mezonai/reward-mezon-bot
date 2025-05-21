@@ -25,11 +25,9 @@ import {
   startsWithSpecialChar,
 } from "../ultis/constant";
 import User from "../models/User";
-import { sendMessageAndGetResponse } from "../gemini/gemini_reward";
-
+import { geminiRewardService } from "../gemini/gemini_reward";
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
-
   try {
     switch (name) {
       case "read-message": {
@@ -43,9 +41,7 @@ export const CallTools = async (request: any) => {
           channel_id: channel_id,
           sender_id: msg.sender_id,
         }));
-
         const limitContext = context.slice(0, limit);
-
         return {
           content: [
             {
@@ -58,7 +54,7 @@ export const CallTools = async (request: any) => {
 
       case "send-message": {
         const { question, channel_id, context } = SendMessageSchema.parse(args);
-        const response = await sendMessageAndGetResponse(
+        const response = await geminiRewardService.sendMessageAndGetResponse(
           question,
           context,
           channel_id

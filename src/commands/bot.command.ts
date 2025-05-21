@@ -326,7 +326,6 @@ export const commands = {
         typeof result.content[0]?.text === "string"
       ) {
         const text = formatListTrophy(JSON.parse(result.content[0].text));
-
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
         await sendMessage(
@@ -371,6 +370,14 @@ export const commands = {
       user_id: string,
       args: string[]
     ) => {
+      const channel = await client.channels.fetch("1840686830249316352");
+      const messages = channel.messages.values();
+      const context = Array.from(messages).map((msg) => ({
+        author: msg.sender_id,
+        content: msg.content?.t,
+        sender_id: msg.sender_id,
+      }));
+
       const result = await rewardToolService.topDay();
       const day = format(new Date(), "yyyy-MM-dd");
       if (

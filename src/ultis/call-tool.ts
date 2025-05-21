@@ -126,9 +126,6 @@ export class RewardToolService {
       channel_id: message?.channel_id,
       sender_id: msg.sender_id,
     }));
-
-    console.error("context", context);
-
     return await clientMCP.callTool({
       name: "send-message",
       arguments: {
