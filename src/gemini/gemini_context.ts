@@ -52,27 +52,37 @@ Hãy phản hồi như một trợ lý AI thông minh, hiểu rõ ngữ cảnh v
     },
   ];
 
-  if (Array.isArray(context) || channe_id) {
-    for (const msg of context) {
-      const text =
-        typeof msg.content === "object" ? msg.content.t : msg.content;
-      const role = msg.author === process.env.BOT ? "model" : "user";
-      const fullText = `Từ người dùng ${
-        msg.author || channe_id
-      } tại  ID channel ${msg.channel_id || channe_id} :\n${text}`;
-      currentContents.push({
-        role: role,
-        parts: [{ text: fullText }],
-      });
-    }
-  }
+  const contextMessages =
+    Array.isArray(context) && (context.length > 0 || channe_id)
+      ? context.map((msg) => {
+          const text =
+            typeof msg.content === "object" ? msg.content.t : msg.content;
+          const processedText = text.startsWith("@bot-reward")
+            ? text.replace("@bot-reward", "").trim().split(/ +/)
+            : text;
 
-  if (question) {
+          const role = msg.author === process.env.BOT ? "model" : "user";
+          const fullText =
+            msg.author === process.env.BOT
+              ? `Từ Bot Trả lời : :\n${processedText} `
+              : `Từ người dùng ${msg.username || channe_id} tại  ID channel ${
+                  msg.channel_id || channe_id
+                } :\n${processedText}`;
+
+          return {
+            role: role,
+            parts: [{ text: fullText }],
+          };
+        })
+      : [];
+
+  currentContents.push(...contextMessages);
+
+  question &&
     currentContents.push({
       role: "user",
       parts: [{ text: question }],
     });
-  }
 
   return currentContents;
 }

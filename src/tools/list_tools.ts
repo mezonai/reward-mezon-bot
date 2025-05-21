@@ -12,6 +12,7 @@ export const ListTools = {
           },
           context: {
             type: "array",
+            optional: true,
             description: "Context of the message",
           },
           question: {
