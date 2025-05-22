@@ -3,6 +3,7 @@ import { addUser } from "../ultis/fn";
 import { sendMessage } from "../ultis/message";
 import { commands } from "../commands/index";
 import { client } from "../config/mezon-client";
+import { da } from "date-fns/locale";
 
 export class MessageEventHandler {
   constructor(private readonly client: MezonClient) {}
@@ -16,8 +17,9 @@ export class MessageEventHandler {
     if (data.sender_id === process.env.BOT) return;
 
     if (
-      (typeof data?.content?.t === "string" &&
-        data.content.t.startsWith("@bot-reward")) ||
+      (Array.isArray(data?.mentions) &&
+        data?.mentions.length > 0 &&
+        data.mentions[0].user_id === process.env.BOT) ||
       (Array.isArray(data?.references) &&
         data.references.length > 0 &&
         data.references[0]?.message_sender_id === process.env.BOT)
@@ -44,7 +46,6 @@ export class MessageEventHandler {
     const args = text.slice(1).trim().split(/ +/);
     const command = args.shift()?.toLowerCase();
     if (!command || !(command in commands)) return;
-
     try {
       await commands[command as keyof typeof commands].execute(
         args,
