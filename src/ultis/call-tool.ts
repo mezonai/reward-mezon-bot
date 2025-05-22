@@ -121,19 +121,21 @@ export class RewardToolService {
     const channel = await client.channels.fetch(message?.channel_id!);
     const messages = channel.messages.values();
     const raw = Array.from(messages).slice(-51, -1);
+
     const context = Array.from(raw).map((msg) => ({
       author: msg.sender_id,
       content: msg.content?.t,
-      channel_id: message?.channel_id,
+      channel_id: msg?.channel?.id,
+      channel_name: msg?.channel?.name,
       sender_id: msg.sender_id,
-      username: message.username,
     }));
+
     return await clientMCP.callTool({
       name: "send-message",
       arguments: {
         channel_id: message?.channel_id,
         question,
-        context: context,
+        context,
       },
     });
   }

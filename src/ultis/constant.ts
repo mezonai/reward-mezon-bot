@@ -184,3 +184,12 @@ export function startsWithSpecialChar(str?: string): boolean {
   const regex = /^[@#$%^&*!]/;
   return regex.test(str);
 }
+
+export function removeCodeBlockTicks(text: string): string {
+  if (!text.includes("```")) {
+    return text;
+  }
+  return text.replace(/```[\s\S]*?```/g, (match) => {
+    return match.replace(/```/g, "").trim();
+  });
+}
