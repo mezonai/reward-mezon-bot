@@ -100,11 +100,12 @@ export class TopService {
           for (const clan of listClan) {
             const listchannel = [...clan.channels.values()];
             for (const channel of listchannel) {
-              if (channel?.name === "welcome")
+              if (channel?.name === "welcome") {
                 await sendMessage(channel?.id as string, message);
+                await User.update({ countmessage: 0 }, { where: {} });
+              }
             }
           }
-          await User.update({ countmessage: 0 }, { where: {} });
         }
       }
     } catch (error) {

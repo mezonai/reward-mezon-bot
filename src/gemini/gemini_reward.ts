@@ -1,10 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import {
   ReadMessagesFunctionDeclaration,
   SendMessageFunctionDeclaration,
 } from "./gemini_schema";
 import { content_gemini } from "./gemini_context";
+import { removeCodeBlockTicks } from "../ultis/constant";
 dotenv.config();
 
 class GeminiRewardService {
@@ -122,7 +123,7 @@ class GeminiRewardService {
             const secondPart =
               secondResult?.candidates?.[0]?.content?.parts?.[0];
             if ("text" in (secondPart || {})) {
-              return secondPart?.text;
+              return removeCodeBlockTicks(secondPart?.text!);
             }
             return "Không thể xử lý phản hồi sau khi đọc tin nhắn.";
           }
@@ -158,7 +159,9 @@ class GeminiRewardService {
               },
             });
 
-            return sendResult?.candidates?.[0]?.content?.parts?.[0]?.text;
+            return removeCodeBlockTicks(
+              sendResult?.candidates?.[0]?.content?.parts?.[0]?.text!
+            );
           }
 
           default:
@@ -167,7 +170,7 @@ class GeminiRewardService {
       }
 
       if (part?.text) {
-        return part.text;
+        return removeCodeBlockTicks(part?.text!);
       }
 
       return "Bot không thể tạo phản hồi.";

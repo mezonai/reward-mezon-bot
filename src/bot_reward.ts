@@ -42,8 +42,8 @@ async function main() {
   try {
     await client.login();
     await connectClient();
-    const botListener = new MezonBotListener(client);
-    botListener.register();
+    const mezonBotListener = new MezonBotListener(client);
+    mezonBotListener.listentEvent();
     monthlyJob.start();
     weeklyJob.start();
     dailyJob.start();
