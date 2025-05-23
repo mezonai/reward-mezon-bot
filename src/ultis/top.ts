@@ -6,7 +6,6 @@ import {
 } from "./constant";
 import { giveToken } from "./fn";
 import User from "../models/User";
-import { client } from "../config/mezon-client";
 import { Reward } from "../models";
 import { Op } from "sequelize";
 import { rewardToolService } from "./call-tool";
@@ -26,16 +25,11 @@ export class TopService {
     type: string
   ): Promise<void> {
     try {
-      const listClan = [...client.clans.values()];
-      for (const clan of listClan) {
-        const listchannel = [...clan.channels.values()];
-        for (const channel of listchannel) {
-          if (channel?.name === "welcome") {
-            await sendMessage(channel?.id as string, message);
-          }
-        }
+      if (process.env.WELCOME_CHANNEL_ID) {
+        await sendMessage(process.env.WELCOME_CHANNEL_ID, message);
       }
-      await giveToken(arrayUser, listClan, type, rewardAmounts);
+
+      await giveToken(arrayUser, type, rewardAmounts);
     } catch (error) {
       console.log(error);
     }
@@ -49,6 +43,7 @@ export class TopService {
       const topUsers = await User.findAll({
         where: {
           user_id: { [Op.ne]: this.botId },
+          countmessage: { [Op.gt]: 0 },
         },
         order: [["countmessage", "DESC"]],
         limit: 10,
@@ -96,15 +91,17 @@ export class TopService {
               subdate;
           }
 
-          const listClan = [...client.clans.values()];
-          for (const clan of listClan) {
-            const listchannel = [...clan.channels.values()];
-            for (const channel of listchannel) {
-              if (channel?.name === "welcome") {
-                await sendMessage(channel?.id as string, message);
-                await User.update({ countmessage: 0 }, { where: {} });
-              }
+          if (process.env.WELCOME_CHANNEL_ID) {
+            const send = await sendMessage(
+              process.env.WELCOME_CHANNEL_ID,
+              message
+            );
+
+            if (send) {
+              await User.update({ countmessage: 0 }, { where: {} });
             }
+          } else {
+            throw new Error("WELCOME_CHANNEL_ID is not defined");
           }
         }
       }

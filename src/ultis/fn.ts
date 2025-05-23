@@ -33,7 +33,7 @@ export const sendToken = async (message: ChannelMessage, money: number) => {
       receiver_id: message.sender_id,
       amount: +money,
     };
-    const result = await client.sendToken(dataSendToken);
+    await client.sendToken(dataSendToken);
     const user = await User.findOne({ where: { user_id: message.sender_id } });
     if (user) {
       user.amount = Number(user.amount) - money;
@@ -78,7 +78,6 @@ export const kttkUser = async (message: ChannelMessage) => {
 
 export const giveToken = async (
   leaderboard: any[],
-  listClan: any[],
   description: string,
   rewardAmounts: number[]
 ) => {
@@ -109,11 +108,8 @@ export const giveToken = async (
           " Reward " +
           description;
 
-        for (const clan of listClan) {
-          const listchannel = [...clan.channels.values()];
-          for (const channel of listchannel) {
-            await sendMessage(channel?.id as string, message);
-          }
+        if (process.env.WELCOME_CHANNEL_ID) {
+          await sendMessage(process.env.WELCOME_CHANNEL_ID, message);
         }
       } else {
         console.warn(`⚠️ Không tìm thấy user: ${userInfo.user_id}`);
