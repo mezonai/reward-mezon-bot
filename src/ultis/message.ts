@@ -47,7 +47,7 @@ export class MessageService {
     try {
       const channel = await client.channels.fetch(channel_id);
       const repyMessage = formatMessage(message);
-      await channel.send({
+      return await channel.send({
         t: repyMessage,
         mk: [
           {
