@@ -9,6 +9,7 @@ export const SendMessageSchema = z.object({
   channel_id: z.string().describe("channel id"),
   context: z.any().optional().default([]).describe("Context of the message"),
   question: z.string().describe("The question to ask Gemini"),
+  type: z.string().optional().describe("Type of gemini"),
 });
 
 export const CrudRewardSchema = z.object({

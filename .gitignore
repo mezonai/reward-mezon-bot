@@ -147,3 +147,6 @@ build
 # End of https://www.toptal.com/developers/gitignore/api/node
 arrow
 .vscode/settings.json
+
+# Mezon cache
+/mezon-cache

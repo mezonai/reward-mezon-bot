@@ -117,18 +117,21 @@ export class RewardToolService {
     });
   }
 
-  async sendMessage(message: ChannelMessage, question: string) {
+  async sendMessage(message: ChannelMessage, question: string, type?: string) {
     const channel = await client.channels.fetch(message?.channel_id!);
     const messages = channel.messages.values();
     const raw = Array.from(messages).slice(-51, -1);
+    const context = Array.from(raw)
+      .filter((msg) => msg.content?.t !== undefined)
+      .map((msg) => ({
+        author: msg.sender_id,
+        content: msg.content?.t,
+        channel_id: msg?.channel?.id,
+        channel_name: msg?.channel?.name,
+        sender_id: msg.sender_id,
+      }));
 
-    const context = Array.from(raw).map((msg) => ({
-      author: msg.sender_id,
-      content: msg.content?.t,
-      channel_id: msg?.channel?.id,
-      channel_name: msg?.channel?.name,
-      sender_id: msg.sender_id,
-    }));
+    console.log("context", context);
 
     return await clientMCP.callTool({
       name: "send-message",
@@ -136,6 +139,7 @@ export class RewardToolService {
         channel_id: message?.channel_id,
         question,
         context,
+        type,
       },
     });
   }
