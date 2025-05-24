@@ -53,12 +53,23 @@ export const CallTools = async (request: any) => {
       }
 
       case "send-message": {
-        const { question, channel_id, context } = SendMessageSchema.parse(args);
-        const response = await geminiRewardService.sendMessageAndGetResponse(
-          question,
-          context,
-          channel_id
-        );
+        const { question, channel_id, context, type } =
+          SendMessageSchema.parse(args);
+        let response;
+        switch (type) {
+          case "ask":
+            response = await geminiRewardService.sendMessageAndGetResponse(
+              question,
+              context,
+              channel_id
+            );
+            break;
+          case "create_image":
+            response = await geminiRewardService.generateImageFromText(
+              question
+            );
+            break;
+        }
 
         return {
           content: [

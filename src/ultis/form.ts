@@ -2,7 +2,7 @@ import { EButtonMessageStyle, EMessageComponentType } from "mezon-sdk";
 import { getRandomColor } from "./color";
 import { MEZON_EMBED_FOOTER } from "./constant";
 
-interface EmbedProps {
+export interface EmbedProps {
   color?: string;
   title?: string;
   url?: string;

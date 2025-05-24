@@ -193,3 +193,19 @@ export function removeCodeBlockTicks(text: string): string {
     return match.replace(/```/g, "").trim();
   });
 }
+export function imageCreationRequest(message: string): boolean {
+  const keywords = [
+    /tạo\s*(ảnh|hình|image)/i,
+    /(create|generate)\s*(image|picture|photo)/i,
+    /chắc\s*tạo\s*(ảnh|hình)/i,
+    /muốn\s*tạo\s*(ảnh|hình)/i,
+    /vẽ\s*(ảnh|hình)/i,
+    /tạo\s*/i,
+  ];
+
+  return keywords.some((pattern) => pattern.test(message));
+}
+
+export const resizedUrl = (url: string) => {
+  return url.replace("/upload/", "/upload/w_300,c_fill/");
+};

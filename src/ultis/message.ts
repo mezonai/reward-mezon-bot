@@ -1,6 +1,7 @@
 import { EMarkdownType } from "mezon-sdk";
 import { client } from "../config/mezon-client";
 import { formatMessage } from "./constant";
+import { EmbedProps } from "./form";
 
 export class MessageService {
   async updateMessage(message: any, channel_id: string, message_id: string) {
@@ -61,6 +62,21 @@ export class MessageService {
       console.error(err);
     }
   }
+
+  async updateEmbed(
+    channel_id: string,
+    embed: EmbedProps[],
+    message_id: string
+  ) {
+    try {
+      const fetchedChannel = await client.channels.fetch(channel_id);
+      const messages = fetchedChannel.messages.values();
+      const fetchedMessage = await fetchedChannel.messages.fetch(message_id!);
+      return await fetchedMessage.update({ embed });
+    } catch (err) {
+      console.error(err);
+    }
+  }
 }
 
 export const messageService = new MessageService();
@@ -68,3 +84,4 @@ export const messageService = new MessageService();
 export const updateMessage = messageService.updateMessage.bind(messageService);
 export const replyMessage = messageService.replyMessage.bind(messageService);
 export const sendMessage = messageService.sendMessage.bind(messageService);
+export const updateEmbed = messageService.updateEmbed.bind(messageService);
