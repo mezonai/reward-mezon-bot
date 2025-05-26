@@ -18,6 +18,10 @@ export const SendMessageFunctionDeclaration = {
         type: Type.STRING,
         description: "Username",
       },
+      type: {
+        type: Type.STRING,
+        description: "Type of gemini",
+      },
     },
     required: ["channel_id", "question", "username"],
   },

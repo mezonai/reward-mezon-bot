@@ -3,7 +3,7 @@ import { addUser } from "../ultis/fn";
 import { sendMessage } from "../ultis/message";
 import { commands } from "../commands/index";
 import { client } from "../config/mezon-client";
-import { da } from "date-fns/locale";
+import { imageCreationRequest } from "../ultis/constant";
 
 export class MessageEventHandler {
   constructor(private readonly client: MezonClient) {}
@@ -14,8 +14,6 @@ export class MessageEventHandler {
 
   public async onChannelMessage(data: ChannelMessage) {
     await addUser(data.sender_id, data.username!, 0, 0, data?.content?.t!);
-    if (data.sender_id === process.env.BOT) return;
-
     if (
       (Array.isArray(data?.mentions) &&
         data?.mentions.length > 0 &&
@@ -24,15 +22,22 @@ export class MessageEventHandler {
         data.references.length > 0 &&
         data.references[0]?.message_sender_id === process.env.BOT)
     ) {
+      let args;
       const rawText = data.content.t || "";
-      const args = rawText.replace("@bot-reward", "").trim().split(/\s+/);
-      try {
+      args = rawText.includes("@bot-reward")
+        ? rawText.replace("@bot-reward", "").trim().split(/\s+/)
+        : rawText.split(/\s+/);
+
+      if (imageCreationRequest(data?.content?.t!)) {
+        console.log("1");
+        await commands["ask"].execute(args, data, "create_image");
+        return;
+      } else {
+        console.log("2");
         await commands["ask"].execute(args, data, "ask");
-      } catch (error) {
-        console.error("Error executing ask command:", error);
+        return;
       }
     }
-
     if (
       typeof data?.content?.t === "string" &&
       data.content.t.startsWith("!")
@@ -40,6 +45,7 @@ export class MessageEventHandler {
       const text = data.content.t;
       await this.handleExclamationCommand(data, text);
     }
+    if (data.sender_id === process.env.BOT) return;
   }
 
   private async handleExclamationCommand(data: ChannelMessage, text: string) {

@@ -19,8 +19,12 @@ export const ListTools = {
             type: "string",
             description: "The question to ask Ge  mini",
           },
+          type: {
+            type: "string",
+            description: "Type of gemini",
+          },
         },
-        required: ["channel_id", "message", "question"],
+        required: ["channel_id", "message", "question", "type"],
       },
     },
     {
