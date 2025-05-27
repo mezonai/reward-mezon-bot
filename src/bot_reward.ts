@@ -4,13 +4,15 @@ import { connectClient } from "./config/connect";
 import { CronJob } from "cron";
 import "./models";
 import { MezonBotListener } from "./event/mezon.event";
-import { showTopDay, showTopMonth, showTopWeek } from "./ultis/top";
+import { showTopDay, showTopMonth, showTopWeek } from "./services/top.service";
+import { messageConsumer } from "./services/message-consumer.service";
 
 dotenv.config();
 
 const dailyJob = new CronJob(
   "0 0 6 * * *",
   async function () {
+    await messageConsumer.syncMessageCounts();
     await showTopDay();
   },
   null,
@@ -42,6 +44,8 @@ async function main() {
   try {
     await client.login();
     await connectClient();
+    await messageConsumer.start();
+    console.log("✅ Kết nối RabbitMQ thành công");
     const mezonBotListener = new MezonBotListener(client);
     mezonBotListener.listentEvent();
     monthlyJob.start();

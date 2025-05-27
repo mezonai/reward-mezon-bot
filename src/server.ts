@@ -8,7 +8,6 @@ import {
 import { CallTools } from "./tools/call_tools";
 import { ListTools } from "./tools/list_tools";
 import sequelize from "./config/database";
-import { client } from "./config/mezon-client";
 
 dotenv.config();
 

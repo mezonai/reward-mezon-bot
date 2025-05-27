@@ -1,5 +1,5 @@
 import { MezonClient } from "mezon-sdk";
-import { addUser } from "../ultis/fn";
+import { addUser } from "../services/system.service";
 
 export class UserEventHandler {
   constructor(private readonly client: MezonClient) {}

@@ -181,7 +181,7 @@ export const TROPY_MOST_ACTIVE_MEMBER = "Most active member";
 
 export function startsWithSpecialChar(str?: string): boolean {
   if (!str) return false;
-  const regex = /^[@#$%^&*!]/;
+  const regex = /^[#$%^&*!]/;
   return regex.test(str);
 }
 
@@ -200,7 +200,6 @@ export function imageCreationRequest(message: string): boolean {
     /chắc\s*tạo\s*(ảnh|hình)/i,
     /muốn\s*tạo\s*(ảnh|hình)/i,
     /vẽ\s*(ảnh|hình)/i,
-    /tạo\s*/i,
   ];
 
   return keywords.some((pattern) => pattern.test(message));

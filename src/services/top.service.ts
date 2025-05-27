@@ -1,15 +1,15 @@
 import { format, getMonth, getWeek, subDays } from "date-fns";
+import User from "../models/User";
+import { Reward } from "../models";
+import { Op } from "sequelize";
+import { sendMessage } from "./message.service";
 import {
   ERROR_TOKEN,
   formatLeaderboard,
   TROPY_MOST_ACTIVE_MEMBER,
-} from "./constant";
-import { giveToken } from "./fn";
-import User from "../models/User";
-import { Reward } from "../models";
-import { Op } from "sequelize";
-import { rewardToolService } from "./call-tool";
-import { sendMessage } from "./message";
+} from "../ultis/constant";
+import { giveToken } from "./system.service";
+import { rewardToolService } from "./call_tool.service";
 
 export class TopService {
   private readonly botId: string;

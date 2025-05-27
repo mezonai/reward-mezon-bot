@@ -1,7 +1,7 @@
 import { ChannelMessage, MezonClient } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
-import { rewardToolService } from "../ultis/call-tool";
-import { replyMessage, sendMessage } from "../ultis/message";
+import { rewardToolService } from "../services/call_tool.service";
+import { replyMessage, sendMessage } from "../services/message.service";
 import RoleReward from "../models/Role_rewards";
 import { components, embedReward } from "../ultis/form";
 import { formatLeaderboard, formatListRole } from "../ultis/constant";

@@ -1,7 +1,7 @@
 import { EMarkdownType } from "mezon-sdk";
 import { client } from "../config/mezon-client";
-import { formatMessage } from "./constant";
-import { EmbedProps } from "./form";
+import { formatMessage } from "../ultis/constant";
+import { EmbedProps } from "../ultis/form";
 
 export class MessageService {
   async updateMessage(message: any, channel_id: string, message_id: string) {
@@ -29,7 +29,7 @@ export class MessageService {
       const fetchedChannel = await client.channels.fetch(channel_id);
       const fetchedMessage = await fetchedChannel.messages.fetch(message_id);
       const repyMessage = formatMessage(message);
-      await fetchedMessage.reply({
+      return await fetchedMessage.reply({
         t: repyMessage,
         mk: [
           {
@@ -70,7 +70,6 @@ export class MessageService {
   ) {
     try {
       const fetchedChannel = await client.channels.fetch(channel_id);
-      const messages = fetchedChannel.messages.values();
       const fetchedMessage = await fetchedChannel.messages.fetch(message_id!);
       return await fetchedMessage.update({ embed });
     } catch (err) {

@@ -1,6 +1,6 @@
 import { MezonClient, TokenSentEvent } from "mezon-sdk";
-import { addUser } from "../ultis/fn";
 import User from "../models/User";
+import { addUser } from "../services/system.service";
 
 export class TokenEventHandler {
   constructor(private readonly client: MezonClient) {}

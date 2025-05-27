@@ -22,10 +22,10 @@ import {
   ERROR_TOKEN,
   getMondayAndSunday,
   getStartandEndOfMonth,
-  startsWithSpecialChar,
 } from "../ultis/constant";
 import User from "../models/User";
 import { geminiRewardService } from "../gemini/gemini_reward";
+
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
   try {
@@ -493,6 +493,7 @@ export const CallTools = async (request: any) => {
       }
       case "top-day": {
         const { date } = TopSchema.parse(args);
+
         const sqlQuery = `
           SELECT * FROM users
           WHERE user_id <> :BOT and countmessage > 0
@@ -643,10 +644,6 @@ export const CallTools = async (request: any) => {
           }
 
           if (existingUser) {
-            if (!startsWithSpecialChar(message)) {
-              existingUser.countmessage += 1;
-              await existingUser.save();
-            }
             return {
               content: [
                 {
