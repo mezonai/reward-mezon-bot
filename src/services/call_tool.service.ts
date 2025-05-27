@@ -1,11 +1,13 @@
 import { ChannelMessage } from "mezon-sdk";
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
+import { messageConsumer } from "./message-consumer.service";
 
 export class RewardToolService {
   private client = clientMCP;
 
   async topDay() {
+    await messageConsumer.syncMessageCounts();
     return await clientMCP.callTool({
       name: "top-day",
       arguments: {
@@ -130,8 +132,6 @@ export class RewardToolService {
         channel_name: msg?.channel?.name,
         sender_id: msg.sender_id,
       }));
-
-    console.log("context", context);
 
     return await clientMCP.callTool({
       name: "send-message",

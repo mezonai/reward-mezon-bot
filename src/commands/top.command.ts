@@ -1,8 +1,8 @@
 import { ChannelMessage } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
-import { rewardToolService } from "../ultis/call-tool";
+import { rewardToolService } from "../services/call_tool.service";
 import { formatLeaderboard, formatLeaderboardMessage } from "../ultis/constant";
-import { replyMessage, sendMessage } from "../ultis/message";
+import { replyMessage, sendMessage } from "../services/message.service";
 import { format, getMonth, getWeek } from "date-fns";
 
 export class TopCommand extends CommandMessage {

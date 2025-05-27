@@ -1,7 +1,7 @@
 import { MezonClient } from "mezon-sdk";
 import Reward from "../models/Reward";
 import RoleReward from "../models/Role_rewards";
-import { updateMessage } from "../ultis/message";
+import { updateMessage } from "../services/message.service";
 
 const isValidPoints = (points: any): boolean =>
   Number.isInteger(+points) && +points >= 0;

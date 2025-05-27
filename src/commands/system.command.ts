@@ -1,9 +1,9 @@
 import { ChannelMessage } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
-import { kttkUser, sendToken } from "../ultis/fn";
-import { messageService, replyMessage } from "../ultis/message";
+import { checkUserBalance, sendToken } from "../services/system.service";
+import { messageService, replyMessage } from "../services/message.service";
 import User from "../models/User";
-import { rewardToolService } from "../ultis/call-tool";
+import { rewardToolService } from "../services/call_tool.service";
 import { EmbedProps } from "../ultis/form";
 import { getRandomColor } from "../ultis/color";
 import { client } from "../config/mezon-client";
@@ -11,7 +11,7 @@ import { client } from "../config/mezon-client";
 export class SystemCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
     if (commandName === "kttk") {
-      await kttkUser(message);
+      await checkUserBalance(message);
     }
     if (commandName === "rut") {
       let money = Number(args[0] || 0);

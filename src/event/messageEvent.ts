@@ -1,10 +1,10 @@
 import { ChannelMessage, MezonClient } from "mezon-sdk";
-import { addUser } from "../ultis/fn";
-import { sendMessage } from "../ultis/message";
 import { commands } from "../commands/index";
 import { client } from "../config/mezon-client";
 import { imageCreationRequest } from "../ultis/constant";
-
+import { addUser } from "../services/system.service";
+import { publicMessage } from "../services/rabbitmq.service";
+import { sendMessage } from "../services/message.service";
 export class MessageEventHandler {
   constructor(private readonly client: MezonClient) {}
 
@@ -14,6 +14,7 @@ export class MessageEventHandler {
 
   public async onChannelMessage(data: ChannelMessage) {
     await addUser(data.sender_id, data.username!, 0, 0, data?.content?.t!);
+    await publicMessage(data);
     if (
       (Array.isArray(data?.mentions) &&
         data?.mentions.length > 0 &&
@@ -29,12 +30,11 @@ export class MessageEventHandler {
         : rawText.split(/\s+/);
 
       if (imageCreationRequest(data?.content?.t!)) {
-        console.log("1");
         await commands["ask"].execute(args, data, "create_image");
         return;
       } else {
-        console.log("2");
         await commands["ask"].execute(args, data, "ask");
+
         return;
       }
     }

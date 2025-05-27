@@ -1,6 +1,6 @@
 import { ChannelMessage } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
-import { replyMessage } from "../ultis/message";
+import { replyMessage } from "../services/message.service";
 
 export class HelpCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage) {

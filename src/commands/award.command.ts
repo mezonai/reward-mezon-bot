@@ -1,7 +1,7 @@
 import { ChannelMessage } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
-import { rewardToolService } from "../ultis/call-tool";
-import { replyMessage, sendMessage } from "../ultis/message";
+import { rewardToolService } from "../services/call_tool.service";
+import { replyMessage, sendMessage } from "../services/message.service";
 
 export class AwardCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
