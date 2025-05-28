@@ -4,7 +4,7 @@ import {
   ReadMessagesFunctionDeclaration,
   SendMessageFunctionDeclaration,
 } from "./gemini_schema";
-import { content_gemini } from "./gemini_context";
+import { content_gemini, context_gemini_bug } from "./gemini_context";
 import { removeCodeBlockTicks, resizedUrl } from "../ultis/constant";
 import fs from "fs";
 import path from "path";
@@ -93,7 +93,6 @@ class GeminiRewardService {
                 } tin nhắn:\n${JSON.stringify(messagesArray, null, 2)}`;
               }
             } catch (error) {
-              console.error("Lỗi khi đọc tin nhắn:", error);
               responseText = "Lỗi khi xử lý dữ liệu tin nhắn.";
             }
 
@@ -180,11 +179,15 @@ class GeminiRewardService {
         return removeCodeBlockTicks(part.text);
       }
 
-      return "Bot không thể tạo phản hồi từ Gemini.";
+      return "Tui gõ cửa Bot-reward mà không ai mở... chắc đi vắng rồi đó! 🚪🤖";
     } catch (err) {
-      console.error("Lỗi trong sendMessageAndGetResponse:", err);
-
-      return "Não tôi giờ quay như chong chóng vì việc. Để thở tí rồi quay lại nha!";
+      const resultBug = await this.genAI.models.generateContent({
+        model: "gemini-2.0-flash-001",
+        contents: context_gemini_bug,
+        config: {},
+      });
+      const text = resultBug?.candidates?.[0]?.content?.parts?.[0]?.text;
+      return text;
     }
   }
 
@@ -192,17 +195,20 @@ class GeminiRewardService {
     try {
       const response = await this.genAI.models.generateContent({
         model: "gemini-2.0-flash-preview-image-generation",
-        contents: question,
+        contents: {
+          role: "user",
+          parts: [{ text: question }],
+        },
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
       });
 
       if (response?.candidates?.[0]?.content?.parts) {
+        let imageResult: string | null = null;
+
         for (const part of response.candidates[0].content.parts) {
-          if (part.text) {
-            console.log(part.text);
-          } else if (part.inlineData?.data) {
+          if (part.inlineData?.data && !imageResult) {
             const imageData = part.inlineData.data;
             const buffer = Buffer.from(imageData, "base64");
             const folderPath = path.join(__dirname, "..", "public", "image");
@@ -219,17 +225,22 @@ class GeminiRewardService {
               resource_type: "image",
             });
             fs.unlinkSync(filePath);
-
-            return resizedUrl(uploadResult.secure_url);
+            imageResult = resizedUrl(uploadResult.secure_url);
           }
         }
+        if (imageResult) return imageResult;
       }
 
       return "Không thể tạo ảnh.";
     } catch (err) {
-      return err instanceof Error
-        ? `Đã xảy ra lỗi: ${err.message}`
-        : "Lỗi không xác định.";
+      console.error("Lỗi trong generateImageFromText:", err);
+      const resultBug = await this.genAI.models.generateContent({
+        model: "gemini-2.0-flash-001",
+        contents: context_gemini_bug,
+        config: {},
+      });
+      const text = resultBug?.candidates?.[0]?.content?.parts?.[0]?.text;
+      return text;
     }
   }
 }

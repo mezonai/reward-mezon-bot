@@ -4,7 +4,7 @@ import { formatMessage } from "../ultis/constant";
 import { EmbedProps } from "../ultis/form";
 
 export class MessageService {
-  async updateMessage(message: any, channel_id: string, message_id: string) {
+  async updateMessage(message: string, channel_id: string, message_id: string) {
     try {
       const updateMessage = formatMessage(message);
       const Channel = await client.channels.fetch(channel_id);
