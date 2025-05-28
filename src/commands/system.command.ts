@@ -70,10 +70,21 @@ export class SystemCommand extends CommandMessage {
         message?.message_id!
       );
 
+      let url = undefined;
+      if (message?.references?.[0]?.content) {
+        try {
+          const contentObj = JSON.parse(message.references[0].content);
+          url = contentObj?.embed?.[0]?.image?.url;
+        } catch (e) {
+          console.error("Invalid JSON in content");
+        }
+      }
+
       const result = await rewardToolService.sendMessage(
         message,
         question,
-        "create_image"
+        "create_image",
+        url
       );
 
       if (!statusMessage) {

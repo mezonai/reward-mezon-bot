@@ -4,7 +4,11 @@ import {
   ReadMessagesFunctionDeclaration,
   SendMessageFunctionDeclaration,
 } from "./gemini_schema";
-import { content_gemini, context_gemini_bug } from "./gemini_context";
+import {
+  content_gemini,
+  context_gemini_bug,
+  convertImageUrlToBase64,
+} from "./gemini_context";
 import { removeCodeBlockTicks, resizedUrl } from "../ultis/constant";
 import fs from "fs";
 import path from "path";
@@ -13,6 +17,7 @@ dotenv.config();
 
 class GeminiRewardService {
   private genAI: GoogleGenAI;
+  private context: any;
   constructor() {
     this.genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
   }
@@ -191,14 +196,30 @@ class GeminiRewardService {
     }
   }
 
-  async generateImageFromText(question: string) {
+  async generateImageFromText(question: string, url?: string) {
     try {
-      const response = await this.genAI.models.generateContent({
-        model: "gemini-2.0-flash-preview-image-generation",
-        contents: {
+      if (url) {
+        const base64Image = await convertImageUrlToBase64(url);
+
+        this.context = [
+          { text: question },
+          {
+            inlineData: {
+              mimeType: "image/png",
+              data: base64Image,
+            },
+          },
+        ];
+      } else {
+        this.context = {
           role: "user",
           parts: [{ text: question }],
-        },
+        };
+      }
+
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.0-flash-preview-image-generation",
+        contents: this.context,
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
