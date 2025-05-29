@@ -4,7 +4,11 @@ import {
   ReadMessagesFunctionDeclaration,
   SendMessageFunctionDeclaration,
 } from "./gemini_schema";
-import { content_gemini, convertImageUrlToBase64 } from "./gemini_context";
+import {
+  content_gemini,
+  context_gemini_image,
+  convertImageUrlToBase64,
+} from "./gemini_context";
 import { removeCodeBlockTicks, resizedUrl } from "../ultis/constant";
 import fs from "fs";
 import path from "path";
@@ -188,15 +192,13 @@ class GeminiRewardService {
 
   async generateImageFromText(question: string, url?: string) {
     try {
-      const questionPrompt = `
-Hãy tạo một hình ảnh mô tả nội dung sau: "${question}".
-Yêu cầu hình ảnh có chiều rộng tối đa 300px và chiều cao tối đa 500px, phù hợp để hiển thị trong không gian nhỏ như avatar hoặc biểu tượng minh họa. Giữ cho bố cục rõ ràng và dễ nhìn.
-`;
+      const questionPrompt = context_gemini_image(question);
+
       if (url) {
         const base64Image = await convertImageUrlToBase64(url);
 
         this.context = [
-          { text: questionPrompt },
+          questionPrompt,
           {
             inlineData: {
               mimeType: "image/png",
@@ -205,10 +207,7 @@ Yêu cầu hình ảnh có chiều rộng tối đa 300px và chiều cao tối 
           },
         ];
       } else {
-        this.context = {
-          role: "user",
-          parts: [{ text: questionPrompt }],
-        };
+        this.context = questionPrompt;
       }
 
       const response = await this.genAI.models.generateContent({

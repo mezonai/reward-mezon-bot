@@ -134,3 +134,27 @@ export function convertImageUrlToBase64(url: string): Promise<string> {
       .on("error", (err) => reject(err));
   });
 }
+
+export const context_gemini_image = (question: string) => {
+  const imagePrompt = `Bạn là bot reward, công cụ tạo hình ảnh minh họa đơn giản.  
+  
+  Quy tắc bắt buộc:
+  - Kích thước tối đa: chiều rộng 300px, chiều cao 500px.
+  - Không thêm chữ hoặc nền phức tạp.
+  - Ưu tiên bố cục tối giản, dễ nhìn.`;
+
+  let currentContents: Content[] = [
+    {
+      role: "model",
+      parts: [{ text: imagePrompt }],
+    },
+  ];
+  if (question) {
+    currentContents.push({
+      role: "user",
+      parts: [{ text: question }],
+    });
+  }
+
+  return currentContents;
+};

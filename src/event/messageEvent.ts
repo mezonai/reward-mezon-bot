@@ -3,8 +3,9 @@ import { commands } from "../commands/index";
 import { client } from "../config/mezon-client";
 import { imageCreationRequest } from "../ultis/constant";
 import { addUser } from "../services/system.service";
-import { publicMessage } from "../services/rabbitmq.service";
+import { publishMessage } from "../services/memcached.service";
 import { sendMessage } from "../services/message.service";
+
 export class MessageEventHandler {
   constructor(private readonly client: MezonClient) {}
 
@@ -14,7 +15,7 @@ export class MessageEventHandler {
 
   public async onChannelMessage(data: ChannelMessage) {
     await addUser(data.sender_id, data.username!, 0, 0, data?.content?.t!);
-    await publicMessage(data);
+    await publishMessage(data);
     if (
       (Array.isArray(data?.mentions) &&
         data?.mentions.length > 0 &&
