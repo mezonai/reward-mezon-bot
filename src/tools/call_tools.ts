@@ -53,7 +53,7 @@ export const CallTools = async (request: any) => {
       }
 
       case "send-message": {
-        const { question, channel_id, context, type } =
+        const { question, channel_id, context, type, url } =
           SendMessageSchema.parse(args);
         let response;
         switch (type) {
@@ -66,7 +66,8 @@ export const CallTools = async (request: any) => {
             break;
           case "create_image":
             response = await geminiRewardService.generateImageFromText(
-              question
+              question,
+              url
             );
             break;
         }

@@ -4,7 +4,7 @@ import {
   ReadMessagesFunctionDeclaration,
   SendMessageFunctionDeclaration,
 } from "./gemini_schema";
-import { content_gemini } from "./gemini_context";
+import { content_gemini, convertImageUrlToBase64 } from "./gemini_context";
 import { removeCodeBlockTicks, resizedUrl } from "../ultis/constant";
 import fs from "fs";
 import path from "path";
@@ -13,6 +13,7 @@ dotenv.config();
 
 class GeminiRewardService {
   private genAI: GoogleGenAI;
+  private context: any;
   constructor() {
     this.genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
   }
@@ -93,7 +94,6 @@ class GeminiRewardService {
                 } tin nhắn:\n${JSON.stringify(messagesArray, null, 2)}`;
               }
             } catch (error) {
-              console.error("Lỗi khi đọc tin nhắn:", error);
               responseText = "Lỗi khi xử lý dữ liệu tin nhắn.";
             }
 
@@ -180,29 +180,50 @@ class GeminiRewardService {
         return removeCodeBlockTicks(part.text);
       }
 
-      return "Bot không thể tạo phản hồi từ Gemini.";
+      return "Tui gõ cửa Bot-reward mà không ai mở... chắc đi vắng rồi đó! 🚪🤖";
     } catch (err) {
-      console.error("Lỗi trong sendMessageAndGetResponse:", err);
-
-      return "Não tôi giờ quay như chong chóng vì việc. Để thở tí rồi quay lại nha!";
+      return "Ối dồi ôi… tui trượt vỏ chuối logic rồi! Cho tui quay xe xử lý cái nè~ 🌀";
     }
   }
 
-  async generateImageFromText(question: string) {
+  async generateImageFromText(question: string, url?: string) {
     try {
+      const questionPrompt = `
+Hãy tạo một hình ảnh mô tả nội dung sau: "${question}".
+Yêu cầu hình ảnh có chiều rộng tối đa 300px và chiều cao tối đa 500px, phù hợp để hiển thị trong không gian nhỏ như avatar hoặc biểu tượng minh họa. Giữ cho bố cục rõ ràng và dễ nhìn.
+`;
+      if (url) {
+        const base64Image = await convertImageUrlToBase64(url);
+
+        this.context = [
+          { text: questionPrompt },
+          {
+            inlineData: {
+              mimeType: "image/png",
+              data: base64Image,
+            },
+          },
+        ];
+      } else {
+        this.context = {
+          role: "user",
+          parts: [{ text: questionPrompt }],
+        };
+      }
+
       const response = await this.genAI.models.generateContent({
         model: "gemini-2.0-flash-preview-image-generation",
-        contents: question,
+        contents: this.context,
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
       });
 
       if (response?.candidates?.[0]?.content?.parts) {
+        let imageResult: string | null = null;
+
         for (const part of response.candidates[0].content.parts) {
-          if (part.text) {
-            console.log(part.text);
-          } else if (part.inlineData?.data) {
+          if (part.inlineData?.data && !imageResult) {
             const imageData = part.inlineData.data;
             const buffer = Buffer.from(imageData, "base64");
             const folderPath = path.join(__dirname, "..", "public", "image");
@@ -219,17 +240,16 @@ class GeminiRewardService {
               resource_type: "image",
             });
             fs.unlinkSync(filePath);
-
-            return resizedUrl(uploadResult.secure_url);
+            imageResult = resizedUrl(uploadResult.secure_url);
           }
         }
+        if (imageResult) return imageResult;
       }
 
       return "Không thể tạo ảnh.";
     } catch (err) {
-      return err instanceof Error
-        ? `Đã xảy ra lỗi: ${err.message}`
-        : "Lỗi không xác định.";
+      console.error("Lỗi trong generateImageFromText:", err);
+      return "Ối dồi ôi… tui trượt vỏ chuối logic rồi! Cho tui quay xe xử lý cái nè~ 🌀";
     }
   }
 }

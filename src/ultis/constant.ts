@@ -200,6 +200,7 @@ export function imageCreationRequest(message: string): boolean {
     /chắc\s*tạo\s*(ảnh|hình)/i,
     /muốn\s*tạo\s*(ảnh|hình)/i,
     /vẽ\s*(ảnh|hình)/i,
+    /vẽ/i,
   ];
 
   return keywords.some((pattern) => pattern.test(message));

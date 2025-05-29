@@ -119,7 +119,12 @@ export class RewardToolService {
     });
   }
 
-  async sendMessage(message: ChannelMessage, question: string, type?: string) {
+  async sendMessage(
+    message: ChannelMessage,
+    question: string,
+    type?: string,
+    url?: string
+  ) {
     const channel = await client.channels.fetch(message?.channel_id!);
     const messages = channel.messages.values();
     const raw = Array.from(messages).slice(-51, -1);
@@ -140,6 +145,7 @@ export class RewardToolService {
         question,
         context,
         type,
+        url,
       },
     });
   }

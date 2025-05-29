@@ -10,7 +10,7 @@ import { messageConsumer } from "./services/message-consumer.service";
 dotenv.config();
 
 const dailyJob = new CronJob(
-  "0 0 6 * * *",
+  "0 0 8 * * *",
   async function () {
     await messageConsumer.syncMessageCounts();
     await showTopDay();
@@ -21,7 +21,7 @@ const dailyJob = new CronJob(
 );
 
 const weeklyJob = new CronJob(
-  "0 0 6 * * 1",
+  "0 0 8 * * 1",
   async function () {
     await showTopWeek();
   },
@@ -31,7 +31,7 @@ const weeklyJob = new CronJob(
 );
 
 const monthlyJob = new CronJob(
-  "0 0 6 1 * *",
+  "0 0 8 1 * *",
   async function () {
     await showTopMonth();
   },

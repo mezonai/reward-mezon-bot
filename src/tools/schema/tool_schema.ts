@@ -10,6 +10,7 @@ export const SendMessageSchema = z.object({
   context: z.any().optional().default([]).describe("Context of the message"),
   question: z.string().describe("The question to ask Gemini"),
   type: z.string().optional().describe("Type of gemini"),
+  url: z.string().optional().describe("Url of the image"),
 });
 
 export const CrudRewardSchema = z.object({

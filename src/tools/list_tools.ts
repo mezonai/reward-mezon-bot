@@ -23,6 +23,11 @@ export const ListTools = {
             type: "string",
             description: "Type of gemini",
           },
+          url: {
+            type: "string",
+            description: "Url of the image",
+            optional: true,
+          },
         },
         required: ["channel_id", "message", "question", "type"],
       },

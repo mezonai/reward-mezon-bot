@@ -1,6 +1,6 @@
 import { FunctionCall as GenAIFunctionCall } from "@google/genai";
 import User from "../models/User";
-
+import https from "https";
 interface Message {
   author: string;
   channel: string;
@@ -116,4 +116,21 @@ Thông tin khác:
   }
 
   return currentContents;
+}
+
+export function convertImageUrlToBase64(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (res) => {
+        const chunks: Uint8Array[] = [];
+
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => {
+          const buffer = Buffer.concat(chunks);
+          const base64 = buffer.toString("base64");
+          resolve(base64);
+        });
+      })
+      .on("error", (err) => reject(err));
+  });
 }

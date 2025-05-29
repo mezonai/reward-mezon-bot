@@ -150,3 +150,5 @@ arrow
 
 # Mezon cache
 /mezon-cache
+docker-compose.yml
+Dockerfile
