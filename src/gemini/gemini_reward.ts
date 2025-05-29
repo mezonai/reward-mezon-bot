@@ -4,11 +4,7 @@ import {
   ReadMessagesFunctionDeclaration,
   SendMessageFunctionDeclaration,
 } from "./gemini_schema";
-import {
-  content_gemini,
-  context_gemini_bug,
-  convertImageUrlToBase64,
-} from "./gemini_context";
+import { content_gemini, convertImageUrlToBase64 } from "./gemini_context";
 import { removeCodeBlockTicks, resizedUrl } from "../ultis/constant";
 import fs from "fs";
 import path from "path";
@@ -186,23 +182,21 @@ class GeminiRewardService {
 
       return "Tui gõ cửa Bot-reward mà không ai mở... chắc đi vắng rồi đó! 🚪🤖";
     } catch (err) {
-      const resultBug = await this.genAI.models.generateContent({
-        model: "gemini-2.0-flash-001",
-        contents: context_gemini_bug,
-        config: {},
-      });
-      const text = resultBug?.candidates?.[0]?.content?.parts?.[0]?.text;
-      return text;
+      return "Ối dồi ôi… tui trượt vỏ chuối logic rồi! Cho tui quay xe xử lý cái nè~ 🌀";
     }
   }
 
   async generateImageFromText(question: string, url?: string) {
     try {
+      const questionPrompt = `
+Hãy tạo một hình ảnh mô tả nội dung sau: "${question}".
+Yêu cầu hình ảnh có chiều rộng tối đa 300px và chiều cao tối đa 500px, phù hợp để hiển thị trong không gian nhỏ như avatar hoặc biểu tượng minh họa. Giữ cho bố cục rõ ràng và dễ nhìn.
+`;
       if (url) {
         const base64Image = await convertImageUrlToBase64(url);
 
         this.context = [
-          { text: question },
+          { text: questionPrompt },
           {
             inlineData: {
               mimeType: "image/png",
@@ -213,7 +207,7 @@ class GeminiRewardService {
       } else {
         this.context = {
           role: "user",
-          parts: [{ text: question }],
+          parts: [{ text: questionPrompt }],
         };
       }
 
@@ -255,13 +249,7 @@ class GeminiRewardService {
       return "Không thể tạo ảnh.";
     } catch (err) {
       console.error("Lỗi trong generateImageFromText:", err);
-      const resultBug = await this.genAI.models.generateContent({
-        model: "gemini-2.0-flash-001",
-        contents: context_gemini_bug,
-        config: {},
-      });
-      const text = resultBug?.candidates?.[0]?.content?.parts?.[0]?.text;
-      return text;
+      return "Ối dồi ôi… tui trượt vỏ chuối logic rồi! Cho tui quay xe xử lý cái nè~ 🌀";
     }
   }
 }

@@ -22,7 +22,7 @@ export class SystemCommand extends CommandMessage {
       if (!Number.isInteger(money) || money <= 0) {
         await replyMessage(
           message.channel_id,
-          "💸 Số tiền rút không hợp lệ. Vui lòng nhập một số nguyên dương.",
+          "💸 Số tiền rút không hợp lệ.",
           message.message_id!
         );
         return;
@@ -102,6 +102,7 @@ export class SystemCommand extends CommandMessage {
               color: getRandomColor(),
               image: {
                 url: result.content[0]?.text,
+                width: "300px",
               },
               timestamp: new Date().toISOString(),
               footer: {
