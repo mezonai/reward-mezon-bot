@@ -45,7 +45,6 @@ async function main() {
     await client.login();
     await connectClient();
     await messageConsumer.start();
-    console.log("✅ Kết nối RabbitMQ thành công");
     const mezonBotListener = new MezonBotListener(client);
     mezonBotListener.listentEvent();
     monthlyJob.start();
