@@ -100,6 +100,7 @@ export class SystemCommand extends CommandMessage {
           const embed: EmbedProps[] = [
             {
               color: getRandomColor(),
+              title: "Image created",
               image: {
                 url: result.content[0]?.text,
                 width: "300px",

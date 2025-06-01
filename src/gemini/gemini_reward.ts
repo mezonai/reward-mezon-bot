@@ -198,7 +198,7 @@ class GeminiRewardService {
         const base64Image = await convertImageUrlToBase64(url);
 
         this.context = [
-          questionPrompt,
+          question,
           {
             inlineData: {
               mimeType: "image/png",
