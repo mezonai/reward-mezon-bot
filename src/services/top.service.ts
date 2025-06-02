@@ -1,4 +1,4 @@
-import { format, getMonth, getWeek, subDays } from "date-fns";
+import { format, getMonth, getWeek, subDays, isMonday } from "date-fns";
 import User from "../models/User";
 import { Reward } from "../models";
 import { Op } from "sequelize";
@@ -13,10 +13,19 @@ import { rewardToolService } from "./call_tool.service";
 
 export class TopService {
   private readonly botId: string;
-  private numberRandom: number = 0;
+  private blacklistedUsers: Set<string> = new Set();
+  private lastClearDate: Date = new Date();
 
   constructor() {
     this.botId = process.env.BOT as string;
+  }
+
+  private clearBlacklistIfMonday(): void {
+    const today = new Date();
+    if (isMonday(today) && this.lastClearDate.getDate() !== today.getDate()) {
+      this.blacklistedUsers.clear();
+      this.lastClearDate = today;
+    }
   }
 
   private async showTopGeneric(
@@ -29,7 +38,6 @@ export class TopService {
       if (process.env.WELCOME_CHANNEL_ID) {
         await sendMessage(process.env.WELCOME_CHANNEL_ID, message);
       }
-
       await giveToken(arrayUser, type, rewardAmounts);
     } catch (error) {
       console.log(error);
@@ -62,21 +70,24 @@ export class TopService {
           createdBy: this.botId,
         });
       }
-      const plainUsers = topUsers.map((user) => user.toJSON());
-      let randomNumber = Math.floor(Math.random() * topUsers.length);
 
-      if (typeof this.numberRandom === "number" && topUsers.length > 1) {
-        while (randomNumber === this.numberRandom) {
-          randomNumber = Math.floor(Math.random() * topUsers.length);
-        }
+      const plainUsers = topUsers
+        .map((user) => user.toJSON())
+        .filter((user) => !this.blacklistedUsers.has(user.user_id));
+
+      if (plainUsers.length === 0) {
+        return;
       }
+
+      let randomNumber = Math.floor(Math.random() * plainUsers.length);
       const user = plainUsers[randomNumber];
-      this.numberRandom = randomNumber;
+
       if (
         user &&
         this.botId &&
         trophies.dataValues.name === TROPY_MOST_ACTIVE_MEMBER
       ) {
+        this.blacklistedUsers.add(user.user_id);
         const award = await rewardToolService.awardTrophy(
           user.user_id,
           TROPY_MOST_ACTIVE_MEMBER,
@@ -106,6 +117,8 @@ export class TopService {
               process.env.WELCOME_CHANNEL_ID,
               message
             );
+
+            this.clearBlacklistIfMonday();
 
             if (send) {
               await User.update({ countmessage: 0 }, { where: {} });
