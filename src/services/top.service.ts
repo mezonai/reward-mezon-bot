@@ -1,4 +1,11 @@
-import { format, getMonth, getWeek, subDays, isMonday } from "date-fns";
+import {
+  format,
+  getMonth,
+  getWeek,
+  subDays,
+  isMonday,
+  startOfDay,
+} from "date-fns";
 import User from "../models/User";
 import { Reward } from "../models";
 import { Op } from "sequelize";
@@ -10,21 +17,87 @@ import {
 } from "../ultis/constant";
 import { giveToken } from "./system.service";
 import { rewardToolService } from "./call_tool.service";
+import BlacklistedUser from "../models/BlacklistedUser";
 
 export class TopService {
   private readonly botId: string;
   private blacklistedUsers: Set<string> = new Set();
   private lastClearDate: Date = new Date();
+  private isInitialized: boolean = false;
 
   constructor() {
     this.botId = process.env.BOT as string;
+    this.initialize();
   }
 
-  private clearBlacklistIfMonday(): void {
+  private async initialize(): Promise<void> {
+    try {
+      await BlacklistedUser.sync();
+      await this.loadBlacklistedUsers();
+      this.isInitialized = true;
+    } catch (error) {
+      console.error("Error initializing TopService:", error);
+    }
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+  }
+
+  private async loadBlacklistedUsers(): Promise<void> {
+    try {
+      const blacklistedFromDb = await BlacklistedUser.findAll();
+      this.blacklistedUsers.clear();
+      blacklistedFromDb.forEach((user) => {
+        this.blacklistedUsers.add(user.user_id);
+      });
+    } catch (error) {
+      console.error("Error loading blacklisted users:", error);
+      throw error;
+    }
+  }
+
+  private async clearBlacklistIfMonday(): Promise<void> {
+    await this.ensureInitialized();
     const today = new Date();
     if (isMonday(today) && this.lastClearDate.getDate() !== today.getDate()) {
       this.blacklistedUsers.clear();
+      await BlacklistedUser.destroy({ where: {} });
       this.lastClearDate = today;
+    }
+  }
+
+  private async isUserBlacklisted(userId: string): Promise<boolean> {
+    await this.ensureInitialized();
+    if (this.blacklistedUsers.has(userId)) {
+      return true;
+    }
+
+    const blacklistedUser = await BlacklistedUser.findOne({
+      where: { user_id: userId },
+    });
+
+    if (blacklistedUser) {
+      this.blacklistedUsers.add(userId);
+      return true;
+    }
+
+    return false;
+  }
+
+  private async addToBlacklist(userId: string): Promise<void> {
+    await this.ensureInitialized();
+    try {
+      this.blacklistedUsers.add(userId);
+      await BlacklistedUser.create({
+        user_id: userId,
+        blacklisted_date: new Date(),
+      });
+    } catch (error) {
+      console.error("Error adding user to blacklist:", error);
+      throw error;
     }
   }
 
@@ -71,9 +144,13 @@ export class TopService {
         });
       }
 
-      const plainUsers = topUsers
-        .map((user) => user.toJSON())
-        .filter((user) => !this.blacklistedUsers.has(user.user_id));
+      const plainUsers = [];
+      for (const user of topUsers) {
+        const json = user.toJSON();
+        if (!(await this.isUserBlacklisted(json.user_id))) {
+          plainUsers.push(json);
+        }
+      }
 
       if (plainUsers.length === 0) {
         return;
@@ -87,7 +164,8 @@ export class TopService {
         this.botId &&
         trophies.dataValues.name === TROPY_MOST_ACTIVE_MEMBER
       ) {
-        this.blacklistedUsers.add(user.user_id);
+        await this.addToBlacklist(user.user_id);
+
         const award = await rewardToolService.awardTrophy(
           user.user_id,
           TROPY_MOST_ACTIVE_MEMBER,
@@ -118,7 +196,7 @@ export class TopService {
               message
             );
 
-            this.clearBlacklistIfMonday();
+            await this.clearBlacklistIfMonday();
 
             if (send) {
               await User.update({ countmessage: 0 }, { where: {} });
