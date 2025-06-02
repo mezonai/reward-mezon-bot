@@ -13,6 +13,7 @@ import { rewardToolService } from "./call_tool.service";
 
 export class TopService {
   private readonly botId: string;
+  private numberRandom: number = 0;
 
   constructor() {
     this.botId = process.env.BOT as string;
@@ -61,11 +62,16 @@ export class TopService {
           createdBy: this.botId,
         });
       }
-
       const plainUsers = topUsers.map((user) => user.toJSON());
-      const randomNumber = Math.floor(Math.random() * topUsers.length);
-      const user = plainUsers[randomNumber];
+      let randomNumber = Math.floor(Math.random() * topUsers.length);
 
+      if (typeof this.numberRandom === "number" && topUsers.length > 1) {
+        while (randomNumber === this.numberRandom) {
+          randomNumber = Math.floor(Math.random() * topUsers.length);
+        }
+      }
+      const user = plainUsers[randomNumber];
+      this.numberRandom = randomNumber;
       if (
         user &&
         this.botId &&
@@ -87,7 +93,11 @@ export class TopService {
           } else {
             message =
               award.content[0]?.text +
-              " là người may mắn nằm trong top 10 thành viên tích cực trong ngày " +
+              " là người may mắn nằm trong top 10 thành viên tích cực" +
+              " với " +
+              user.countmessage +
+              " message" +
+              " trong ngày " +
               subdate;
           }
 

@@ -24,7 +24,11 @@ export class HelpCommand extends CommandMessage {
       !top_month - Xem bảng xếp hạng trophy tháng này
       !kttk - kiểm tra tài khoản
       !rut - rút tiền
-      @bot-reward - hỏi bot nội dung trong channel 
+      @bot-reward - hỏi bot nội dung trong channel hoặc tạo ảnh 
+      
+      - Lưu ý tạo ảnh thì cần phải có 1 trong từ sau "tạo ảnh", "tạo hình",
+       "tạo image","generate image", "create photo", "vẽ hình", "vẽ ảnh"
+
             `;
     await replyMessage(message?.channel_id!, helpText, message?.message_id!);
   }
