@@ -23,7 +23,6 @@ export class TopService {
   private readonly botId: string;
   private blacklistedUsers: Set<string> = new Set();
   private lastClearDate: Date = new Date();
-  private isInitialized: boolean = false;
 
   constructor() {
     this.botId = process.env.BOT as string;
@@ -34,15 +33,8 @@ export class TopService {
     try {
       await BlacklistedUser.sync();
       await this.loadBlacklistedUsers();
-      this.isInitialized = true;
     } catch (error) {
       console.error("Error initializing TopService:", error);
-    }
-  }
-
-  private async ensureInitialized(): Promise<void> {
-    if (!this.isInitialized) {
-      await this.initialize();
     }
   }
 
@@ -60,7 +52,6 @@ export class TopService {
   }
 
   private async clearBlacklistIfMonday(): Promise<void> {
-    await this.ensureInitialized();
     const today = new Date();
     if (isMonday(today) && this.lastClearDate.getDate() !== today.getDate()) {
       this.blacklistedUsers.clear();
@@ -69,26 +60,11 @@ export class TopService {
     }
   }
 
-  private async isUserBlacklisted(userId: string): Promise<boolean> {
-    await this.ensureInitialized();
-    if (this.blacklistedUsers.has(userId)) {
-      return true;
-    }
-
-    const blacklistedUser = await BlacklistedUser.findOne({
-      where: { user_id: userId },
-    });
-
-    if (blacklistedUser) {
-      this.blacklistedUsers.add(userId);
-      return true;
-    }
-
-    return false;
+  private isUserBlacklistedFromCache(userId: string): boolean {
+    return this.blacklistedUsers.has(userId);
   }
 
   private async addToBlacklist(userId: string): Promise<void> {
-    await this.ensureInitialized();
     try {
       this.blacklistedUsers.add(userId);
       await BlacklistedUser.create({
@@ -119,9 +95,15 @@ export class TopService {
 
   public async showTopDay(): Promise<void> {
     try {
+      await this.loadBlacklistedUsers();
       let message;
       const points = 10000;
       const subdate = format(subDays(new Date(), 1), "yyyy-MM-dd");
+
+      const blacklistedUserIds = await BlacklistedUser.findAll({
+        attributes: ["user_id"],
+      }).then((users) => users.map((user) => user.user_id));
+
       const topUsers = await User.findAll({
         where: {
           user_id: { [Op.ne]: this.botId },
@@ -144,14 +126,9 @@ export class TopService {
         });
       }
 
-      const plainUsers = [];
-      for (const user of topUsers) {
-        const json = user.toJSON();
-        if (!(await this.isUserBlacklisted(json.user_id))) {
-          plainUsers.push(json);
-        }
-      }
-
+      const plainUsers = topUsers
+        .map((user) => user.toJSON())
+        .filter((user) => !blacklistedUserIds.includes(user.user_id));
       if (plainUsers.length === 0) {
         return;
       }
