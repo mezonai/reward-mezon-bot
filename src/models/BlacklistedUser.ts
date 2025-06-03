@@ -2,15 +2,25 @@ import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database";
 
 class BlacklistedUser extends Model {
+  declare id: number;
   declare user_id: string;
+  declare clan_id: string;
   declare blacklisted_date: Date;
 }
 
 BlacklistedUser.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     user_id: {
       type: DataTypes.STRING,
-      primaryKey: true,
+      allowNull: false,
+    },
+    clan_id: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
     blacklisted_date: {

@@ -186,6 +186,7 @@ class GeminiRewardService {
 
       return "Tui gõ cửa Bot-reward mà không ai mở... chắc đi vắng rồi đó! 🚪🤖";
     } catch (err) {
+      console.error("lỗi gemni", err);
       return "Ối dồi ôi… tui trượt vỏ chuối logic rồi! Cho tui quay xe xử lý cái nè~ 🌀";
     }
   }

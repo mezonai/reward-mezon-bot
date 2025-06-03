@@ -22,7 +22,8 @@ export class SystemService {
     username: string,
     amount: number,
     countmessage: number,
-    message?: string
+    message?: string,
+    clan_id?: string
   ) {
     return clientMCP.callTool({
       name: "add-user",
@@ -32,6 +33,7 @@ export class SystemService {
         amount,
         countmessage,
         message,
+        clan_id,
       },
     });
   }
@@ -87,7 +89,7 @@ export class SystemService {
       } else {
         await replyMessage(
           message?.channel_id!,
-          `💸Số dư của bạn là ${result?.amount} ₫ `,
+          `💸Số dư của bạn là ${result?.amount} ₫`,
           message?.message_id!
         );
       }

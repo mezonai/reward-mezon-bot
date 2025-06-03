@@ -82,7 +82,10 @@ export class RewardCommand extends CommandMessage {
   }
 
   private async handleRankCommand(message: ChannelMessage, fullArg: string) {
-    const result = await rewardToolService.rankReward(+fullArg ? +fullArg : 10);
+    const result = await rewardToolService.rankReward(
+      +fullArg ? +fullArg : 10,
+      message.clan_id!
+    );
 
     if (
       result &&

@@ -106,7 +106,6 @@ export class DataStorageService {
     const count = await this.getAsync(key);
     return count ? parseInt(count as string) : 0;
   }
-
   async setData(
     key: string,
     data: any,
@@ -114,12 +113,10 @@ export class DataStorageService {
   ): Promise<void> {
     await this.setAsync(key, JSON.stringify(data), expirySeconds);
   }
-
   async getData(key: string): Promise<any> {
     const data = await this.getAsync(key);
     return data ? JSON.parse(data as string) : null;
   }
-
   async deleteData(key: string): Promise<void> {
     return new Promise((resolve) => {
       this.cache.delete(key);
@@ -127,27 +124,22 @@ export class DataStorageService {
     });
   }
 
-  async checkAndIncrementCount(key: string): Promise<any> {
-    const data = await this.getData(key);
+  async checkAndIncrementCount(key: string, clan_id?: string): Promise<any> {
+    const storageKey = clan_id ? `${key}_${clan_id}` : key;
+    const data = await this.getData(storageKey);
     if (data) {
       data.count = (data.count || 0) + 1;
-      await this.setData(key, data);
+      await this.setData(storageKey, data);
       return data;
     } else {
       const newData = {
         user_id: key,
+        clan_id: clan_id,
         count: 1,
       };
-      await this.setData(key, newData);
+      await this.setData(storageKey, newData);
       return newData;
     }
-  }
-
-  async close(): Promise<void> {
-    return new Promise((resolve) => {
-      this.cache.clear();
-      resolve();
-    });
   }
 }
 

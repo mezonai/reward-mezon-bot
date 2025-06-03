@@ -12,7 +12,8 @@ export class AwardCommand extends CommandMessage {
       message?.mentions?.[0]?.user_id!,
       rewardName,
       userName,
-      message.sender_id
+      message.sender_id,
+      message.clan_id!
     );
     if (
       result &&
