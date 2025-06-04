@@ -7,6 +7,7 @@ class UserReward extends Model {
   declare user_id: string;
   declare user_name: string;
   declare points: number;
+  declare clan_id?: string;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -32,6 +33,11 @@ UserReward.init(
       type: DataTypes.STRING(500),
       allowNull: false,
       comment: "Tên hiển thị của người dùng",
+    },
+    clan_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: "ID của clan",
     },
   },
   {

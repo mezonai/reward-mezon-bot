@@ -25,6 +25,7 @@ export const AddUserRewardSchema = z.object({
   userId: z.string().describe("User ID to add the reward to"),
   rewardId: z.string().describe("Reward ID to add"),
   amount: z.number().describe("Amount of the reward to add"),
+  clan_id: z.string().optional().describe("ID of the clan the user belongs to"),
 });
 
 // New schema for awarding a trophy
@@ -33,6 +34,7 @@ export const AwardTrophySchema = z.object({
   rewardName: z.string().describe("Name of the trophy to award"),
   userName: z.string().describe("Name of the user to award the trophy to"),
   sender_id: z.string().describe("User ID give trophy"),
+  clan_id: z.string().optional().describe("ID of the clan the user belongs to"),
 });
 
 // New schema for getting user trophies
@@ -46,6 +48,7 @@ export const GetLeaderboardSchema = z.object({
     .max(100)
     .default(10)
     .describe("Number of top users to return"),
+  clan_id: z.string().optional().describe("Clan id"),
 });
 
 // New schema for assigning a role based on trophy score
@@ -58,6 +61,11 @@ export const AssignRoleOnScoreSchema = z.object({
 
 export const TopSchema = z.object({
   date: z.string().describe("Date to get the top week for"),
+  clan_id: z.string().optional().describe("ID of the clan the user belongs to"),
+});
+export const TopDaySchema = z.object({
+  date: z.string().describe("Date to get the top week for"),
+  clan_id: z.string().optional().describe("ID of the clan the user belongs to"),
 });
 
 export const AddUserSchema = z.object({
@@ -66,4 +74,5 @@ export const AddUserSchema = z.object({
   amount: z.number().describe("Amount of the reward to add"),
   countmessage: z.number().optional().describe("number message in clan"),
   message: z.string().optional().describe("message user send"),
+  clan_id: z.string().optional().describe("ID of the clan the user belongs to"),
 });

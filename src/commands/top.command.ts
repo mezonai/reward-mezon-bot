@@ -8,7 +8,7 @@ import { format, getMonth, getWeek } from "date-fns";
 export class TopCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
     if (commandName === "top") {
-      const result = await rewardToolService.topDay();
+      const result = await rewardToolService.topDay(message.clan_id!);
       const day = format(new Date(), "yyyy-MM-dd");
       if (
         result &&
@@ -29,7 +29,7 @@ export class TopCommand extends CommandMessage {
       }
     }
     if (commandName === "top_week") {
-      const result = await rewardToolService.topWeek();
+      const result = await rewardToolService.topWeek(message.clan_id!);
       const week = getWeek(new Date());
       if (
         result &&
@@ -50,7 +50,7 @@ export class TopCommand extends CommandMessage {
       }
     }
     if (commandName === "top_month") {
-      const result = await rewardToolService.topMonth();
+      const result = await rewardToolService.topMonth(message.clan_id!);
       const month = getMonth(new Date()) + 1;
       if (
         result &&

@@ -1,21 +1,19 @@
 import { EMarkdownType } from "mezon-sdk";
 import { client } from "../config/mezon-client";
-import { formatMessage } from "../ultis/constant";
 import { EmbedProps } from "../ultis/form";
 
 export class MessageService {
   async updateMessage(message: string, channel_id: string, message_id: string) {
     try {
-      const updateMessage = formatMessage(message);
       const Channel = await client.channels.fetch(channel_id);
       const fetchedMessage = await Channel.messages.fetch(message_id);
       await fetchedMessage.update({
-        t: updateMessage,
+        t: message,
         mk: [
           {
-            type: EMarkdownType.TRIPLE,
+            type: EMarkdownType.PRE,
             s: 0,
-            e: updateMessage.length,
+            e: message.length,
           },
         ],
       });
@@ -28,14 +26,13 @@ export class MessageService {
     try {
       const fetchedChannel = await client.channels.fetch(channel_id);
       const fetchedMessage = await fetchedChannel.messages.fetch(message_id);
-      const repyMessage = formatMessage(message);
       return await fetchedMessage.reply({
-        t: repyMessage,
+        t: message,
         mk: [
           {
-            type: EMarkdownType.TRIPLE,
+            type: EMarkdownType.PRE,
             s: 0,
-            e: repyMessage.length,
+            e: message.length,
           },
         ],
       });
@@ -47,14 +44,13 @@ export class MessageService {
   async sendMessage(channel_id: string, message: string) {
     try {
       const channel = await client.channels.fetch(channel_id);
-      const repyMessage = formatMessage(message);
       return await channel.send({
-        t: repyMessage,
+        t: message,
         mk: [
           {
-            type: EMarkdownType.TRIPLE,
+            type: EMarkdownType.PRE,
             s: 0,
-            e: repyMessage.length,
+            e: message.length,
           },
         ],
       });

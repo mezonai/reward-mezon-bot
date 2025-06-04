@@ -8,6 +8,7 @@ import {
   GetLeaderboardSchema,
   ReadMessagesSchema,
   SendMessageSchema,
+  TopDaySchema,
   TopSchema,
 } from "./schema/tool_schema";
 import Reward from "../models/Reward";
@@ -83,7 +84,7 @@ export const CallTools = async (request: any) => {
       }
 
       case "award-user": {
-        const { userId, rewardName, userName, sender_id } =
+        const { userId, rewardName, userName, sender_id, clan_id } =
           AwardTrophySchema.parse(args);
         try {
           if (userId === sender_id || userId === process.env.BOT) {
@@ -163,6 +164,7 @@ export const CallTools = async (request: any) => {
             reward_id: trophy.id,
             user_id: userId,
             user_name: userName,
+            clan_id,
           });
 
           return {
@@ -288,14 +290,15 @@ export const CallTools = async (request: any) => {
       }
 
       case "rank": {
-        const { limit } = GetLeaderboardSchema.parse(args);
+        const { limit, clan_id } = GetLeaderboardSchema.parse(args);
         const query = `
-            WITH user_total_points AS (
+             WITH user_total_points AS (
             SELECT
               ur.user_name,
               SUM(r.points) AS total_point
             FROM user_rewards ur
             JOIN rewards r ON ur.reward_id = r.id
+            WHERE ur.clan_id = :clan_id
             GROUP BY ur.user_name
           )
           SELECT
@@ -315,7 +318,7 @@ export const CallTools = async (request: any) => {
 
         try {
           const results = await sequelize.query(query, {
-            replacements: { limit },
+            replacements: { limit, clan_id },
             type: QueryTypes.SELECT,
           });
           return {
@@ -467,7 +470,7 @@ export const CallTools = async (request: any) => {
       }
 
       case "get-user-rewards": {
-        const { userId } = args;
+        const { userId, clan_id } = args;
         const result = await sequelize.query(
           `
           SELECT 
@@ -475,10 +478,10 @@ export const CallTools = async (request: any) => {
 		  ur.user_name
           FROM rewards r
           JOIN user_rewards ur ON ur.reward_id = r.id
-          WHERE ur.user_id = :userId
+          WHERE ur.user_id = :userId AND ur.clan_id = :clan_id
         `,
           {
-            replacements: { userId },
+            replacements: { userId, clan_id },
             type: QueryTypes.SELECT,
           }
         );
@@ -493,17 +496,17 @@ export const CallTools = async (request: any) => {
         };
       }
       case "top-day": {
-        const { date } = TopSchema.parse(args);
+        const { date, clan_id } = TopDaySchema.parse(args);
 
         const sqlQuery = `
           SELECT * FROM users
-          WHERE user_id <> :BOT and countmessage > 0
+          WHERE user_id <> :BOT and countmessage > 0 and clan_id = :clan_id 
           ORDER BY countmessage DESC
           LIMIT 10
         `;
 
         const result = await sequelize.query(sqlQuery, {
-          replacements: { BOT: process.env.BOT! },
+          replacements: { BOT: process.env.BOT!, clan_id },
           type: QueryTypes.SELECT,
         });
 
@@ -520,7 +523,7 @@ export const CallTools = async (request: any) => {
       }
 
       case "top-week": {
-        const { date } = TopSchema.parse(args);
+        const { date, clan_id } = TopSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getMondayAndSunday(subdate);
         const endDate = addDate(end_date, 1);
@@ -535,6 +538,7 @@ export const CallTools = async (request: any) => {
             JOIN rewards r ON ur.reward_id = r.id
             WHERE ur."createdAt" >= DATE :start_date
               AND ur."createdAt" < DATE :end_date
+              AND ur.clan_id = :clan_id   
             GROUP BY ur.user_name, ur.user_id
           )
 
@@ -555,7 +559,7 @@ export const CallTools = async (request: any) => {
                   `;
 
         const result = await sequelize.query(sqlQuery, {
-          replacements: { start_date, end_date: endDate },
+          replacements: { start_date, end_date: endDate, clan_id },
           type: QueryTypes.SELECT,
         });
 
@@ -571,7 +575,7 @@ export const CallTools = async (request: any) => {
         };
       }
       case "top-month": {
-        const { date } = TopSchema.parse(args);
+        const { date, clan_id } = TopSchema.parse(args);
         const subdate = afterDate(date, 1);
         const { start_date, end_date } = getStartandEndOfMonth(subdate);
         const endDate = addDate(end_date, 1);
@@ -586,6 +590,7 @@ export const CallTools = async (request: any) => {
             JOIN rewards r ON ur.reward_id = r.id
             WHERE ur."createdAt" >= DATE :start_date
               AND ur."createdAt" < DATE :end_date
+              AND ur.clan_id = :clan_id   
             GROUP BY ur.user_name , ur.user_id
           )
 
@@ -602,11 +607,11 @@ export const CallTools = async (request: any) => {
             LIMIT 1
             ) rr ON true
             ORDER BY total_point DESC
-          LIMIT 5;
+          LIMIT 3;
                   `;
 
         const result = await sequelize.query(sqlQuery, {
-          replacements: { start_date, end_date: endDate },
+          replacements: { start_date, end_date: endDate, clan_id },
           type: QueryTypes.SELECT,
         });
 
@@ -623,70 +628,104 @@ export const CallTools = async (request: any) => {
       }
       case "add-user": {
         try {
-          const {
+          let {
             user_id: userId,
             amount,
             username,
             message,
+            clan_id,
           } = AddUserSchema.parse(args);
 
-          const existingUser = await User.findOne({
-            where: { user_id: userId },
-          });
-          if (enumBot.some((bot: string) => username.includes(bot))) {
+          if (userId === process.env.BOT) {
+            clan_id = "0";
+            const existingBot = await User.findOne({
+              where: { user_id: userId, clan_id: "0" },
+            });
+            if (existingBot) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `❌ User bot ${userId} đã tồn tại trong cơ sở dữ liệu.`,
+                  },
+                ],
+              };
+            }
+            await User.create({
+              user_id: userId,
+              username,
+              amount,
+              countmessage: 0,
+              clan_id: "0",
+            });
             return {
               content: [
                 {
                   type: "text",
-                  text: `❌ User ${userId} là bot, không thể thêm..`,
+                  text: `✅ Đã thêm user bot ${userId} vào cơ sở dữ liệu.`,
                 },
               ],
             };
           }
 
+          if (
+            enumBot.some((bot: string) => username.includes(bot)) ||
+            username === "Anonymous"
+          ) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `❌ User ${userId} không hợp lệ (bot hoặc Anonymous), không thể thêm.`,
+                },
+              ],
+            };
+          }
+
+          const existingUser = await User.findOne({
+            where: { user_id: userId, clan_id },
+          });
+
           if (existingUser) {
+            if (existingUser.clan_id == null) {
+              existingUser.clan_id = clan_id;
+              await existingUser.save();
+            }
             return {
               content: [
                 {
                   type: "text",
-                  text: `❌ User ${userId} đã tồn tại trong cơ sở dữ liệu hoặc là bot .`,
+                  text: `❌ User ${userId} đã tồn tại trong cơ sở dữ liệu.`,
                 },
               ],
             };
           }
-          if (username === "Anonymous") {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `❌ User  là Anonymous , không thể thêm..`,
-                },
-              ],
-            };
-          }
+
           await User.create({
             user_id: userId,
             username,
             amount,
             countmessage: 1,
+            clan_id,
           });
-
           return {
             content: [
               {
                 type: "text",
-                text: "✅ Đã thêm user vào cơ sở dữ liệu.",
+                text: `✅ Đã thêm user ${userId} vào cơ sở dữ liệu.`,
               },
             ],
           };
         } catch (e: any) {
-          console.error("❌ Error creating user: ", e);
+          console.error(
+            "❌ Error creating user:",
+            e.message,
+            "| username:",
+            args?.username
+          );
           return {
             content: [
-              {
-                type: "text",
-                text: `❌ Lỗi khi thêm user: ${e.message}`,
-              },
+              { type: "text", text: `❌ Lỗi khi thêm user: ${e.message}` },
             ],
           };
         }

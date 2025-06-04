@@ -6,39 +6,43 @@ import { messageConsumer } from "./message-consumer.service";
 export class RewardToolService {
   private client = clientMCP;
 
-  async topDay() {
+  async topDay(clan_id: string) {
     await messageConsumer.syncMessageCounts();
     return await clientMCP.callTool({
       name: "top-day",
       arguments: {
         date: new Date().toISOString().split("T")[0],
+        clan_id,
       },
     });
   }
 
-  async topWeek() {
+  async topWeek(clan_id?: string) {
     return await this.client.callTool({
       name: "top-week",
       arguments: {
         date: new Date().toISOString().split("T")[0],
+        clan_id,
       },
     });
   }
 
-  async topMonth() {
+  async topMonth(clan_id?: string) {
     return await this.client.callTool({
       name: "top-month",
       arguments: {
         date: new Date().toISOString().split("T")[0],
+        clan_id,
       },
     });
   }
 
-  async rankReward(limit: number = 5) {
+  async rankReward(limit: number = 5, clan_id: string) {
     return await this.client.callTool({
       name: "rank",
       arguments: {
         limit,
+        clan_id,
       },
     });
   }
@@ -47,7 +51,8 @@ export class RewardToolService {
     userId: string,
     rewardName: string,
     userName: string,
-    sender_id: string
+    sender_id: string,
+    clan_id: string
   ) {
     try {
       const result = await this.client.callTool({
@@ -57,6 +62,7 @@ export class RewardToolService {
           rewardName,
           userName,
           sender_id,
+          clan_id,
         },
       });
 
@@ -66,11 +72,12 @@ export class RewardToolService {
     }
   }
 
-  async trophyUser(userId: string) {
+  async trophyUser(userId: string, clan_id: string) {
     return await this.client.callTool({
       name: "get-user-rewards",
       arguments: {
         userId,
+        clan_id,
       },
     });
   }

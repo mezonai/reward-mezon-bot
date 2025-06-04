@@ -112,8 +112,12 @@ export const ListTools = {
             type: "string",
             description: "Display id of the user giver trophy",
           },
+          clan_id: {
+            type: "string",
+            description: "Clan id",
+          },
         },
-        required: ["userId", "rewardId"],
+        required: ["userId", "rewardId", "clan_id"],
       },
     },
     {
@@ -158,6 +162,11 @@ export const ListTools = {
             description: "Number of top users to return",
             default: 10,
           },
+          clan_id: {
+            type: "string",
+            description: "Clan id",
+            optional: true,
+          },
         },
       },
     },
@@ -194,8 +203,13 @@ export const ListTools = {
             type: "string",
             description: "ID of the user",
           },
+          clan_id: {
+            type: "string",
+            description: "Clan id",
+            optional: true,
+          },
         },
-        required: ["userId"],
+        required: ["userId", "clan_id"],
       },
     },
     {
@@ -216,6 +230,10 @@ export const ListTools = {
             type: "string",
             description: "get total point of day",
           },
+          clan_id: {
+            type: "string",
+            description: "clan id",
+          },
         },
       },
     },
@@ -229,6 +247,11 @@ export const ListTools = {
             type: "string",
             description: "get total point of week",
           },
+          clan_id: {
+            type: "string",
+            optional: true,
+            description: "clan id",
+          },
         },
       },
     },
@@ -241,6 +264,11 @@ export const ListTools = {
           date: {
             type: "string",
             description: "get total point of month",
+          },
+          clan_id: {
+            type: "string",
+            optional: true,
+            description: "clan id",
           },
         },
       },
@@ -271,9 +299,13 @@ export const ListTools = {
             type: "string",
             description: "message user",
           },
+          clan_id: {
+            type: "string",
+            description: "clan id",
+          },
         },
       },
-      require: ["user_id", "username"],
+      require: ["user_id", "username", "clan_id"],
     },
   ],
 };

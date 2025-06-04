@@ -36,7 +36,8 @@ export class TrophyCommand extends CommandMessage {
     const result = await rewardToolService.trophyUser(
       message?.mentions?.[0]?.user_id!
         ? message?.mentions?.[0]?.user_id!
-        : message?.sender_id!
+        : message?.sender_id!,
+      message.clan_id!
     );
     if (
       result &&
