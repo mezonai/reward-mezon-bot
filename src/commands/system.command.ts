@@ -10,9 +10,18 @@ import User from "../models/User";
 import { rewardToolService } from "../services/call_tool.service";
 import { EmbedProps } from "../ultis/form";
 import { getRandomColor } from "../ultis/color";
+import { checkAnonymous } from "../ultis/constant";
 
 export class SystemCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
+    if (checkAnonymous(message.username!)) {
+      await replyMessage(
+        message.channel_id,
+        "You must mention a valid member or provide a valid user ID or user not found!",
+        message?.message_id!
+      );
+      return;
+    }
     if (commandName === "kttk") {
       await checkUserBalance(message);
     }
@@ -27,7 +36,9 @@ export class SystemCommand extends CommandMessage {
         );
         return;
       }
-      let user = await User.findOne({ where: { user_id: message.sender_id } });
+      let user = await User.findOne({
+        where: { user_id: message.sender_id, clan_id: message.clan_id },
+      });
       if (!user || user.amount == 0 || money > user.amount) {
         await replyMessage(
           message.channel_id,

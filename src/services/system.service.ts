@@ -52,7 +52,7 @@ export class SystemService {
 
       await client.sendToken(dataSendToken);
       const user = await User.findOne({
-        where: { user_id: message.sender_id },
+        where: { user_id: message.sender_id, clan_id: message.clan_id },
       });
 
       if (user) {
@@ -77,7 +77,7 @@ export class SystemService {
   public async checkUserBalance(message: ChannelMessage): Promise<void> {
     try {
       const result = await User.findOne({
-        where: { user_id: message.sender_id },
+        where: { user_id: message.sender_id, clan_id: message.clan_id },
       });
 
       if (!result) {
@@ -101,7 +101,8 @@ export class SystemService {
   public async giveToken(
     leaderboard: any[],
     description: string,
-    rewardAmounts: number[]
+    rewardAmounts: number[],
+    clan_id: string
   ): Promise<void> {
     try {
       let rank = 0;
@@ -111,7 +112,7 @@ export class SystemService {
         rank += 1;
 
         const user = await User.findOne({
-          where: { user_id: userInfo.user_id },
+          where: { user_id: userInfo.user_id, clan_id },
         });
         if (user) {
           user.amount = (Number(user.amount) || 0) + reward;
@@ -146,7 +147,6 @@ export class SystemService {
   }
 }
 
-// Export a singleton instance
 export const systemService = new SystemService();
 
 export const addUser = systemService.addUser.bind(systemService);

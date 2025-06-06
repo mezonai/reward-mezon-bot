@@ -4,7 +4,11 @@ import { rewardToolService } from "../services/call_tool.service";
 import { replyMessage, sendMessage } from "../services/message.service";
 import RoleReward from "../models/Role_rewards";
 import { components, embedReward } from "../ultis/form";
-import { formatLeaderboard, formatListRole } from "../ultis/constant";
+import {
+  checkAnonymous,
+  formatLeaderboard,
+  formatListRole,
+} from "../ultis/constant";
 import { client } from "../config/mezon-client";
 
 interface Action {
@@ -20,6 +24,14 @@ interface ApiResponse {
 export class RewardCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
     try {
+      if (checkAnonymous(message.username!)) {
+        await replyMessage(
+          message.channel_id,
+          "You must mention a valid member or provide a valid user ID or user not found!",
+          message?.message_id!
+        );
+        return;
+      }
       const fullArg = args.join(" ");
       if (!fullArg && commandName !== "list" && commandName !== "rank") {
         await replyMessage(

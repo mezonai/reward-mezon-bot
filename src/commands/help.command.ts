@@ -1,9 +1,18 @@
 import { ChannelMessage } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
 import { replyMessage } from "../services/message.service";
+import { checkAnonymous } from "../ultis/constant";
 
 export class HelpCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage) {
+    if (checkAnonymous(message.username!)) {
+      await replyMessage(
+        message.channel_id,
+        "You must mention a valid member or provide a valid user ID or user not found!",
+        message?.message_id!
+      );
+      return;
+    }
     const helpText = `
               🏆 **Reward - Help Menu:** 👑
        

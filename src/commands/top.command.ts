@@ -1,12 +1,24 @@
 import { ChannelMessage } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
 import { rewardToolService } from "../services/call_tool.service";
-import { formatLeaderboard, formatLeaderboardMessage } from "../ultis/constant";
+import {
+  checkAnonymous,
+  formatLeaderboard,
+  formatLeaderboardMessage,
+} from "../ultis/constant";
 import { replyMessage, sendMessage } from "../services/message.service";
 import { format, getMonth, getWeek } from "date-fns";
 
 export class TopCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
+    if (checkAnonymous(message.username!)) {
+      await replyMessage(
+        message.channel_id,
+        "You must mention a valid member or provide a valid user ID or user not found!",
+        message?.message_id!
+      );
+      return;
+    }
     if (commandName === "top") {
       const result = await rewardToolService.topDay(message.clan_id!);
       const day = format(new Date(), "yyyy-MM-dd");

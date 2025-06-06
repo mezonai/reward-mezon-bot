@@ -26,6 +26,7 @@ import {
 } from "../ultis/constant";
 import User from "../models/User";
 import { geminiRewardService } from "../gemini/gemini_reward";
+import { dataStorageService } from "../services/memcached.service";
 
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
@@ -113,7 +114,7 @@ export const CallTools = async (request: any) => {
           }
 
           const UserReceiver = await User.findOne({
-            where: { user_id: userId },
+            where: { user_id: userId, clan_id },
           });
           if (!UserReceiver) {
             return {
@@ -127,7 +128,7 @@ export const CallTools = async (request: any) => {
           }
 
           const UserGiveTrophy = await User.findOne({
-            where: { user_id: sender_id },
+            where: { user_id: sender_id, clan_id },
           });
           if (!UserGiveTrophy) {
             return {
@@ -498,9 +499,10 @@ export const CallTools = async (request: any) => {
       case "top-day": {
         const { date, clan_id } = TopDaySchema.parse(args);
 
+        // Get users from database first
         const sqlQuery = `
           SELECT * FROM users
-          WHERE user_id <> :BOT and countmessage > 0 and clan_id = :clan_id 
+          WHERE user_id <> :BOT and clan_id = :clan_id 
           ORDER BY countmessage DESC
           LIMIT 10
         `;
@@ -516,7 +518,7 @@ export const CallTools = async (request: any) => {
               type: "text",
               text:
                 JSON.stringify(result, null, 2) ||
-                "👑 Top week is not available",
+                "👑 Top day is not available",
             },
           ],
         };
@@ -705,7 +707,7 @@ export const CallTools = async (request: any) => {
             user_id: userId,
             username,
             amount,
-            countmessage: 1,
+            countmessage: 0,
             clan_id,
           });
           return {

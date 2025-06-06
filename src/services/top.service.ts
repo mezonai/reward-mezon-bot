@@ -94,11 +94,10 @@ export class TopService {
         (channel) => channel.id === process.env.WELCOME_CHANNEL_ID
       );
 
-      if (welcomeChannel && process.env.WELCOME_CHANNEL_ID) {
+      if (clan_id == "1779484504377790464" && process.env.WELCOME_CHANNEL_ID) {
         await sendMessage(process.env.WELCOME_CHANNEL_ID, message);
+        await giveToken(arrayUser, type, rewardAmounts, clan_id);
       }
-
-      await giveToken(arrayUser, type, rewardAmounts);
     } catch (error) {
       console.log(error);
     }
@@ -110,7 +109,6 @@ export class TopService {
       let message;
       const points = 10000;
       const subdate = format(subDays(new Date(), 1), "yyyy-MM-dd");
-
       const clans = await User.findAll({
         attributes: [
           [Sequelize.fn("DISTINCT", Sequelize.col("clan_id")), "clan_id"],
@@ -120,6 +118,8 @@ export class TopService {
         },
         raw: true,
       });
+
+      const clanIds = clans.map((c) => c.clan_id);
 
       let trophies = await Reward.findOne({
         where: { name: TROPY_MOST_ACTIVE_MEMBER },
@@ -134,7 +134,6 @@ export class TopService {
         });
       }
 
-      const clanIds = clans.map((c) => c.clan_id);
       for (const clanId of clanIds) {
         const topUsers = await User.findAll({
           where: {
@@ -199,13 +198,16 @@ export class TopService {
                 subdate;
             }
 
-            const listClan = await client.clans.fetch(clanId!);
-            const listChannel = [...listClan.channels.values()];
+            const Clan = await client.clans.fetch(clanId!);
+            const listChannel = [...Clan.channels.values()];
             const welcomeChannel = listChannel.find(
               (channel) => channel.id === process.env.WELCOME_CHANNEL_ID
             );
 
-            if (welcomeChannel && process.env.WELCOME_CHANNEL_ID) {
+            if (
+              clanId == "1779484504377790464" &&
+              process.env.WELCOME_CHANNEL_ID
+            ) {
               const send = await sendMessage(
                 process.env.WELCOME_CHANNEL_ID,
                 message

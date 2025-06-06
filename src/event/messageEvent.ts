@@ -1,6 +1,5 @@
 import { ChannelMessage, MezonClient } from "mezon-sdk";
 import { commands } from "../commands/index";
-import { client } from "../config/mezon-client";
 import { imageCreationRequest } from "../ultis/constant";
 import { addUser } from "../services/system.service";
 import { publishMessage } from "../services/memcached.service";
@@ -9,7 +8,7 @@ export class MessageEventHandler {
   constructor(private readonly client: MezonClient) {}
 
   public register() {
-    client.onChannelMessage(this.onChannelMessage.bind(this));
+    this.client.onChannelMessage(this.onChannelMessage.bind(this));
   }
 
   public async onChannelMessage(data: ChannelMessage) {
@@ -53,6 +52,8 @@ export class MessageEventHandler {
       await this.handleExclamationCommand(data, text);
     }
     if (data.sender_id === process.env.BOT) return;
+
+    console.log("data", data);
   }
 
   private async handleExclamationCommand(data: ChannelMessage, text: string) {
