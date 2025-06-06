@@ -502,7 +502,7 @@ export const CallTools = async (request: any) => {
         // Get users from database first
         const sqlQuery = `
           SELECT * FROM users
-          WHERE user_id <> :BOT and clan_id = :clan_id 
+          WHERE user_id <> :BOT and clan_id = :clan_id and countmessage > 0
           ORDER BY countmessage DESC
           LIMIT 10
         `;
