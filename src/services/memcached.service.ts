@@ -1,122 +1,66 @@
-interface QueueMessage {
-  message: any;
-  timestamp: number;
-}
+import { AwardCommand } from "../commands/award.command";
+import sequelize from "../config/database";
+import { filterMessagesByDateRange } from "../ultis/constant";
+import { enumBot, startsWithSpecialChar } from "../ultis/constant";
 
-interface CacheEntry {
-  value: any;
-  expiryTime: number;
+interface MessageData {
+  user_id: string;
+  clan_id?: string;
+  count: number;
 }
 
 export class DataStorageService {
-  private static instance: DataStorageService;
-  private cache: Map<string, CacheEntry>;
-  private readonly queueKey = "message_queue";
-  private readonly messageExpiry = 7 * 24 * 60 * 60;
-  private readonly dataExpiry = 30 * 24 * 60 * 60;
+  private cache: Map<string, MessageData>;
 
-  private constructor() {
-    this.cache = new Map<string, CacheEntry>();
-  }
-
-  public static getInstance(): DataStorageService {
-    if (!DataStorageService.instance) {
-      DataStorageService.instance = new DataStorageService();
-    }
-    return DataStorageService.instance;
+  constructor() {
+    this.cache = new Map<string, MessageData>();
   }
 
   async publishMessage(message: any): Promise<void> {
-    const queue = await this.getAsync(this.queueKey);
-    const messageQueue: QueueMessage[] = queue ? JSON.parse(queue) : [];
-    messageQueue.push({
-      message,
-      timestamp: Date.now(),
-    });
+    try {
+      const { username, sender_id, content, clan_id } = message;
 
-    await this.setAsync(
-      this.queueKey,
-      JSON.stringify(messageQueue),
-      this.messageExpiry
-    );
-  }
-
-  async consumeMessages(
-    callback: (message: any) => Promise<void>
-  ): Promise<void> {
-    const processQueue = async () => {
-      try {
-        const queue: any = await this.getAsync(this.queueKey);
-        if (queue) {
-          const messageQueue = JSON.parse(queue);
-          if (messageQueue.length > 0) {
-            const { message } = messageQueue.shift();
-            await callback(message);
-            await this.setAsync(
-              this.queueKey,
-              JSON.stringify(messageQueue),
-              this.messageExpiry
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error processing message queue:", error);
-      }
-
-      setTimeout(processQueue, 100);
-    };
-
-    processQueue();
-  }
-
-  private getAsync(key: string): Promise<any> {
-    return new Promise((resolve) => {
-      const entry = this.cache.get(key);
-      if (!entry) {
-        resolve(null);
+      if (
+        !sender_id ||
+        username === "Anonymous" ||
+        enumBot.some((bot) => username.includes(bot)) ||
+        startsWithSpecialChar(content?.t) ||
+        sender_id === process.env.BOT
+      ) {
         return;
       }
+      const key = `${clan_id}_${sender_id}`;
 
-      if (entry.expiryTime < Date.now()) {
-        this.cache.delete(key);
-        resolve(null);
-        return;
+      if (this.getAsync(key)) {
+        this.checkAndIncrementCount(sender_id, clan_id);
+      } else {
+        await Promise.all([
+          this.setAsync(key, {
+            user_id: sender_id,
+            clan_id,
+            count: 0,
+          }),
+          this.checkAndIncrementCount(sender_id, clan_id),
+        ]);
       }
-
-      resolve(entry.value);
-    });
+    } catch (error) {
+      console.error("Error processing message:", error);
+    }
   }
 
-  private setAsync(key: string, value: string, expiry: number): Promise<void> {
-    return new Promise((resolve) => {
-      const expiryTime = Date.now() + expiry * 1000;
-      this.cache.set(key, { value, expiryTime });
-      resolve();
-    });
+  private getAsync(key: string) {
+    const entry = this.cache.get(key);
+    if (!entry) {
+      return;
+    }
+    return entry;
   }
 
-  async incrementCount(key: string): Promise<number> {
-    const currentValue = await this.getAsync(key);
-    const newValue = currentValue ? parseInt(currentValue as string) + 1 : 1;
-    await this.setAsync(key, newValue.toString(), this.dataExpiry);
-    return newValue;
+  private async setAsync(key: string, data: MessageData): Promise<void> {
+    console.log("data ASYNX", data);
+    this.cache.set(key, data);
   }
 
-  async getCount(key: string): Promise<number> {
-    const count = await this.getAsync(key);
-    return count ? parseInt(count as string) : 0;
-  }
-  async setData(
-    key: string,
-    data: any,
-    expirySeconds: number = this.dataExpiry
-  ): Promise<void> {
-    await this.setAsync(key, JSON.stringify(data), expirySeconds);
-  }
-  async getData(key: string): Promise<any> {
-    const data = await this.getAsync(key);
-    return data ? JSON.parse(data as string) : null;
-  }
   async deleteData(key: string): Promise<void> {
     return new Promise((resolve) => {
       this.cache.delete(key);
@@ -124,27 +68,42 @@ export class DataStorageService {
     });
   }
 
-  async checkAndIncrementCount(key: string, clan_id?: string): Promise<any> {
-    const storageKey = clan_id ? `${key}_${clan_id}` : key;
-    const data = await this.getData(storageKey);
+  async checkAndIncrementCount(
+    sender_id: string,
+    clan_id: string
+  ): Promise<any> {
+    const storageKey = `${clan_id}_${sender_id}`;
+
+    let data = (await this.getAsync(storageKey)) as MessageData;
+
     if (data) {
-      data.count = (data.count || 0) + 1;
-      await this.setData(storageKey, data);
-      return data;
-    } else {
-      const newData = {
-        user_id: key,
-        clan_id: clan_id,
-        count: 1,
-      };
-      await this.setData(storageKey, newData);
-      return newData;
+      data.count += 1;
+      await this.setAsync(storageKey, data);
     }
+  }
+
+  async syncMessageCounts() {
+    const allData = Array.from(this.cache.values());
+    for (const data of allData) {
+      await sequelize.query(
+        `UPDATE users SET countmessage = countmessage + :increment WHERE user_id = :user_id`,
+        {
+          replacements: {
+            increment: data.count,
+            user_id: data.user_id,
+          },
+        }
+      );
+    }
+
+    this.cache.clear();
   }
 }
 
-export const dataStorageService = DataStorageService.getInstance();
-export const connect = async () => {};
-export const publishMessage = async (message: any) => {
-  await dataStorageService.publishMessage(message);
-};
+export const dataStorageService = new DataStorageService();
+
+export const publishMessage =
+  dataStorageService.publishMessage.bind(dataStorageService);
+
+export const syncMessageCounts =
+  dataStorageService.syncMessageCounts.bind(dataStorageService);

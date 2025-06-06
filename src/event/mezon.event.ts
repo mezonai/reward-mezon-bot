@@ -9,10 +9,10 @@ export class MezonBotListener {
 
   constructor(private readonly client: MezonClient) {
     this.handlers = [
-      new MessageEventHandler(client),
-      new TokenEventHandler(client),
-      new UserEventHandler(client),
-      new EventHandler(client),
+      new MessageEventHandler(this.client),
+      new TokenEventHandler(this.client),
+      new UserEventHandler(this.client),
+      new EventHandler(this.client),
     ];
   }
 

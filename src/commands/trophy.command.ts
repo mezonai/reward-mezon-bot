@@ -4,7 +4,11 @@ import { rewardToolService } from "../services/call_tool.service";
 import { replyMessage, sendMessage } from "../services/message.service";
 import Reward from "../models/Reward";
 import { embedTrophy, components } from "../ultis/form";
-import { formatListTrophy, formatListTrophyUser } from "../ultis/constant";
+import {
+  checkAnonymous,
+  formatListTrophy,
+  formatListTrophyUser,
+} from "../ultis/constant";
 import { client } from "../config/mezon-client";
 
 type TrophyAction = "new" | "upd" | "del";
@@ -20,6 +24,14 @@ interface FetchedMessage {
 export class TrophyCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
     try {
+      if (checkAnonymous(message.username!)) {
+        await replyMessage(
+          message.channel_id,
+          "You must mention a valid member or provide a valid user ID or user not found!",
+          message?.message_id!
+        );
+        return;
+      }
       if (commandName === "trophy") {
         await this.handleTrophyCommand(args, message);
       } else if (commandName === "list_trophy") {

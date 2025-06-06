@@ -1,13 +1,13 @@
 import { ChannelMessage } from "mezon-sdk";
 import { clientMCP } from "../config/connect";
 import { client } from "../config/mezon-client";
-import { messageConsumer } from "./message-consumer.service";
+import { syncMessageCounts } from "./memcached.service";
 
 export class RewardToolService {
   private client = clientMCP;
 
   async topDay(clan_id: string) {
-    await messageConsumer.syncMessageCounts();
+    await syncMessageCounts();
     return await clientMCP.callTool({
       name: "top-day",
       arguments: {

@@ -185,6 +185,32 @@ export function startsWithSpecialChar(str?: string): boolean {
   return regex.test(str);
 }
 
+export function filterMessagesByDateRange(
+  messages: Array<{ id: string; timestamp: number }>,
+  startDate?: Date,
+  endDate?: Date
+): Array<{ id: string; timestamp: number }> {
+  if (!messages || !Array.isArray(messages)) {
+    return [];
+  }
+
+  if (!startDate && !endDate) {
+    return messages;
+  }
+
+  return messages.filter((msg) => {
+    const msgDate = new Date(msg.timestamp);
+    if (startDate && endDate) {
+      return msgDate >= startDate && msgDate <= endDate;
+    } else if (startDate) {
+      return msgDate >= startDate;
+    } else if (endDate) {
+      return msgDate <= endDate;
+    }
+    return true;
+  });
+}
+
 export function removeCodeBlockTicks(text: string): string {
   if (!text.includes("```")) {
     return text;
@@ -193,6 +219,14 @@ export function removeCodeBlockTicks(text: string): string {
     return match.replace(/```/g, "").trim();
   });
 }
+
+export const checkAnonymous = (name: string): boolean => {
+  if (name == "Anonymous") {
+    return true;
+  }
+  return false;
+};
+
 export function imageCreationRequest(message: string): boolean {
   const keywords = [
     /tạo\s*(ảnh|hình|image)/i,
