@@ -51,19 +51,82 @@ export class MessageEventHandler {
   private async handleExclamationCommand(data: ChannelMessage, text: string) {
     const args = text.slice(1).trim().split(/ +/);
     const command = args.shift()?.toLowerCase();
-    if (!command || !(command in commands)) return;
-    try {
-      await commands[command as keyof typeof commands].execute(
-        args,
-        data,
-        command
-      );
-    } catch (error) {
-      console.error("error", error);
-      await sendMessage(
-        data.channel_id,
-        "⚠️ Error, please check the command `!help`."
-      );
+    if (!command) return;
+    
+    if (command in commands) {
+      try {
+        await commands[command as keyof typeof commands].execute(
+          args,
+          data,
+          command
+        );
+      } catch (error) {
+        console.error("error", error);
+        await sendMessage(
+          data.channel_id,
+          "⚠️ Error, please check the command `!help`."
+        );
+      }
+    } else {
+      const suggestion = this.findSimilarCommand(command);
+      if (suggestion) {
+        await sendMessage(
+          data.channel_id,
+          `⚠️ Command \`!${command}\` not found. Did you mean \`!${suggestion}\`?`
+        );
+      } else {
+        await sendMessage(
+          data.channel_id,
+          `⚠️ Command \`!${command}\` not found. Type \`!help\` to see available commands.`
+        );
+      }
     }
+  }
+
+
+  private findSimilarCommand(input: string): string | null {
+    const availableCommands = Object.keys(commands);
+    let bestMatch: string | null = null;
+    let bestDistance = Infinity;
+    
+    for (const cmd of availableCommands) {
+      const distance = this.levenshteinDistance(input, cmd);
+
+      if (distance < bestDistance && distance <= Math.max(2, Math.floor(cmd.length / 2))) {
+        bestMatch = cmd;
+        bestDistance = distance;
+      }
+    }
+    
+    return bestMatch;
+  }
+
+
+  private levenshteinDistance(a: string, b: string): number {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const matrix = [];
+
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+
+ 
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        const cost = a[j - 1] === b[i - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,     
+          matrix[i][j - 1] + 1,      
+          matrix[i - 1][j - 1] + cost 
+        );
+      }
+    }
+
+    return matrix[b.length][a.length];
   }
 }

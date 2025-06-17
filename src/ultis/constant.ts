@@ -19,8 +19,8 @@ export function formatLeaderboard(data: any[], title?: string): string {
   let leaderboard = `🏆 Leaderboard ${title ? title : ""} :\n`;
   data.forEach((user, index) => {
     leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${
-      user.total_point
-    } 💰 -   ${
+     (+user.total_point).toLocaleString()
+    } ₫  -  ${
       user.role_name == "Đồng"
         ? "🥉"
         : user.role_name == "Bạc"
@@ -66,13 +66,24 @@ export function formatListTrophy(data: any[]): string {
   return leaderboard.trim();
 }
 
+export function formatDate(date: string): string {
+  const utcDate = new Date(date);
+
+  return utcDate.toLocaleString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour12: false,
+  });
+}
+
 export function formatListTrophyUser(data: any[]): string {
+
+  console.log("data", data)
   if (data.length === 0) {
     return "🏆 No trophies in the list.";
   }
   let leaderboardTrophy = `📝 Trophy List for ${data[0].user_name}:\n`;
   data.forEach((item) => {
-    leaderboardTrophy += `- @${item.user_name} - ${item.points} 💰 -  🏆 ${item.name}\n`;
+    leaderboardTrophy += `- @${item.user_name} - ${Number(item.points).toLocaleString()} ₫ -  🏆 ${item.name} - ${formatDate(item.createdAt)}\n`;
   });
 
   return leaderboardTrophy.trim();

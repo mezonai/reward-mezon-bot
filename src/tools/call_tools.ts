@@ -477,7 +477,7 @@ export const CallTools = async (request: any) => {
           `
           SELECT 
 		  r.name, r.points,
-		  ur.user_name
+		  ur.user_name, ur."createdAt"
           FROM rewards r
           JOIN user_rewards ur ON ur.reward_id = r.id
           WHERE ur.user_id = :userId AND ur.clan_id = :clan_id
@@ -719,7 +719,6 @@ export const CallTools = async (request: any) => {
               countmessage: 0,
             });
           }
-
           return {
             content: [
               {
@@ -729,8 +728,6 @@ export const CallTools = async (request: any) => {
             ],
           };
         } catch (e: any) {
-          console.log(e, "e");
-
           console.error(
             "❌ Error creating user:",
             e.message,
@@ -745,95 +742,8 @@ export const CallTools = async (request: any) => {
         }
       }
 
-      case "add-user-reward": {
-        const { userId, rewardId, amount, clan_id } =
-          AddUserRewardSchema.parse(args);
 
-        const reward = await Reward.findByPk(rewardId);
-        if (!reward) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: "❌ Reward does not exist.",
-              },
-            ],
-          };
-        }
 
-        const userAmountToCheck = await User.findOne({
-          where: { user_id: userId },
-        });
-
-        if (!userAmountToCheck) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: "❌ User does not exist.",
-              },
-            ],
-          };
-        }
-
-        await UserReward.create({
-          reward_id: rewardId,
-          user_id: userId,
-          user_name: userAmountToCheck.username,
-          clan_id,
-        });
-
-        await User.increment("amount", {
-          by: reward.points,
-          where: { user_id: userId },
-        });
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `✅ Added reward ${reward.get("name")} for user ${
-                userAmountToCheck.username
-              }.`,
-            },
-          ],
-        };
-      }
-
-      case "get-leaderboard": {
-        const { limit, clan_id } = GetLeaderboardSchema.parse(args);
-
-        const result = await sequelize.query(
-          `
-          SELECT 
-              u.user_id,
-              u.username,
-              u.amount,
-              COUNT(ur.id) as reward_count,
-              SUM(r.points) as total_reward_points
-          FROM users u
-          LEFT JOIN user_rewards ur ON u.user_id = ur.user_id
-          LEFT JOIN rewards r ON ur.reward_id = r.id
-          WHERE ur.clan_id = :clan_id
-          GROUP BY u.user_id, u.username, u.amount
-          ORDER BY total_reward_points DESC, u.amount DESC
-          LIMIT :limit
-        `,
-          {
-            replacements: { limit, clan_id },
-            type: QueryTypes.SELECT,
-          }
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2) || "No data found",
-            },
-          ],
-        };
-      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);

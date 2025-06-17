@@ -207,14 +207,9 @@ export class TopService {
                 subdate;
             }
             const clan = await client.clans.fetch(clanId);
-
-            
             if (!clan) {
               return;
             }
-
-            console.log(clan.welcome_channel_id)
-
             if (clan.welcome_channel_id ) {
               await sendMessage(clan.welcome_channel_id , message).then(
                 async () => {

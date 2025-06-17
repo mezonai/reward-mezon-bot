@@ -44,6 +44,7 @@ UserClanMessage.init(
       defaultValue: 0,
     },
   },
+  
   {
     sequelize,
     modelName: "UserClanMessage",
@@ -51,7 +52,7 @@ UserClanMessage.init(
     timestamps: true,
     indexes: [
       {
-        unique: true,
+        unique: false,
         fields: ["user_id", "clan_id"],
       },
     ],

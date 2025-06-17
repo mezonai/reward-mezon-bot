@@ -4,6 +4,7 @@ import User from "../models/User";
 import dotenv from "dotenv";
 import { replyMessage, sendMessage } from "./message.service";
 import { client } from "../config/mezon-client";
+import sequelize from "../config/database";
 dotenv.config();
 
 export class SystemService {
@@ -38,6 +39,7 @@ export class SystemService {
     message: ChannelMessage,
     money: number
   ): Promise<void> {
+    const transaction = await sequelize.transaction();
     try {
       const dataSendToken = {
         sender_id: this.botId,
@@ -49,12 +51,16 @@ export class SystemService {
       await client.sendToken(dataSendToken);
       const user = await User.findOne({
         where: { user_id: message.sender_id },
+        lock: true,
+        transaction,
       });
 
       if (user) {
         user.amount = Number(user.amount) - money;
-        await user?.save();
+        await user.save({ transaction });
       }
+
+      await transaction.commit();
 
       await replyMessage(
         message?.channel_id!,
@@ -62,6 +68,7 @@ export class SystemService {
         message?.message_id!
       );
     } catch (error) {
+      await transaction.rollback();
       await replyMessage(
         message?.channel_id!,
         `💸 Failed to withdraw ${money} ₫, please try again`,

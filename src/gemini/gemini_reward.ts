@@ -29,7 +29,7 @@ class GeminiRewardService {
   ) {
     try {
       if (!process.env.GEMINI_API_KEY) {
-        return "GEMINI_API_KEY chưa được khai báo trong file .env.";
+        return "GEMINI_API_KEY has not been declared in the .env file.";
       }
 
       const currentContents = await content_gemini(
@@ -68,7 +68,7 @@ class GeminiRewardService {
               limit: number;
             };
 
-            let responseText = "Không thể đọc tin nhắn hoặc kênh trống.";
+            let responseText = "Cannot read messages or the channel is empty.";
 
             try {
               const contextMessages = [];
@@ -98,7 +98,7 @@ class GeminiRewardService {
                 } tin nhắn:\n${JSON.stringify(messagesArray, null, 2)}`;
               }
             } catch (error) {
-              responseText = "Lỗi khi xử lý dữ liệu tin nhắn.";
+              responseText = "Error processing message data.";
             }
 
             currentContents.push(
@@ -132,7 +132,7 @@ class GeminiRewardService {
               return removeCodeBlockTicks(secondPart.text);
             }
 
-            return "Không thể xử lý phản hồi sau khi đọc tin nhắn.";
+            return "Cannot process response after reading messages.";
           }
 
           case "send-message": {
@@ -169,14 +169,14 @@ class GeminiRewardService {
             const sendText =
               sendResult?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!sendText) {
-              return "Không nhận được phản hồi từ Gemini.";
+              return "No response received from Gemini.";
             }
 
             return removeCodeBlockTicks(sendText);
           }
 
           default:
-            return `Lệnh "${name}" không được hỗ trợ.`;
+            return `Command "${name}" is not supported.`;
         }
       }
 
@@ -184,10 +184,10 @@ class GeminiRewardService {
         return removeCodeBlockTicks(part.text);
       }
 
-      return "Tui gõ cửa Bot-reward mà không ai mở... chắc đi vắng rồi đó! 🚪🤖";
+      return "I knocked on Bot-reward's door but no one answered... they must be away! 🚪🤖";
     } catch (err) {
-      console.error("lỗi gemni", err);
-      return "Ối dồi ôi… tui trượt vỏ chuối logic rồi! Cho tui quay xe xử lý cái nè~ 🌀";
+      console.error("Gemini error", err);
+      return "Oops... I slipped on a logic banana peel! Let me turn around and fix this~ 🌀";
     }
   }
 
@@ -246,10 +246,10 @@ class GeminiRewardService {
         if (imageResult) return imageResult;
       }
 
-      return "Không thể tạo ảnh.";
+      return "Cannot create image.";
     } catch (err) {
-      console.error("Lỗi trong generateImageFromText:", err);
-      return "Ối dồi ôi… tui trượt vỏ chuối logic rồi! Cho tui quay xe xử lý cái nè~ 🌀";
+      console.error("Error in generateImageFromText:", err);
+      return "Oops... I slipped on a logic banana peel! Let me turn around and fix this~ 🌀";
     }
   }
 }

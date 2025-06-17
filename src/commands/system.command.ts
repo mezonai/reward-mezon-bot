@@ -31,7 +31,7 @@ export class SystemCommand extends CommandMessage {
       if (!Number.isInteger(money) || money <= 0) {
         await replyMessage(
           message.channel_id,
-          "💸 Số tiền rút không hợp lệ.",
+          "💸 Invalid withdrawal amount.",
           message.message_id!
         );
         return;
@@ -42,7 +42,7 @@ export class SystemCommand extends CommandMessage {
       if (!user || user.amount == 0 || money > user.amount) {
         await replyMessage(
           message.channel_id,
-          "💸Số dư của bạn không đủ để rút hoặc số tiền rút không hợp lệ ",
+          "💸 Your balance is insufficient for withdrawal or the withdrawal amount is invalid",
           message.message_id!
         );
         return;
@@ -77,7 +77,7 @@ export class SystemCommand extends CommandMessage {
 
       const statusMessage = await replyMessage(
         message.channel_id,
-        "Đang tạo ảnh, vui lòng chờ...",
+        "Creating image, please wait...",
         message?.message_id!
       );
 
