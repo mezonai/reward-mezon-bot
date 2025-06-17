@@ -11,14 +11,7 @@ export class UserEventHandler {
   }
 
   public async onAddClanUser(data: any) {
-    await addUser(
-      data.user.user_id,
-      data.user.username!,
-      0,
-      0,
-      undefined,
-      data.clan_id
-    );
+    await addUser(data.user.user_id, data.user.username!, 0, data.clan_id);
   }
 
   public async onRoleAssign(data: any) {}

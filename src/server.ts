@@ -33,8 +33,6 @@ async function main() {
     try {
       await sequelize.authenticate();
       console.log("✅ Kết nối PostgreSQL thành công");
-      await sequelize.sync({ alter: true });
-      await sequelize.query(`SET TIME ZONE 'Asia/Ho_Chi_Minh';`);
       const transport = new StdioServerTransport();
       await server.connect(transport);
     } catch (error) {

@@ -72,7 +72,6 @@ export const AddUserSchema = z.object({
   user_id: z.string().describe("User ID to add the reward to"),
   username: z.string().describe("Username of the user to add the reward to"),
   amount: z.number().describe("Amount of the reward to add"),
-  countmessage: z.number().optional().describe("number message in clan"),
   message: z.string().optional().describe("message user send"),
   clan_id: z.string().optional().describe("ID of the clan the user belongs to"),
 });

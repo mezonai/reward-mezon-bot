@@ -11,11 +11,12 @@ import {
 
 export function formatLeaderboard(data: any[], title?: string): string {
   if (data.length === 0) {
-    return `🏆 Không có người chơi nào trong bảng xếp hạng ${
+    return `🏆 No players in the leaderboard ${
       title ? title : ""
     } `;
   }
-  let leaderboard = `🏆 Bảng xếp hạng ${title ? title : ""} :\n`;
+
+  let leaderboard = `🏆 Leaderboard ${title ? title : ""} :\n`;
   data.forEach((user, index) => {
     leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${
       user.total_point
@@ -35,17 +36,17 @@ export function formatLeaderboard(data: any[], title?: string): string {
 
 export function formatLeaderboardMessage(data: any[], title?: string): string {
   if (data.length === 0) {
-    return `🏆 Không có người chơi nào trong bảng xếp hạng ${
+    return `🏆 No players in the leaderboard ${
       title ? title : ""
     } `;
   }
-  let leaderboard = `🏆 Bảng xếp hạng thành viên tích cực trong ${
+  let leaderboard = `🏆 Leaderboard of active members in ${
     title ? title : ""
   } :\n`;
   data.forEach((user, index) => {
     leaderboard += `${index + 1}. 🧑 @${user?.username} - ${
       user.countmessage
-    } message \n`;
+    } messages \n`;
   });
 
   return leaderboard.trim();
@@ -53,9 +54,9 @@ export function formatLeaderboardMessage(data: any[], title?: string): string {
 
 export function formatListTrophy(data: any[]): string {
   if (data.length === 0) {
-    return "🏆 Không có trophy trong 📝.";
+    return "🏆 No trophies in the list 📝.";
   }
-  let leaderboard = "📝 Danh sách trophy 🏆:\n";
+  let leaderboard = "📝 Trophy List 🏆:\n";
   data.forEach((item, index) => {
     leaderboard += `${index + 1}. 🏆 ${item?.name} - ${
       item.description
@@ -67,9 +68,9 @@ export function formatListTrophy(data: any[]): string {
 
 export function formatListTrophyUser(data: any[]): string {
   if (data.length === 0) {
-    return "🏆 Không có trophy nào trong danh sách.";
+    return "🏆 No trophies in the list.";
   }
-  let leaderboardTrophy = `📝 List Trophy ${data[0].user_name}:\n`;
+  let leaderboardTrophy = `📝 Trophy List for ${data[0].user_name}:\n`;
   data.forEach((item) => {
     leaderboardTrophy += `- @${item.user_name} - ${item.points} 💰 -  🏆 ${item.name}\n`;
   });
@@ -79,9 +80,9 @@ export function formatListTrophyUser(data: any[]): string {
 
 export function formatListRole(data: any[]): string {
   if (data.length === 0) {
-    return "🔥 Không có role nào trong danh sách.";
+    return "🔥 No roles in the list.";
   }
-  let leaderboardRole = `🌟 👑 List role Rewards  🌟:\n`;
+  let leaderboardRole = `🌟 👑 Role Rewards List 🌟:\n`;
   data.forEach((item) => {
     leaderboardRole += ` ${
       item.role_name == "Đồng"
@@ -175,7 +176,7 @@ export const MEZON_EMBED_FOOTER = {
 };
 
 export const ERROR_TOKEN =
-  "💸Số dư của bạn không đủ để trao thưởng hoặc số tiền rút không hợp lệ";
+  "💸 Your balance is insufficient for awarding or the withdrawal amount is invalid";
 
 export const TROPY_MOST_ACTIVE_MEMBER = "Most active member";
 

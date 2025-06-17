@@ -1,15 +1,16 @@
 import { z } from "zod";
 import { client } from "../config/mezon-client";
 import {
-  AddUserSchema,
-  AssignRoleOnScoreSchema,
-  AwardTrophySchema,
-  CrudRewardSchema,
-  GetLeaderboardSchema,
-  ReadMessagesSchema,
-  SendMessageSchema,
-  TopDaySchema,
-  TopSchema,
+    AddUserSchema,
+    AssignRoleOnScoreSchema,
+    AwardTrophySchema,
+    CrudRewardSchema,
+    GetLeaderboardSchema,
+    ReadMessagesSchema,
+    SendMessageSchema,
+    TopDaySchema,
+    TopSchema,
+    AddUserRewardSchema,
 } from "./schema/tool_schema";
 import Reward from "../models/Reward";
 import UserReward from "../models/User_reward";
@@ -17,16 +18,16 @@ import sequelize from "../config/database";
 import { QueryTypes } from "sequelize";
 import RoleReward from "../models/Role_rewards";
 import {
-  addDate,
-  afterDate,
-  enumBot,
-  ERROR_TOKEN,
-  getMondayAndSunday,
-  getStartandEndOfMonth,
+    addDate,
+    afterDate,
+    enumBot,
+    ERROR_TOKEN,
+    getMondayAndSunday,
+    getStartandEndOfMonth,
 } from "../ultis/constant";
 import User from "../models/User";
+import UserClanMessage from "../models/UserClanMessage";
 import { geminiRewardService } from "../gemini/gemini_reward";
-import { dataStorageService } from "../services/memcached.service";
 
 export const CallTools = async (request: any) => {
   const { name, arguments: args } = request.params;
@@ -114,28 +115,28 @@ export const CallTools = async (request: any) => {
           }
 
           const UserReceiver = await User.findOne({
-            where: { user_id: userId, clan_id },
+            where: { user_id: userId },
           });
           if (!UserReceiver) {
             return {
               content: [
                 {
                   type: "text",
-                  text: ` found receiver !` as string,
+                  text: `Receiver not found!` as string,
                 },
               ],
             };
           }
 
           const UserGiveTrophy = await User.findOne({
-            where: { user_id: sender_id, clan_id },
+            where: { user_id: sender_id },
           });
           if (!UserGiveTrophy) {
             return {
               content: [
                 {
                   type: "text",
-                  text: `Not found User give trophy !` as string,
+                  text: `User giving trophy not found!` as string,
                 },
               ],
             };
@@ -172,7 +173,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: ` Đã trao 🏆 ${rewardName} cho @${userName}.` as string,
+                text: `Awarded 🏆 ${rewardName} to @${userName}.` as string,
               },
             ],
           };
@@ -182,7 +183,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: "❌ Có lỗi khi trao reward. Vui lòng thử lại.",
+                text: "❌ Error awarding reward. Please try again.",
               },
             ],
           };
@@ -331,7 +332,7 @@ export const CallTools = async (request: any) => {
             ],
           };
         } catch (err) {
-          console.error("Lỗi khi truy vấn:", err);
+          console.error("Error when querying:", err);
         }
       }
 
@@ -422,7 +423,7 @@ export const CallTools = async (request: any) => {
             content: [
               {
                 type: "text",
-                text: `🏅 Đã tạo Role Reward: ${role_name} với mốc điểm ${point_threshold}.`,
+                text: `🏅 Role Reward created: ${role_name} with point threshold ${point_threshold}.`,
               },
             ],
           };
@@ -499,11 +500,13 @@ export const CallTools = async (request: any) => {
       case "top-day": {
         const { date, clan_id } = TopDaySchema.parse(args);
 
-        // Get users from database first
+        // Get users from UserClanMessage với join để lấy username
         const sqlQuery = `
-          SELECT * FROM users
-          WHERE user_id <> :BOT and clan_id = :clan_id and countmessage > 0
-          ORDER BY countmessage DESC
+          SELECT ucm.user_id, ucm.clan_id, ucm.countmessage, u.username
+          FROM user_clan_messages ucm
+          JOIN users u ON ucm.user_id = u.user_id
+          WHERE ucm.user_id <> :BOT and ucm.clan_id = :clan_id and ucm.countmessage > 0
+          ORDER BY ucm.countmessage DESC
           LIMIT 10
         `;
 
@@ -531,40 +534,38 @@ export const CallTools = async (request: any) => {
         const endDate = addDate(end_date, 1);
 
         const sqlQuery = `
-          WITH user_total_points AS (
-            SELECT 
-              ur.user_name,
-              ur.user_id,
-              SUM(r.points) AS total_point
-            FROM user_rewards ur
-            JOIN rewards r ON ur.reward_id = r.id
-            WHERE ur."createdAt" >= DATE :start_date
-              AND ur."createdAt" < DATE :end_date
-              AND ur.clan_id = :clan_id   
-            GROUP BY ur.user_name, ur.user_id
-          )
-
+        WITH user_total_points AS (
           SELECT 
-            utp.user_name,
-            utp.user_id,
-            utp.total_point,
-            rr.role_name AS role_name
-          FROM user_total_points utp
-          JOIN LATERAL (
-            SELECT role_name
-            FROM role_rewards
-            WHERE point_threshold <= utp.total_point
-            LIMIT 1
-            ) rr ON true
-          ORDER BY total_point DESC
-          LIMIT 3;
-                  `;
+            ur.user_name,
+            ur.user_id,
+            SUM(r.points) AS total_point
+          FROM user_rewards ur
+          JOIN rewards r ON ur.reward_id = r.id
+          WHERE ur."createdAt" >= DATE :start_date
+            AND ur."createdAt" < DATE :end_date
+            AND ur.clan_id = :clan_id   
+          GROUP BY ur.user_name, ur.user_id
+        )
 
+        SELECT 
+          utp.user_name,
+          utp.user_id,
+          utp.total_point,
+          rr.role_name AS role_name
+        FROM user_total_points utp
+        JOIN LATERAL (
+          SELECT role_name
+          FROM role_rewards
+          WHERE point_threshold <= utp.total_point
+          LIMIT 1
+          ) rr ON true
+        ORDER BY total_point DESC
+        LIMIT 3;
+                `;
         const result = await sequelize.query(sqlQuery, {
           replacements: { start_date, end_date: endDate, clan_id },
           type: QueryTypes.SELECT,
         });
-
         return {
           content: [
             {
@@ -623,7 +624,7 @@ export const CallTools = async (request: any) => {
               type: "text",
               text:
                 JSON.stringify(result, null, 2) ||
-                " 👑 Top month is not available",
+                "👑 Top month is not available",
             },
           ],
         };
@@ -634,21 +635,19 @@ export const CallTools = async (request: any) => {
             user_id: userId,
             amount,
             username,
-            message,
             clan_id,
           } = AddUserSchema.parse(args);
 
           if (userId === process.env.BOT) {
-            clan_id = "0";
             const existingBot = await User.findOne({
-              where: { user_id: userId, clan_id: "0" },
+              where: { user_id: userId },
             });
             if (existingBot) {
               return {
                 content: [
                   {
                     type: "text",
-                    text: `❌ User bot ${userId} đã tồn tại trong cơ sở dữ liệu.`,
+                    text: `❌ User bot ${userId} already exists in the database.`,
                   },
                 ],
               };
@@ -657,14 +656,12 @@ export const CallTools = async (request: any) => {
               user_id: userId,
               username,
               amount,
-              countmessage: 0,
-              clan_id: "0",
             });
             return {
               content: [
                 {
                   type: "text",
-                  text: `✅ Đã thêm user bot ${userId} vào cơ sở dữ liệu.`,
+                  text: `✅ Added bot user ${userId} to the database.`,
                 },
               ],
             };
@@ -678,26 +675,32 @@ export const CallTools = async (request: any) => {
               content: [
                 {
                   type: "text",
-                  text: `❌ User ${userId} không hợp lệ (bot hoặc Anonymous), không thể thêm.`,
+                  text: `❌ User ${userId} is invalid (bot or Anonymous), cannot be added.`,
                 },
               ],
             };
           }
 
           const existingUser = await User.findOne({
-            where: { user_id: userId, clan_id },
+            where: { user_id: userId },
           });
 
-          if (existingUser) {
-            if (existingUser.clan_id == null) {
-              existingUser.clan_id = clan_id;
-              await existingUser.save();
+          if (existingUser) {         
+            if (clan_id) {
+              await UserClanMessage.findOrCreate({
+                where: { user_id: userId, clan_id },
+                defaults: {
+                  user_id: userId,
+                  clan_id,
+                  countmessage: 0,
+                },
+              });
             }
             return {
               content: [
                 {
                   type: "text",
-                  text: `❌ User ${userId} đã tồn tại trong cơ sở dữ liệu.`,
+                  text: `❌ User ${userId} already exists in the database.`,
                 },
               ],
             };
@@ -707,18 +710,27 @@ export const CallTools = async (request: any) => {
             user_id: userId,
             username,
             amount,
-            countmessage: 0,
-            clan_id,
           });
+
+          if (clan_id) {
+            await UserClanMessage.create({
+              user_id: userId,
+              clan_id,
+              countmessage: 0,
+            });
+          }
+
           return {
             content: [
               {
                 type: "text",
-                text: `✅ Đã thêm user ${userId} vào cơ sở dữ liệu.`,
+                text: `✅ User ${userId} added to the database.`,
               },
             ],
           };
         } catch (e: any) {
+          console.log(e, "e");
+
           console.error(
             "❌ Error creating user:",
             e.message,
@@ -727,10 +739,100 @@ export const CallTools = async (request: any) => {
           );
           return {
             content: [
-              { type: "text", text: `❌ Lỗi khi thêm user: ${e.message}` },
+              { type: "text", text: `❌ Error adding user: ${e.message}` },
             ],
           };
         }
+      }
+
+      case "add-user-reward": {
+        const { userId, rewardId, amount, clan_id } =
+          AddUserRewardSchema.parse(args);
+
+        const reward = await Reward.findByPk(rewardId);
+        if (!reward) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "❌ Reward does not exist.",
+              },
+            ],
+          };
+        }
+
+        const userAmountToCheck = await User.findOne({
+          where: { user_id: userId },
+        });
+
+        if (!userAmountToCheck) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "❌ User does not exist.",
+              },
+            ],
+          };
+        }
+
+        await UserReward.create({
+          reward_id: rewardId,
+          user_id: userId,
+          user_name: userAmountToCheck.username,
+          clan_id,
+        });
+
+        await User.increment("amount", {
+          by: reward.points,
+          where: { user_id: userId },
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `✅ Added reward ${reward.get("name")} for user ${
+                userAmountToCheck.username
+              }.`,
+            },
+          ],
+        };
+      }
+
+      case "get-leaderboard": {
+        const { limit, clan_id } = GetLeaderboardSchema.parse(args);
+
+        const result = await sequelize.query(
+          `
+          SELECT 
+              u.user_id,
+              u.username,
+              u.amount,
+              COUNT(ur.id) as reward_count,
+              SUM(r.points) as total_reward_points
+          FROM users u
+          LEFT JOIN user_rewards ur ON u.user_id = ur.user_id
+          LEFT JOIN rewards r ON ur.reward_id = r.id
+          WHERE ur.clan_id = :clan_id
+          GROUP BY u.user_id, u.username, u.amount
+          ORDER BY total_reward_points DESC, u.amount DESC
+          LIMIT :limit
+        `,
+          {
+            replacements: { limit, clan_id },
+            type: QueryTypes.SELECT,
+          }
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2) || "No data found",
+            },
+          ],
+        };
       }
 
       default:

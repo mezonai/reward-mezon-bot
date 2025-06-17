@@ -36,7 +36,7 @@ export class RewardCommand extends CommandMessage {
       if (!fullArg && commandName !== "list" && commandName !== "rank") {
         await replyMessage(
           message.channel_id,
-          "Vui lòng cung cấp thông tin hợp lệ.",
+          "Please provide valid information.",
           message?.message_id!
         );
         return;
@@ -50,6 +50,8 @@ export class RewardCommand extends CommandMessage {
       const [action, roleName, score] = fullArg.split("|").map((s) => s.trim());
 
       if (commandName === "reward") {
+
+        if (message.sender_id !== "1840678415796015104") return
         const fetchedChannel = await client.channels.fetch(message.channel_id);
         const fetchedMessage = await fetchedChannel.messages.fetch(
           message?.message_id!
@@ -74,7 +76,7 @@ export class RewardCommand extends CommandMessage {
           default:
             await replyMessage(
               message.channel_id,
-              "Hành động không hợp lệ. Sử dụng 'new', 'upd', hoặc 'del'.",
+              "Invalid action. Use 'new', 'upd', or 'del'.",
               message?.message_id!
             );
         }
@@ -88,7 +90,7 @@ export class RewardCommand extends CommandMessage {
       console.error("Error in reward command:", error);
       await sendMessage(
         message.channel_id,
-        "Đã xảy ra lỗi khi xử lý lệnh reward."
+        "An error occurred while processing the reward command."
       );
     }
   }
@@ -110,7 +112,7 @@ export class RewardCommand extends CommandMessage {
     } else {
       await sendMessage(
         message.channel_id,
-        "Lỗi: Không thể xử dý kết quả trả về."
+        "Error: Unable to process the returned result."
       );
     }
   }
@@ -166,7 +168,7 @@ export class RewardCommand extends CommandMessage {
     if (!reward) {
       await replyMessage(
         message.channel_id,
-        "Không tìm thấy phần thưởng với tên này.",
+        "Reward with this name not found.",
         message?.message_id!
       );
       return;
@@ -181,7 +183,7 @@ export class RewardCommand extends CommandMessage {
   private async handleApiError(message: ChannelMessage) {
     await sendMessage(
       message.channel_id,
-      "Lỗi: Không thể xử lý kết quả trả về."
+      "Error: Unable to process the returned result."
     );
   }
 }

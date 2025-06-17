@@ -1,28 +1,29 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/database";
 
-interface UserAttributes {
+interface UserClanMessageAttributes {
   id: number;
   user_id: string;
-  username: string;
-  amount: number;
+  clan_id: string;
+  countmessage: number;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, "id"> {}
+interface UserClanMessageCreationAttributes
+  extends Optional<UserClanMessageAttributes, "id"> {}
 
-class User
-  extends Model<UserAttributes, UserCreationAttributes>
-  implements UserAttributes
+class UserClanMessage
+  extends Model<UserClanMessageAttributes, UserClanMessageCreationAttributes>
+  implements UserClanMessageAttributes
 {
   declare id: number;
   declare user_id: string;
-  declare username: string;
-  declare amount: number;
+  declare clan_id: string;
+  declare countmessage: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
 
-User.init(
+UserClanMessage.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -32,13 +33,12 @@ User.init(
     user_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
-    username: {
+    clan_id: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    amount: {
+    countmessage: {
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0,
@@ -46,10 +46,16 @@ User.init(
   },
   {
     sequelize,
-    modelName: "User",
-    tableName: "users",
+    modelName: "UserClanMessage",
+    tableName: "user_clan_messages",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["user_id", "clan_id"],
+      },
+    ],
   }
 );
 
-export default User;
+export default UserClanMessage;

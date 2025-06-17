@@ -2,7 +2,7 @@ import { ChannelMessage, MezonClient } from "mezon-sdk";
 import { commands } from "../commands/index";
 import { imageCreationRequest } from "../ultis/constant";
 import { addUser } from "../services/system.service";
-import { publishMessage } from "../services/memcached.service";
+import { publishMessage, syncMessageCounts } from "../services/memcached.service";
 import { sendMessage } from "../services/message.service";
 export class MessageEventHandler {
   constructor(private readonly client: MezonClient) {}
@@ -12,14 +12,7 @@ export class MessageEventHandler {
   }
 
   public async onChannelMessage(data: ChannelMessage) {
-    await addUser(
-      data.sender_id,
-      data.username!,
-      0,
-      0,
-      data?.content?.t!,
-      data.clan_id!
-    );
+    await addUser(data.sender_id, data.username!, 0, data.clan_id!);
     await publishMessage(data);
     if (
       (Array.isArray(data?.mentions) &&
@@ -53,7 +46,6 @@ export class MessageEventHandler {
     }
     if (data.sender_id === process.env.BOT) return;
 
-    console.log("data", data);
   }
 
   private async handleExclamationCommand(data: ChannelMessage, text: string) {
@@ -67,9 +59,10 @@ export class MessageEventHandler {
         command
       );
     } catch (error) {
+      console.error("error", error);
       await sendMessage(
         data.channel_id,
-        "⚠️ Lỗi cú pháp, vui lòng xem lại lệnh `!help`."
+        "⚠️ Error, please check the command `!help`."
       );
     }
   }

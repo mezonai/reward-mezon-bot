@@ -9,7 +9,9 @@
     "bot": " tsc && node build/bot_reward.js",
     "dev:bot": "nodemon --watch src --ext ts,js --exec \"npm run bot\"",
     "build": "rimraf build &&tsc",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "migrate": "tsc && node build/scripts/init-database.js",
+    "db:init": "npm run migrate"
   },
   "keywords": [
     "mezon",
@@ -24,7 +26,7 @@
     "cron": "^4.3.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.1",
-    "mezon-sdk": "^2.7.97",
+    "mezon-sdk": "^2.7.99",
     "pg": "^8.15.6",
     "sequelize": "^6.37.7",
     "zod": "^3.24.3"

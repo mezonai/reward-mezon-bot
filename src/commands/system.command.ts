@@ -37,7 +37,7 @@ export class SystemCommand extends CommandMessage {
         return;
       }
       let user = await User.findOne({
-        where: { user_id: message.sender_id, clan_id: message.clan_id },
+        where: { user_id: message.sender_id },
       });
       if (!user || user.amount == 0 || money > user.amount) {
         await replyMessage(
