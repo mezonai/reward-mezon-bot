@@ -16,7 +16,10 @@ const getExistsMessage = (type: string, name: string): string =>
   `🏆 The ${type} ${name} already exists`;
 
 const getInvalidPointsMessage = (): string =>
-  `Value must be a positive integer greater than or equal to 0`;
+  `Name must have a value and score must be a positive integer greater than or equal to 0`;
+
+const getInvalidRoleNameMessage = (): string =>
+  `Role name must have a value and point threshold must be a positive integer greater than or equal to 0`;
 
 export class EventHandler {
   constructor(private readonly client: MezonClient) {}
@@ -42,6 +45,7 @@ export class EventHandler {
 
         case "submit":
           if (!data?.extra_data) return;
+
 
           let dataForm;
           try {
@@ -109,11 +113,16 @@ export class EventHandler {
   ) {
     switch (handle) {
       case "new": {
+
+        if (!dataForm.name || !dataForm.points) {
+          await updateMessage(getInvalidPointsMessage(), channelId, messageId);
+          return;
+        }
         if (!isValidPoints(dataForm.points)) {
           await updateMessage(getInvalidPointsMessage(), channelId, messageId);
           return;
         }
-
+       
         const existingReward = await Reward.findOne({
           where: { name: dataForm?.name },
         });
@@ -144,6 +153,10 @@ export class EventHandler {
 
       case "upd": {
         if (!id) return;
+        if (!dataForm.name || !dataForm.points) {
+          await updateMessage(getInvalidPointsMessage(), channelId, messageId);
+          return;
+        }
 
         if (!isValidPoints(dataForm.points)) {
           await updateMessage(getInvalidPointsMessage(), channelId, messageId);
@@ -180,8 +193,12 @@ export class EventHandler {
   ) {
     switch (handle) {
       case "new": {
+        if (!dataForm.role_name || !dataForm.point_threshold) {
+          await updateMessage(getInvalidRoleNameMessage(), channelId, messageId);
+          return;
+        }
         if (!isValidPoints(dataForm.point_threshold)) {
-          await updateMessage(getInvalidPointsMessage(), channelId, messageId);
+          await updateMessage(getInvalidRoleNameMessage(), channelId, messageId);
           return;
         }
 
@@ -213,9 +230,13 @@ export class EventHandler {
 
       case "upd": {
         if (!id) return;
+        if (!dataForm.role_name || !dataForm.point_threshold) {
+          await updateMessage(getInvalidRoleNameMessage(), channelId, messageId);
+          return;
+        }
 
         if (!isValidPoints(dataForm.point_threshold)) {
-          await updateMessage(getInvalidPointsMessage(), channelId, messageId);
+          await updateMessage(getInvalidRoleNameMessage(), channelId, messageId);
           return;
         }
 

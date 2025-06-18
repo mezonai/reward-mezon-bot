@@ -287,10 +287,6 @@ export const ListTools = {
             type: "string",
             description: "id of user",
           },
-          countmessage: {
-            type: "number",
-            description: "number messager user",
-          },
           amount: {
             type: "number",
             description: "amount of user",

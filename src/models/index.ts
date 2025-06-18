@@ -11,4 +11,9 @@ UserReward.belongsTo(Reward, {
   onDelete: "CASCADE",
 });
 
-export { Reward, UserReward };
+export { default as User } from "./User";
+export { default as Reward } from "./Reward";
+export { default as UserReward } from "./User_reward";
+export { default as UserClanMessage } from "./UserClanMessage";
+export { default as BlacklistedUser } from "./BlacklistedUser";
+export { default as RoleReward } from "./Role_rewards";

@@ -22,11 +22,11 @@ export class TokenEventHandler {
           bot.amount = (Number(bot.amount) || 0) + Number(data.amount);
           await bot.save();
         } else {
-          await addUser(process.env.BOT, process.env.BOT_NAME!, data.amount, 0);
+          await addUser(process.env.BOT!, process.env.BOT_NAME!, data.amount);
         }
 
         if (!user) {
-          await addUser(data.sender_id, data.sender_name!, data.amount, 0);
+          await addUser(data.sender_id, data.sender_name!, data.amount);
           user = await User.findOne({ where: { user_id: data.sender_id } });
           if (!user) throw new Error("User creation failed");
         }

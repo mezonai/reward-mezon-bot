@@ -1,7 +1,5 @@
-import { AwardCommand } from "../commands/award.command";
-import sequelize from "../config/database";
-import { filterMessagesByDateRange } from "../ultis/constant";
 import { enumBot, startsWithSpecialChar } from "../ultis/constant";
+import UserClanMessage from "../models/UserClanMessage";
 
 interface MessageData {
   user_id: string;
@@ -57,7 +55,6 @@ export class DataStorageService {
   }
 
   private async setAsync(key: string, data: MessageData): Promise<void> {
-    console.log("data ASYNX", data);
     this.cache.set(key, data);
   }
 
@@ -84,16 +81,24 @@ export class DataStorageService {
 
   async syncMessageCounts() {
     const allData = Array.from(this.cache.values());
+
     for (const data of allData) {
-      await sequelize.query(
-        `UPDATE users SET countmessage = countmessage + :increment WHERE user_id = :user_id`,
-        {
-          replacements: {
-            increment: data.count,
-            user_id: data.user_id,
-          },
-        }
-      );
+      if (!data.clan_id) continue;
+
+      const [userClanMessage] = await UserClanMessage.findOrCreate({
+        where: {
+          user_id: data.user_id,
+          clan_id: data.clan_id,
+        },
+        defaults: {
+          user_id: data.user_id,
+          clan_id: data.clan_id,
+          countmessage: 0,
+        },
+      });
+
+      userClanMessage.countmessage += data.count;
+      await userClanMessage.save();
     }
 
     this.cache.clear();

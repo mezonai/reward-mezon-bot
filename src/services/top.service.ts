@@ -1,6 +1,6 @@
 import { format, getMonth, getWeek, subDays, isMonday } from "date-fns";
 import User from "../models/User";
-import { Reward, UserReward } from "../models";
+import { Reward, UserClanMessage, UserReward } from "../models";
 import { Op, Sequelize } from "sequelize";
 import { sendMessage } from "./message.service";
 import {
@@ -88,15 +88,15 @@ export class TopService {
     clan_id: string
   ): Promise<void> {
     try {
-      const listClan = await client.clans.fetch(clan_id!);
-      const listChannel = [...listClan.channels.values()];
-      const welcomeChannel = listChannel.find(
-        (channel) => channel.id === process.env.WELCOME_CHANNEL_ID
-      );
-
-      if (clan_id == "1779484504377790464" && process.env.WELCOME_CHANNEL_ID) {
-        await sendMessage(process.env.WELCOME_CHANNEL_ID, message);
-        await giveToken(arrayUser, type, rewardAmounts, clan_id);
+      const clan = await client.clans.fetch(clan_id!);
+      if (!clan) {
+        return;
+      }
+      if (clan.welcome_channel_id ) {
+        await Promise.all([
+          sendMessage(clan.welcome_channel_id, message),
+          giveToken(arrayUser, type, rewardAmounts, clan.welcome_channel_id),
+        ]);
       }
     } catch (error) {
       console.log(error);
@@ -105,19 +105,22 @@ export class TopService {
 
   public async showTopDay(): Promise<void> {
     try {
+
       await this.loadBlacklistedUsers();
       let message;
       const points = 10000;
       const subdate = format(subDays(new Date(), 1), "yyyy-MM-dd");
-      const clans = await User.findAll({
+      const clans = await UserClanMessage.findAll({
         attributes: [
           [Sequelize.fn("DISTINCT", Sequelize.col("clan_id")), "clan_id"],
         ],
         where: {
-          user_id: { [Op.ne]: process.env.BOT },
+          countmessage: { [Op.gt]: 0 },
         },
         raw: true,
       });
+
+
 
       const clanIds = clans.map((c) => c.clan_id);
 
@@ -128,33 +131,45 @@ export class TopService {
       if (!trophies) {
         trophies = await Reward.create({
           name: TROPY_MOST_ACTIVE_MEMBER,
-          description: "thành viên tích cực",
+          description: "Active Member",
           points: points,
           createdBy: this.botId,
         });
       }
 
       for (const clanId of clanIds) {
-        const topUsers = await User.findAll({
+        const topMessageCounts = await UserClanMessage.findAll({
           where: {
-            user_id: { [Op.ne]: this.botId },
-            countmessage: { [Op.gt]: 0 },
             clan_id: clanId,
           },
           order: [["countmessage", "DESC"]],
           limit: 10,
         });
 
-        const plainUsers = topUsers
-          .map((user) => user.toJSON())
-          .filter(
-            (user) =>
-              !Array.from(this.blacklistedUsers).some(
-                (blacklisted) =>
-                  blacklisted.user_id === user.user_id &&
-                  blacklisted.clan_id === clanId
-              )
-          );
+        const topUsers = [];
+        for (const messageCount of topMessageCounts) {
+          const user = await User.findOne({
+            where: { user_id: messageCount.user_id },
+          });
+
+          if (user) {
+            topUsers.push({
+              ...user.toJSON(),
+              countmessage: messageCount.countmessage,
+              clan_id: messageCount.clan_id,
+            });
+          }
+        }
+
+
+        const plainUsers = topUsers.filter(
+          (user) =>
+            !Array.from(this.blacklistedUsers).some(
+              (blacklisted) =>
+                blacklisted.user_id === user.user_id &&
+                blacklisted.clan_id === clanId
+            )
+        );
 
         if (plainUsers.length === 0) {
           return;
@@ -162,25 +177,19 @@ export class TopService {
 
         let randomNumber = Math.floor(Math.random() * plainUsers.length);
         const user = plainUsers[randomNumber];
-
         if (
           user &&
           this.botId &&
           trophies.dataValues.name === TROPY_MOST_ACTIVE_MEMBER
         ) {
-          if (!user.clan_id) {
-            return;
-          }
-
           await this.addToBlacklist(user.user_id, user.clan_id);
           const award = await rewardToolService.awardTrophy(
             user.user_id,
             TROPY_MOST_ACTIVE_MEMBER,
             user.username,
             this.botId,
-            clanId!
+            clanId
           );
-
           if (
             Array.isArray(award.content) &&
             typeof award.content[0]?.text === "string"
@@ -190,33 +199,27 @@ export class TopService {
             } else {
               message =
                 award.content[0]?.text +
-                " là người may mắn nằm trong top 10 thành viên tích cực" +
-                " với " +
+                " is the lucky person in the top 10 active members" +
+                " with " +
                 user.countmessage +
-                " message" +
-                " trong ngày " +
+                " messages" +
+                " on " +
                 subdate;
             }
-
-            const Clan = await client.clans.fetch(clanId!);
-            const listChannel = [...Clan.channels.values()];
-            const welcomeChannel = listChannel.find(
-              (channel) => channel.id === process.env.WELCOME_CHANNEL_ID
-            );
-
-            if (
-              clanId == "1779484504377790464" &&
-              process.env.WELCOME_CHANNEL_ID
-            ) {
-              const send = await sendMessage(
-                process.env.WELCOME_CHANNEL_ID,
-                message
+            const clan = await client.clans.fetch(clanId);
+            if (!clan) {
+              return;
+            }
+            if (clan.welcome_channel_id ) {
+              await sendMessage(clan.welcome_channel_id , message).then(
+                async () => {
+                  this.clearBlacklistIfMonday();
+                  await UserClanMessage.update(
+                    { countmessage: 0 },
+                    { where: { clan_id: clanId } }
+                  );
+                }
               );
-
-              this.clearBlacklistIfMonday();
-              if (send) {
-                await User.update({ countmessage: 0 }, { where: {} });
-              }
             }
           }
         }
@@ -249,14 +252,14 @@ export class TopService {
         ) {
           const message = formatLeaderboard(
             JSON.parse(result.content[0].text),
-            `Tuần ${week}`
+            `Week ${week}`
           );
           arrayUser = JSON.parse(result.content[0].text);
           await this.showTopGeneric(
             message,
             arrayUser,
             rewardAmounts,
-            `Tuần ${week}`,
+            `Week ${week}`,
             clanId!
           );
         }
@@ -288,7 +291,7 @@ export class TopService {
         ) {
           const message = formatLeaderboard(
             JSON.parse(result.content[0].text),
-            `Tháng ${month}`
+            `Month ${month}`
           );
           arrayUser = JSON.parse(result.content[0].text);
 
@@ -296,7 +299,7 @@ export class TopService {
             message,
             arrayUser,
             rewardAmounts,
-            `Tháng ${month}`,
+            `Month ${month}`,
             clanId!
           );
         }

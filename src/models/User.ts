@@ -6,8 +6,6 @@ interface UserAttributes {
   user_id: string;
   username: string;
   amount: number;
-  countmessage: number;
-  clan_id?: string;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "id"> {}
@@ -20,8 +18,6 @@ class User
   declare user_id: string;
   declare username: string;
   declare amount: number;
-  declare countmessage: number;
-  declare clan_id?: string;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -36,6 +32,7 @@ User.init(
     user_id: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
     username: {
       type: DataTypes.STRING,
@@ -45,15 +42,6 @@ User.init(
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0,
-    },
-    countmessage: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-      defaultValue: 0,
-    },
-    clan_id: {
-      type: DataTypes.STRING,
-      allowNull: true,
     },
   },
   {

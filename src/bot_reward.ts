@@ -6,6 +6,7 @@ import "./models";
 import { MezonBotListener } from "./event/mezon.event";
 import { showTopDay, showTopMonth, showTopWeek } from "./services/top.service";
 import { syncMessageCounts } from "./services/memcached.service";
+import sequelize from "./config/database";
 // import { messageConsumer } from "./services/message-consumer.service";
 
 dotenv.config();
@@ -13,8 +14,10 @@ dotenv.config();
 const dailyJob = new CronJob(
   "0 0 8 * * *",
   async function () {
-    syncMessageCounts();
-    await showTopDay();
+   await Promise.all([
+    syncMessageCounts(),
+    showTopDay()
+   ])
   },
   null,
   true,
@@ -53,6 +56,8 @@ const monthlyJob = new CronJob(
 
 async function main() {
   try {
+    await sequelize.query(`SET TIME ZONE 'Asia/Ho_Chi_Minh';`);
+    await sequelize.sync({ alter: true });
     await client.login();
     await connectClient();
     const mezonBotListener = new MezonBotListener(client);

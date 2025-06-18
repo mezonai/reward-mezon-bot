@@ -23,7 +23,7 @@ Reward.init(
     },
     description: {
       type: DataTypes.STRING(500),
-      allowNull: false,
+      allowNull: true,
     },
     points: {
       type: DataTypes.BIGINT,

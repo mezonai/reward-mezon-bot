@@ -62,7 +62,7 @@ export class TrophyCommand extends CommandMessage {
     } else {
       await sendMessage(
         message.channel_id,
-        "Lỗi: Không thể xử dý kết quả trả về."
+        "Error: Unable to process the returned result."
       );
     }
   }
@@ -76,7 +76,7 @@ export class TrophyCommand extends CommandMessage {
     if (!action) {
       await replyMessage(
         message.channel_id,
-        "Thiếu thông tin hành động (new/upd/del)",
+        "Missing action information (new/upd/del)",
         message.message_id!
       );
       return;
@@ -101,7 +101,7 @@ export class TrophyCommand extends CommandMessage {
       default:
         await replyMessage(
           message.channel_id,
-          `Hành động không hợp lệ: ${action}. Sử dụng new/upd/del.`,
+          `Invalid action: ${action}. Use new/upd/del.`,
           message.message_id!
         );
     }
@@ -128,7 +128,7 @@ export class TrophyCommand extends CommandMessage {
     if (!name) {
       await replyMessage(
         message.channel_id,
-        "Bạn cần thêm tên trophy để xóa",
+        "You need to add trophy name to delete",
         message.message_id!
       );
       return;
@@ -169,7 +169,7 @@ export class TrophyCommand extends CommandMessage {
     if (!name) {
       await replyMessage(
         message.channel_id,
-        "Thiếu tên trophy để cập nhật",
+        "Missing trophy name to update",
         message.message_id!
       );
       return;
@@ -181,7 +181,7 @@ export class TrophyCommand extends CommandMessage {
       if (!trophy) {
         await replyMessage(
           message.channel_id,
-          "Không tìm thấy trophy",
+          "Trophy not found",
           message.message_id!
         );
         return;
@@ -216,10 +216,10 @@ export class TrophyCommand extends CommandMessage {
   }
 
   private async sendErrorMessage(channelId: string) {
-    await sendMessage(channelId, "Lỗi: Không thể xử lý kết quả trả về.");
+    await sendMessage(channelId, "Error: Unable to process the returned result.");
   }
 
   private async handleError(channelId: string, error: unknown) {
-    await sendMessage(channelId, "Lỗi: Đã xảy ra lỗi khi xử lý yêu cầu.");
+    await sendMessage(channelId, "Error: An error occurred while processing the request.");
   }
 }

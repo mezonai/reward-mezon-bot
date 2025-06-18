@@ -16,27 +16,27 @@ export class HelpCommand extends CommandMessage {
     const helpText = `
               🏆 **Reward - Help Menu:** 👑
        
-      !help - Hiển thị danh sách lệnh
-      !trophy new  - Tạo trophy mới 
-      !trophy upd | tên trophy - Cập nhật trophy
-      !trophy del | tên trophy - xóa trophy
-      !list_trophy - Xem danh sách trophy
-      !award @người dùng | Trophy Name - (Trao trophy cho người dùng)
-      !rank  or !rank số hạng - Xem bảng xếp hạng reward 
-      !trophies or !trophies user - Xem danh sách trophy của người dùng hoặc của bản thân
-      !list - Xem danh sách role rewards 
-      !reward del | tên role name - xóa role reward
-      !reward new - tạo role reward
-      !reward upd | tên role name  - cập nhật role reward
-      !top - Xem bảng xếp hạng hạng thành viên tích cực trong ngày
-      !top_week - Xem bảng xếp hạng trophy tuần này
-      !top_month - Xem bảng xếp hạng trophy tháng này
-      !kttk - kiểm tra tài khoản
-      !rut - rút tiền
-      @bot-reward - hỏi bot nội dung trong channel hoặc tạo ảnh 
+      !help - Display command list
+      !trophy new  - Create new trophy 
+      !trophy upd | trophy name - Update trophy
+      !trophy del | trophy name - Delete trophy
+      !list_trophy - View trophy list
+      !award @user | Trophy Name - (Award trophy to user)
+      !rank  or !rank number - View reward leaderboard 
+      !trophies or !trophies user - View trophy list of a user or yourself
+      !list - View role rewards list 
+      !reward del | role name - Delete role reward (only admin)
+      !reward new - Create role reward (only admin)
+      !reward upd | role name  - Update role reward (only admin)
+      !top - View leaderboard of active members today
+      !top_week - View trophy leaderboard this week
+      !top_month - View trophy leaderboard this month
+      !kttk - Check account
+      !rut - Withdraw money
+      @bot-reward - Ask bot about content in channel or create images 
       
-      - Lưu ý tạo ảnh thì cần phải có 1 trong từ sau "tạo ảnh", "tạo hình",
-       "tạo image","generate image", "create photo", "vẽ hình", "vẽ ảnh"
+      - Note: To create images, you need to include one of the following words: "create image", 
+        "generate image", "create photo", "draw image"
 
             `;
     await replyMessage(message?.channel_id!, helpText, message?.message_id!);

@@ -29,14 +29,14 @@ export class TopCommand extends CommandMessage {
       ) {
         const text = formatLeaderboardMessage(
           JSON.parse(result.content[0].text),
-          `ngày ${day}`
+          `day ${day}`
         );
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về."
+          "Error: Unable to process the returned result."
         );
       }
     }
@@ -50,14 +50,14 @@ export class TopCommand extends CommandMessage {
       ) {
         const text = formatLeaderboard(
           JSON.parse(result.content[0].text),
-          `Tuần ${week}`
+          `Week ${week}`
         );
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về."
+          "Error: Unable to process the returned result."
         );
       }
     }
@@ -71,14 +71,14 @@ export class TopCommand extends CommandMessage {
       ) {
         const text = formatLeaderboard(
           JSON.parse(result.content[0].text),
-          `Tháng ${month}`
+          `Month ${month}`
         );
 
         await replyMessage(message.channel_id, text, message?.message_id!);
       } else {
         await sendMessage(
           message.channel_id,
-          "Lỗi: Không thể xử dý kết quả trả về."
+          "Error: Unable to process the returned result."
         );
       }
     }

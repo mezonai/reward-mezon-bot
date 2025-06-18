@@ -1,9 +1,10 @@
 import { clientMCP } from "../config/connect";
-import { client } from "../config/mezon-client";
-import { ChannelMessage, EMarkdownType } from "mezon-sdk";
+import { ChannelMessage } from "mezon-sdk";
 import User from "../models/User";
 import dotenv from "dotenv";
 import { replyMessage, sendMessage } from "./message.service";
+import { client } from "../config/mezon-client";
+import sequelize from "../config/database";
 dotenv.config();
 
 export class SystemService {
@@ -21,8 +22,6 @@ export class SystemService {
     user_id: string,
     username: string,
     amount: number,
-    countmessage: number,
-    message?: string,
     clan_id?: string
   ) {
     return clientMCP.callTool({
@@ -31,8 +30,6 @@ export class SystemService {
         user_id,
         username,
         amount,
-        countmessage,
-        message,
         clan_id,
       },
     });
@@ -42,6 +39,7 @@ export class SystemService {
     message: ChannelMessage,
     money: number
   ): Promise<void> {
+    const transaction = await sequelize.transaction();
     try {
       const dataSendToken = {
         sender_id: this.botId,
@@ -52,32 +50,74 @@ export class SystemService {
 
       await client.sendToken(dataSendToken);
       const user = await User.findOne({
-        where: { user_id: message.sender_id, clan_id: message.clan_id },
+        where: { user_id: message.sender_id },
+        lock: true,
+        transaction,
       });
 
       if (user) {
         user.amount = Number(user.amount) - money;
-        await user?.save();
+        await user.save({ transaction });
       }
+
+      await transaction.commit();
 
       await replyMessage(
         message?.channel_id!,
-        `💸 Rút ${money} ₫ thành công`,
+        `💸 Successfully withdrew ${money.toLocaleString()} ₫`,
         message?.message_id!
       );
     } catch (error) {
+      await transaction.rollback();
       await replyMessage(
         message?.channel_id!,
-        `💸 Rút ${money} ₫ không thành công, vui lòng thử lại`,
+        `💸 Failed to withdraw ${money} ₫, please try again`,
         message?.message_id!
       );
     }
   }
 
+  public async getUserRewards(userId: string, clan_id: string) {
+    return clientMCP.callTool({
+      name: "get-user-rewards",
+      arguments: {
+        userId,
+        clan_id,
+      },
+    });
+  }
+
+  public async topDay(clan_id: string) {
+    return clientMCP.callTool({
+      name: "top-day",
+      arguments: {
+        clan_id,
+      },
+    });
+  }
+
+  public async topWeek(clan_id: string) {
+    return clientMCP.callTool({
+      name: "top-week",
+      arguments: {
+        clan_id,
+      },
+    });
+  }
+
+  public async topMonth(clan_id: string) {
+    return clientMCP.callTool({
+      name: "top-month",
+      arguments: {
+        clan_id,
+      },
+    });
+  }
+
   public async checkUserBalance(message: ChannelMessage): Promise<void> {
     try {
       const result = await User.findOne({
-        where: { user_id: message.sender_id, clan_id: message.clan_id },
+        where: { user_id: message.sender_id },
       });
 
       if (!result) {
@@ -89,7 +129,7 @@ export class SystemService {
       } else {
         await replyMessage(
           message?.channel_id!,
-          `💸Số dư của bạn là ${result?.amount} ₫`,
+          `💸 Your balance is ${result?.amount} ₫`,
           message?.message_id!
         );
       }
@@ -112,7 +152,7 @@ export class SystemService {
         rank += 1;
 
         const user = await User.findOne({
-          where: { user_id: userInfo.user_id, clan_id },
+          where: { user_id: userInfo.user_id },
         });
         if (user) {
           user.amount = (Number(user.amount) || 0) + reward;
@@ -123,22 +163,22 @@ export class SystemService {
           });
 
           const message =
-            "🎉Chúc mừng " +
+            "🎉 Congratulations " +
             user.username +
-            " đã nhận được " +
-            reward +
+            " has received " +
+            reward.toLocaleString() +
             "₫ " +
-            "khi đạt" +
+            "for reaching" +
             " top #" +
             rank +
             " Reward " +
             description;
 
-          if (this.welcomeChannelId) {
-            await sendMessage(this.welcomeChannelId, message);
+          if (clan_id) {
+            await sendMessage(clan_id, message);
           }
         } else {
-          console.warn(`⚠️ Không tìm thấy user: ${userInfo.user_id}`);
+          console.warn(`⚠️ User not found: ${userInfo.user_id}`);
         }
       }
     } catch (error) {
