@@ -4,6 +4,7 @@ import { TopCommand } from "./top.command";
 import { SystemCommand } from "./system.command";
 import { AwardCommand } from "./award.command";
 import { HelpCommand } from "./help.command";
+import { FinanceCommand } from "./finance.command";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -24,4 +25,5 @@ export const commands = {
   list_trophy: new TrophyCommand(),
   trophies: new TrophyCommand(),
   list: new RewardCommand(),
+  balance: new FinanceCommand(),
 };

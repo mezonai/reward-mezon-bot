@@ -2,11 +2,14 @@ import { MezonClient, TokenSentEvent } from "mezon-sdk";
 import User from "../models/User";
 import { addUser } from "../services/system.service";
 import sequelize from "../config/database";
+import Transaction from "../models/Transaction";
+import { TransactionType } from "../models/Transaction";
 export class TokenEventHandler {
   private user: User | null = null;
   private bot: User | null = null;
   private botId: string;
   private botName: string;
+  private transactionBot: Transaction | null = null;
   constructor(private readonly client: MezonClient) {
     this.botId = process.env.BOT!;
     this.botName = process.env.BOT_NAME!;
@@ -57,7 +60,17 @@ export class TokenEventHandler {
         this.user!.amount =
           (Number(this.user!.amount) || 0) + Number(data.amount);
         await this.user!.save({ transaction });
-
+        this.transactionBot = await Transaction.create(
+          {
+            amount: data.amount,
+            transaction_type: TransactionType.DEPOSIT,
+            sender_id: data.sender_id,
+            receiver_id: this.botId,
+            description: `Deposit ${data.amount}`,
+            status: true,
+          },
+          { transaction }
+        );
         await transaction.commit();
       }
     } catch (e) {
@@ -73,6 +86,10 @@ export class TokenEventHandler {
             (Number(this.user.amount) || 0) - Number(data.amount);
           this.bot.amount =
             (Number(this.bot.amount) || 0) - Number(data.amount);
+          if (this.transactionBot) {
+            this.transactionBot.transaction_type = TransactionType.REFUND;
+            await this.transactionBot.save({ transaction });
+          }
 
           await Promise.all([
             this.user.save({ transaction }),

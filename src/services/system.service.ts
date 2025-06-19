@@ -1,6 +1,7 @@
 import { clientMCP } from "../config/connect";
 import { ChannelMessage } from "mezon-sdk";
 import User from "../models/User";
+import Transaction, { TransactionType } from "../models/Transaction";
 import dotenv from "dotenv";
 import { replyMessage, sendMessage } from "./message.service";
 import { client } from "../config/mezon-client";
@@ -69,6 +70,20 @@ export class SystemService {
         await bot.save({ transaction });
       }
       await client.sendToken(dataSendToken);
+
+      await Transaction.create(
+        {
+          amount: money,
+          transaction_type: TransactionType.WITHDRAWAL,
+          sender_id: this.botId,
+          receiver_id: message.sender_id,
+          description: `Withdrawal requested by ${
+            user?.username || message.sender_id
+          }`,
+          status: true,
+        },
+        { transaction }
+      );
 
       await transaction.commit();
 
@@ -155,8 +170,10 @@ export class SystemService {
     clan_id: string
   ): Promise<void> {
     try {
+      const transaction = await sequelize.transaction();
+
       let rank = 0;
-      for (let i = 0; i < leaderboard.length; i++) {
+      for (let i = 0; i < leaderboard.length; ++i) {
         const userInfo = leaderboard[i];
         const reward = rewardAmounts[i];
         rank += 1;
@@ -165,36 +182,46 @@ export class SystemService {
           where: { user_id: userInfo.user_id },
         });
         if (user) {
-          user.amount = (Number(user.amount) || 0) + reward;
-          await user.save();
-          await User.increment("amount", {
-            by: -Number(reward),
-            where: { user_id: this.botId },
-          });
+          try {
+            user.amount = (Number(user.amount) || 0) + reward;
+            await user.save({ transaction });
 
-          const message =
-            "🎉 Congratulations " +
-            user.username +
-            " has received " +
-            reward.toLocaleString() +
-            "₫ " +
-            "for reaching" +
-            " top #" +
-            rank +
-            " Reward " +
-            description;
+            await User.increment("amount", {
+              by: -Number(reward),
+              where: { user_id: this.botId },
+              transaction,
+            });
 
-          if (clan_id) {
-            await sendMessage(clan_id, message);
+            const message =
+              "🎉 Congratulations " +
+              user.username +
+              " has received " +
+              reward.toLocaleString() +
+              "₫ " +
+              "for reaching" +
+              " top #" +
+              rank +
+              " Reward " +
+              description;
+
+            if (clan_id) {
+              await sendMessage(clan_id, message);
+            }
+          } catch (error) {
+            await transaction.rollback();
+            console.error(`Error giving token to user ${user.user_id}:`, error);
           }
         } else {
           console.warn(`⚠️ User not found: ${userInfo.user_id}`);
         }
       }
+      await transaction.commit();
     } catch (error) {
       console.error(error);
     }
   }
+
+ 
 }
 
 export const systemService = new SystemService();
