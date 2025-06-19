@@ -1,16 +1,16 @@
 import { z } from "zod";
 import { client } from "../config/mezon-client";
 import {
-    AddUserSchema,
-    AssignRoleOnScoreSchema,
-    AwardTrophySchema,
-    CrudRewardSchema,
-    GetLeaderboardSchema,
-    ReadMessagesSchema,
-    SendMessageSchema,
-    TopDaySchema,
-    TopSchema,
-    AddUserRewardSchema,
+  AddUserSchema,
+  AssignRoleOnScoreSchema,
+  AwardTrophySchema,
+  CrudRewardSchema,
+  GetLeaderboardSchema,
+  ReadMessagesSchema,
+  SendMessageSchema,
+  TopDaySchema,
+  TopSchema,
+  AddUserRewardSchema,
 } from "./schema/tool_schema";
 import Reward from "../models/Reward";
 import UserReward from "../models/User_reward";
@@ -18,12 +18,12 @@ import sequelize from "../config/database";
 import { QueryTypes } from "sequelize";
 import RoleReward from "../models/Role_rewards";
 import {
-    addDate,
-    afterDate,
-    enumBot,
-    ERROR_TOKEN,
-    getMondayAndSunday,
-    getStartandEndOfMonth,
+  addDate,
+  afterDate,
+  enumBot,
+  ERROR_TOKEN,
+  getMondayAndSunday,
+  getStartandEndOfMonth,
 } from "../ultis/constant";
 import User from "../models/User";
 import UserClanMessage from "../models/UserClanMessage";
@@ -500,7 +500,6 @@ export const CallTools = async (request: any) => {
       case "top-day": {
         const { date, clan_id } = TopDaySchema.parse(args);
 
-        // Get users from UserClanMessage với join để lấy username
         const sqlQuery = `
           SELECT ucm.user_id, ucm.clan_id, ucm.countmessage, u.username
           FROM user_clan_messages ucm
@@ -566,6 +565,7 @@ export const CallTools = async (request: any) => {
           replacements: { start_date, end_date: endDate, clan_id },
           type: QueryTypes.SELECT,
         });
+
         return {
           content: [
             {
@@ -685,7 +685,7 @@ export const CallTools = async (request: any) => {
             where: { user_id: userId },
           });
 
-          if (existingUser) {         
+          if (existingUser) {
             if (clan_id) {
               await UserClanMessage.findOrCreate({
                 where: { user_id: userId, clan_id },
@@ -741,9 +741,6 @@ export const CallTools = async (request: any) => {
           };
         }
       }
-
-
-
 
       default:
         throw new Error(`Unknown tool: ${name}`);

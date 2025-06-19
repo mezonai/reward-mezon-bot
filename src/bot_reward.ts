@@ -14,10 +14,8 @@ dotenv.config();
 const dailyJob = new CronJob(
   "0 0 8 * * *",
   async function () {
-   await Promise.all([
-    syncMessageCounts(),
-    showTopDay()
-   ])
+    await syncMessageCounts();
+    await showTopDay();
   },
   null,
   true,
