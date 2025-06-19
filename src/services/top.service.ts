@@ -88,11 +88,14 @@ export class TopService {
     clan_id: string
   ): Promise<void> {
     try {
+      if (arrayUser.length === 0) {
+        return;
+      }
       const clan = await client.clans.fetch(clan_id!);
       if (!clan) {
         return;
       }
-      if (clan.welcome_channel_id ) {
+      if (clan.welcome_channel_id) {
         await Promise.all([
           sendMessage(clan.welcome_channel_id, message),
           giveToken(arrayUser, type, rewardAmounts, clan.welcome_channel_id),
@@ -105,7 +108,6 @@ export class TopService {
 
   public async showTopDay(): Promise<void> {
     try {
-
       await this.loadBlacklistedUsers();
       let message;
       const points = 10000;
@@ -119,8 +121,6 @@ export class TopService {
         },
         raw: true,
       });
-
-
 
       const clanIds = clans.map((c) => c.clan_id);
 
@@ -141,6 +141,12 @@ export class TopService {
         const topMessageCounts = await UserClanMessage.findAll({
           where: {
             clan_id: clanId,
+            countmessage: {
+              [Op.gt]: 0,
+            },
+            user_id: {
+              [Op.not]: this.botId,
+            },
           },
           order: [["countmessage", "DESC"]],
           limit: 10,
@@ -161,7 +167,6 @@ export class TopService {
           }
         }
 
-
         const plainUsers = topUsers.filter(
           (user) =>
             !Array.from(this.blacklistedUsers).some(
@@ -172,11 +177,12 @@ export class TopService {
         );
 
         if (plainUsers.length === 0) {
-          return;
+          break;
         }
 
         let randomNumber = Math.floor(Math.random() * plainUsers.length);
         const user = plainUsers[randomNumber];
+
         if (
           user &&
           this.botId &&
@@ -208,22 +214,16 @@ export class TopService {
             }
             const clan = await client.clans.fetch(clanId);
             if (!clan) {
-              return;
+              break;
             }
-            if (clan.welcome_channel_id ) {
-              await sendMessage(clan.welcome_channel_id , message).then(
-                async () => {
-                  this.clearBlacklistIfMonday();
-                  await UserClanMessage.update(
-                    { countmessage: 0 },
-                    { where: { clan_id: clanId } }
-                  );
-                }
-              );
+            if (clan.welcome_channel_id) {
+              await sendMessage(clan.welcome_channel_id, message);
             }
           }
         }
       }
+      await UserClanMessage.update({ countmessage: 0 }, { where: {} });
+      await this.clearBlacklistIfMonday();
     } catch (error) {
       console.error(error);
     }
@@ -245,6 +245,7 @@ export class TopService {
       const clanIds = clans.map((c) => c.clan_id);
       for (const clanId of clanIds) {
         const result = await rewardToolService.topWeek(clanId);
+
         if (
           result &&
           Array.isArray(result.content) &&
