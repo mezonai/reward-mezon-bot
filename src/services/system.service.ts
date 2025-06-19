@@ -48,17 +48,27 @@ export class SystemService {
         amount: +money,
       };
 
-      await client.sendToken(dataSendToken);
       const user = await User.findOne({
         where: { user_id: message.sender_id },
         lock: true,
         transaction,
       });
-
       if (user) {
         user.amount = Number(user.amount) - money;
         await user.save({ transaction });
       }
+
+      const bot = await User.findOne({
+        where: { user_id: this.botId },
+        lock: true,
+        transaction,
+      });
+
+      if (bot) {
+        bot.amount = Number(bot.amount) - money;
+        await bot.save({ transaction });
+      }
+      await client.sendToken(dataSendToken);
 
       await transaction.commit();
 
