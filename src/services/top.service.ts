@@ -21,7 +21,6 @@ interface BlacklistedUserCache {
 export class TopService {
   private readonly botId: string;
   private blacklistedUsers: Set<BlacklistedUserCache> = new Set();
-  private lastClearDate: Date = new Date();
 
   constructor() {
     this.botId = process.env.BOT as string;
@@ -55,10 +54,10 @@ export class TopService {
 
   private async clearBlacklistIfMonday(): Promise<void> {
     const today = new Date();
-    if (isMonday(today) && this.lastClearDate.getDate() !== today.getDate()) {
+    if (isMonday(today)) {
+      console.log("clearBlacklistIfMonday");
       this.blacklistedUsers.clear();
       await BlacklistedUser.destroy({ where: {} });
-      this.lastClearDate = today;
     }
   }
 
@@ -112,18 +111,19 @@ export class TopService {
       let message;
       const points = 10000;
       const subdate = format(subDays(new Date(), 1), "yyyy-MM-dd");
-      const clans = await UserClanMessage.findAll({
+      const clansWithUserCount = await UserClanMessage.findAll({
         attributes: [
-          [Sequelize.fn("DISTINCT", Sequelize.col("clan_id")), "clan_id"],
+          "clan_id",
+          [Sequelize.fn("COUNT", Sequelize.col("user_id")), "user_count"],
         ],
-        where: {
-          countmessage: { [Op.gt]: 0 },
-        },
+        having: Sequelize.literal("COUNT(DISTINCT user_id) >= 100"),
+        group: ["clan_id"],
         raw: true,
       });
-
-      const clanIds = clans.map((c) => c.clan_id);
-
+      const clanIds = clansWithUserCount.map((c) => c.clan_id);
+      if (clanIds.length === 0) {
+        return;
+      }
       let trophies = await Reward.findOne({
         where: { name: TROPY_MOST_ACTIVE_MEMBER },
       });
@@ -177,7 +177,7 @@ export class TopService {
         );
 
         if (plainUsers.length === 0) {
-          break;
+          continue;
         }
 
         let randomNumber = Math.floor(Math.random() * plainUsers.length);
@@ -214,7 +214,7 @@ export class TopService {
             }
             const clan = await client.clans.fetch(clanId);
             if (!clan) {
-              break;
+              continue;
             }
             if (clan.welcome_channel_id) {
               await sendMessage(clan.welcome_channel_id, message);
@@ -231,18 +231,29 @@ export class TopService {
 
   public async showTopWeek(): Promise<void> {
     try {
+      console.log("showTopWeek");
       const week = getWeek(subDays(new Date(), 1));
       const rewardAmounts = [15000, 10000, 5000];
       let arrayUser: string[] = [];
 
-      const clans = await UserReward.findAll({
+      const clansWithUserCount = await UserClanMessage.findAll({
         attributes: [
-          [Sequelize.fn("DISTINCT", Sequelize.col("clan_id")), "clan_id"],
+          "clan_id",
+          [Sequelize.fn("COUNT", Sequelize.col("user_id")), "user_count"],
         ],
+
+        group: ["clan_id"],
+        having: Sequelize.literal("COUNT(DISTINCT user_id) >= 100"),
         raw: true,
       });
 
-      const clanIds = clans.map((c) => c.clan_id);
+      console.log("clansWithUserCount", clansWithUserCount);
+
+      const clanIds = clansWithUserCount.map((c) => c.clan_id);
+
+      if (clanIds.length === 0) {
+        return;
+      }
       for (const clanId of clanIds) {
         const result = await rewardToolService.topWeek(clanId);
 
@@ -275,14 +286,20 @@ export class TopService {
       const month = getMonth(subDays(new Date(), 1)) + 1;
       let arrayUser: string[] = [];
       const rewardAmounts: number[] = [50000, 30000, 15000];
-      const clans = await UserReward.findAll({
+      const clansWithUserCount = await UserClanMessage.findAll({
         attributes: [
-          [Sequelize.fn("DISTINCT", Sequelize.col("clan_id")), "clan_id"],
+          "clan_id",
+          [Sequelize.fn("COUNT", Sequelize.col("user_id")), "user_count"],
         ],
+        group: ["clan_id"],
+        having: Sequelize.literal("COUNT(user_id) >= 100"),
         raw: true,
       });
 
-      const clanIds = clans.map((c) => c.clan_id);
+      const clanIds = clansWithUserCount.map((c) => c.clan_id);
+      if (clanIds.length === 0) {
+        return;
+      }
       for (const clanId of clanIds) {
         const result = await rewardToolService.topMonth(clanId);
         if (
