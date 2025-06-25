@@ -120,6 +120,9 @@ export class TopService {
         group: ["clan_id"],
         raw: true,
       });
+
+      console.log("clansWithUserCount", clansWithUserCount);
+
       const clanIds = clansWithUserCount.map((c) => c.clan_id);
       if (clanIds.length === 0) {
         return;
@@ -246,8 +249,6 @@ export class TopService {
         having: Sequelize.literal("COUNT(DISTINCT user_id) >= 100"),
         raw: true,
       });
-
-      console.log("clansWithUserCount", clansWithUserCount);
 
       const clanIds = clansWithUserCount.map((c) => c.clan_id);
 

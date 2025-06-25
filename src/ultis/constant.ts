@@ -11,16 +11,14 @@ import {
 
 export function formatLeaderboard(data: any[], title?: string): string {
   if (data.length === 0) {
-    return `🏆 No players in the leaderboard ${
-      title ? title : ""
-    } `;
+    return `🏆 No players in the leaderboard ${title ? title : ""} `;
   }
 
   let leaderboard = `🏆 Leaderboard ${title ? title : ""} :\n`;
   data.forEach((user, index) => {
-    leaderboard += `${index + 1}. 🧑 @${user?.user_name} - ${
-     (+user.total_point).toLocaleString()
-    } ₫  -  ${
+    leaderboard += `${index + 1}. 🧑 @${
+      user?.user_name
+    } - ${(+user.total_point).toLocaleString()} ₫  -  ${
       user.role_name == "Đồng"
         ? "🥉"
         : user.role_name == "Bạc"
@@ -36,9 +34,7 @@ export function formatLeaderboard(data: any[], title?: string): string {
 
 export function formatLeaderboardMessage(data: any[], title?: string): string {
   if (data.length === 0) {
-    return `🏆 No players in the leaderboard ${
-      title ? title : ""
-    } `;
+    return `🏆 No players in the leaderboard ${title ? title : ""} `;
   }
   let leaderboard = `🏆 Leaderboard of active members in ${
     title ? title : ""
@@ -76,14 +72,14 @@ export function formatDate(date: string): string {
 }
 
 export function formatListTrophyUser(data: any[]): string {
-
-  console.log("data", data)
   if (data.length === 0) {
     return "🏆 No trophies in the list.";
   }
   let leaderboardTrophy = `📝 Trophy List for ${data[0].user_name}:\n`;
   data.forEach((item) => {
-    leaderboardTrophy += `- @${item.user_name} - ${Number(item.points).toLocaleString()} ₫ -  🏆 ${item.name} - ${formatDate(item.createdAt)}\n`;
+    leaderboardTrophy += `- @${item.user_name} - ${Number(
+      item.points
+    ).toLocaleString()} ₫ -  🏆 ${item.name} - ${formatDate(item.createdAt)}\n`;
   });
 
   return leaderboardTrophy.trim();
@@ -176,7 +172,14 @@ export const formatMessage = (message: string) => {
   return "```" + message + "```";
 };
 
-export const enumBot = ["KOMU", "CheckIn", "System", "Fumo", "Utility"];
+export const enumBot = [
+  "KOMU",
+  "CheckIn",
+  "System",
+  "Fumo",
+  "Utility",
+  "Sena36",
+];
 
 export const MEZON_IMAGE_URL =
   "https://cdn.mezon.vn/1837043892743049216/1840654271217930240/1827994776956309500/857_0246x0w.webp";
