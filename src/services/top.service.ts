@@ -55,7 +55,6 @@ export class TopService {
   private async clearBlacklistIfMonday(): Promise<void> {
     const today = new Date();
     if (isMonday(today)) {
-      console.log("clearBlacklistIfMonday");
       this.blacklistedUsers.clear();
       await BlacklistedUser.destroy({ where: {} });
     }
@@ -120,9 +119,6 @@ export class TopService {
         group: ["clan_id"],
         raw: true,
       });
-
-      console.log("clansWithUserCount", clansWithUserCount);
-
       const clanIds = clansWithUserCount.map((c) => c.clan_id);
       if (clanIds.length === 0) {
         return;
@@ -231,10 +227,8 @@ export class TopService {
       console.error(error);
     }
   }
-
   public async showTopWeek(): Promise<void> {
     try {
-      console.log("showTopWeek");
       const week = getWeek(subDays(new Date(), 1));
       const rewardAmounts = [15000, 10000, 5000];
       let arrayUser: string[] = [];
