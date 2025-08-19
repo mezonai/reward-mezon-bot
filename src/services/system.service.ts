@@ -12,6 +12,7 @@ export class SystemService {
   private readonly botId: string;
   private readonly botName: string;
   private readonly welcomeChannelId: string;
+  private processingUsers: Map<string, boolean> = new Map();
 
   constructor() {
     this.botId = process.env.BOT || "";
@@ -40,65 +41,97 @@ export class SystemService {
     message: ChannelMessage,
     money: number
   ): Promise<void> {
-    const transaction = await sequelize.transaction();
+    const userId = message.sender_id;
+
+    if (this.processingUsers.get(userId)) {
+      await replyMessage(
+        message?.channel_id!,
+        "⏳ You have a withdrawal request currently being processed. Please wait until it is completed before submitting a new request.",
+        message?.message_id!
+      );
+      return;
+    }
+
+    this.processingUsers.set(userId, true);
+
+    let pendingTx: Transaction | null = null;
     try {
       const dataSendToken = {
         sender_id: this.botId,
         sender_name: this.botName,
-        receiver_id: message.sender_id,
+        receiver_id: userId,
         amount: +money,
       };
 
-      const user = await User.findOne({
-        where: { user_id: message.sender_id },
-        lock: true,
-        transaction,
-      });
-      if (user) {
-        user.amount = Number(user.amount) - money;
-        await user.save({ transaction });
+      const createTx = await sequelize.transaction();
+      try {
+        pendingTx = await Transaction.create(
+          {
+            amount: money,
+            transaction_type: TransactionType.WITHDRAWAL,
+            sender_id: this.botId,
+            receiver_id: userId,
+            description: `Withdrawal requested by ${
+              message.username || userId
+            }`,
+            status: false,
+          },
+          { transaction: createTx }
+        );
+        await createTx.commit();
+      } catch (e) {
+        await createTx.rollback();
+        throw e;
       }
 
-      const bot = await User.findOne({
-        where: { user_id: this.botId },
-        lock: true,
-        transaction,
-      });
-
-      if (bot) {
-        bot.amount = Number(bot.amount) - money;
-        await bot.save({ transaction });
-      }
       await client.sendToken(dataSendToken);
 
-      await Transaction.create(
-        {
-          amount: money,
-          transaction_type: TransactionType.WITHDRAWAL,
-          sender_id: this.botId,
-          receiver_id: message.sender_id,
-          description: `Withdrawal requested by ${
-            user?.username || message.sender_id
-          }`,
-          status: true,
-        },
-        { transaction }
-      );
+      const updateTx = await sequelize.transaction();
+      try {
+        const user = await User.findOne({
+          where: { user_id: userId },
+          lock: true,
+          transaction: updateTx,
+        });
+        if (user) {
+          user.amount = (Number(user.amount) || 0) - Number(money);
+          await user.save({ transaction: updateTx });
+        }
 
-      await transaction.commit();
+        const bot = await User.findOne({
+          where: { user_id: this.botId },
+          lock: true,
+          transaction: updateTx,
+        });
+        if (bot) {
+          bot.amount = (Number(bot.amount) || 0) - Number(money);
+          await bot.save({ transaction: updateTx });
+        }
 
-      await replyMessage(
-        message?.channel_id!,
-        `💸 Successfully withdrew ${money.toLocaleString()} ₫`,
-        message?.message_id!
-      );
+        if (pendingTx) {
+          pendingTx.status = true;
+          await pendingTx.save({ transaction: updateTx });
+        }
+
+        await updateTx.commit();
+
+        await replyMessage(
+          message?.channel_id!,
+          `💸 Successfully withdrew ${money.toLocaleString()} ₫`,
+          message?.message_id!
+        );
+      } catch (e) {
+        await updateTx.rollback();
+        throw e;
+      }
     } catch (error) {
-      await transaction.rollback();
       await replyMessage(
         message?.channel_id!,
         `💸 Failed to withdraw ${money} ₫, please try again`,
         message?.message_id!
       );
+    } finally {
+      this.processingUsers.delete(userId);
     }
   }
 
@@ -220,8 +253,6 @@ export class SystemService {
       console.error(error);
     }
   }
-
- 
 }
 
 export const systemService = new SystemService();

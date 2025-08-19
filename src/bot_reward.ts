@@ -23,7 +23,7 @@ const dailyJob = new CronJob(
 );
 
 const asynCountMessage = new CronJob(
-  "0 */5 * * * *",
+  "0 */3 * * * *",
   async function () {
     syncMessageCounts();
   },

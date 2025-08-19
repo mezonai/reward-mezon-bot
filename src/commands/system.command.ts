@@ -1,6 +1,6 @@
 import { ChannelMessage } from "mezon-sdk";
 import { CommandMessage } from "./base_command";
-import { checkUserBalance, sendToken } from "../services/system.service";
+import { systemService } from "../services/system.service";
 import {
   messageService,
   replyMessage,
@@ -23,7 +23,7 @@ export class SystemCommand extends CommandMessage {
       return;
     }
     if (commandName === "kttk") {
-      await checkUserBalance(message);
+      await systemService.checkUserBalance(message);
     }
     if (commandName === "rut") {
       let money = Number(args[0] || 0);
@@ -50,7 +50,7 @@ export class SystemCommand extends CommandMessage {
         money = money == 0 ? user.amount : money;
       }
 
-      await sendToken(message, money);
+      await systemService.sendToken(message, money);
     }
     if (commandName === "ask") {
       const question = args.join(" ");

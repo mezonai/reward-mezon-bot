@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A mezon bot using Model Context Protocol with TypeScript",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=20.19.4 <21"
+  },
   "scripts": {
     "start": "tsc && node build/bot_reward.js",
     "dev": "nodemon --watch src --ext ts,js --exec \"npm start\"",
@@ -33,7 +36,7 @@
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.0",
-    "@types/node": "^20.11.0",
+    "@types/node": "^20.17.10",
     "@types/sequelize": "^4.28.20",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.2",

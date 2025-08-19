@@ -80,7 +80,7 @@ export class TopService {
 
   private async showTopGeneric(
     message: string,
-    arrayUser: string[],
+    arrayUser: any[],
     rewardAmounts: number[],
     type: string,
     clan_id: string
@@ -119,6 +119,7 @@ export class TopService {
         group: ["clan_id"],
         raw: true,
       });
+
       const clanIds = clansWithUserCount.map((c) => c.clan_id);
       if (clanIds.length === 0) {
         return;
@@ -211,7 +212,9 @@ export class TopService {
                 " on " +
                 subdate;
             }
+
             const clan = await client.clans.fetch(clanId);
+
             if (!clan) {
               continue;
             }
@@ -224,14 +227,14 @@ export class TopService {
       await UserClanMessage.update({ countmessage: 0 }, { where: {} });
       await this.clearBlacklistIfMonday();
     } catch (error) {
-      console.error(error);
+      console.error("error showTopDay", error);
     }
   }
   public async showTopWeek(): Promise<void> {
     try {
       const week = getWeek(subDays(new Date(), 1));
-      const rewardAmounts = [15000, 10000, 5000];
-      let arrayUser: string[] = [];
+      const rewardAmounts = [15000];
+      let arrayUser: any[] = [];
 
       const clansWithUserCount = await UserClanMessage.findAll({
         attributes: [
@@ -257,11 +260,35 @@ export class TopService {
           Array.isArray(result.content) &&
           typeof result.content[0]?.text === "string"
         ) {
-          const message = formatLeaderboard(
-            JSON.parse(result.content[0].text),
-            `Week ${week}`
-          );
-          arrayUser = JSON.parse(result.content[0].text);
+          const userData = JSON.parse(result.content[0].text);
+
+          if (userData.length > 0) {
+            const highestScore = userData[0].total_point;
+            const usersWithHighestScore = userData.filter(
+              (user: any) => user.total_point === highestScore
+            );
+
+            if (usersWithHighestScore.length > 1) {
+              const randomIndex = Math.floor(
+                Math.random() * usersWithHighestScore.length
+              );
+              const selectedUser = usersWithHighestScore[randomIndex];
+
+              userData[0] = selectedUser;
+
+              userData.sort((a: any, b: any) => {
+                if (b.total_point !== a.total_point) {
+                  return b.total_point - a.total_point;
+                }
+                return b.trophy_count - a.trophy_count;
+              });
+            }
+          }
+
+          const selectedUsers = userData.slice(0, rewardAmounts.length);
+
+          const message = formatLeaderboard(selectedUsers, `Week ${week}`);
+          arrayUser = selectedUsers;
           await this.showTopGeneric(
             message,
             arrayUser,
@@ -272,14 +299,14 @@ export class TopService {
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error("error showTopWeek", error);
     }
   }
 
   public async showTopMonth(): Promise<void> {
     try {
       const month = getMonth(subDays(new Date(), 1)) + 1;
-      let arrayUser: string[] = [];
+      let arrayUser: any[] = [];
       const rewardAmounts: number[] = [50000, 30000, 15000];
       const clansWithUserCount = await UserClanMessage.findAll({
         attributes: [
@@ -302,12 +329,35 @@ export class TopService {
           Array.isArray(result.content) &&
           typeof result.content[0]?.text === "string"
         ) {
-          const message = formatLeaderboard(
-            JSON.parse(result.content[0].text),
-            `Month ${month}`
-          );
-          arrayUser = JSON.parse(result.content[0].text);
+          const userData = JSON.parse(result.content[0].text);
 
+          if (userData.length > 0) {
+            const highestScore = userData[0].total_point;
+            const usersWithHighestScore = userData.filter(
+              (user: any) => user.total_point === highestScore
+            );
+
+            if (usersWithHighestScore.length > 1) {
+              const randomIndex = Math.floor(
+                Math.random() * usersWithHighestScore.length
+              );
+              const selectedUser = usersWithHighestScore[randomIndex];
+
+              userData[0] = selectedUser;
+
+              userData.sort((a: any, b: any) => {
+                if (b.total_point !== a.total_point) {
+                  return b.total_point - a.total_point;
+                }
+                return b.trophy_count - a.trophy_count;
+              });
+            }
+          }
+
+          const selectedUsers = userData.slice(0, rewardAmounts.length);
+
+          const message = formatLeaderboard(selectedUsers, `Month ${month}`);
+          arrayUser = selectedUsers;
           await this.showTopGeneric(
             message,
             arrayUser,
@@ -318,7 +368,7 @@ export class TopService {
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error("error showTopMonth", error);
     }
   }
 }

@@ -50,8 +50,7 @@ export class RewardCommand extends CommandMessage {
       const [action, roleName, score] = fullArg.split("|").map((s) => s.trim());
 
       if (commandName === "reward") {
-
-        if (message.sender_id !== "1840678415796015104") return
+        if (message.sender_id !== "1840678415796015104") return;
         const fetchedChannel = await client.channels.fetch(message.channel_id);
         const fetchedMessage = await fetchedChannel.messages.fetch(
           message?.message_id!
