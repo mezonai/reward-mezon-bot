@@ -38,7 +38,6 @@ export class DataStorageService {
       if (this.getAsync(key)) {
         this.checkAndIncrementCount(sender_id, clan_id, text, now);
       } else {
-        // Khởi tạo user mới với count = 1 (tin nhắn đầu tiên)
         await this.setAsync(key, {
           user_id: sender_id,
           clan_id,
