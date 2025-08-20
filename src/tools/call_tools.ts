@@ -314,7 +314,7 @@ export const CallTools = async (request: any) => {
             WHERE point_threshold <= utp.total_point
             LIMIT 1
           ) rr ON true
-		      ORDER BY total_point DESC
+          ORDER BY total_point DESC
           Limit :limit;
   `;
 
@@ -476,8 +476,8 @@ export const CallTools = async (request: any) => {
         const result = await sequelize.query(
           `
           SELECT 
-		  r.name, r.points,
-		  ur.user_name, ur."createdAt"
+      r.name, r.points,
+      ur.user_name, ur."createdAt"
           FROM rewards r
           JOIN user_rewards ur ON ur.reward_id = r.id
           WHERE ur.user_id = :userId AND ur.clan_id = :clan_id
@@ -537,7 +537,8 @@ export const CallTools = async (request: any) => {
           SELECT 
             ur.user_name,
             ur.user_id,
-            SUM(r.points) AS total_point
+            SUM(r.points) AS total_point,
+            COUNT(ur.reward_id) AS trophy_count
           FROM user_rewards ur
           JOIN rewards r ON ur.reward_id = r.id
           WHERE ur."createdAt" >= DATE :start_date
@@ -558,13 +559,15 @@ export const CallTools = async (request: any) => {
           WHERE point_threshold <= utp.total_point
           LIMIT 1
           ) rr ON true
-        ORDER BY total_point DESC
-        LIMIT 3;
+        ORDER BY total_point DESC, utp.trophy_count DESC
+        LIMIT 10;
                 `;
         const result = await sequelize.query(sqlQuery, {
           replacements: { start_date, end_date: endDate, clan_id },
           type: QueryTypes.SELECT,
         });
+
+        console.log("result top week", result);
 
         return {
           content: [
