@@ -6,6 +6,7 @@ import { AwardCommand } from "./award.command";
 import { HelpCommand } from "./help.command";
 import { FinanceCommand } from "./finance.command";
 import dotenv from "dotenv";
+import { AdminCommand } from "./admin.command";
 
 dotenv.config();
 
@@ -26,4 +27,5 @@ export const commands = {
   trophies: new TrophyCommand(),
   list: new RewardCommand(),
   balance: new FinanceCommand(),
+  chk: new AdminCommand(),
 };
