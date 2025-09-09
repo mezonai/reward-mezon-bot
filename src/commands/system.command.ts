@@ -13,6 +13,8 @@ import { getRandomColor } from "../ultis/color";
 import { checkAnonymous } from "../ultis/constant";
 
 export class SystemCommand extends CommandMessage {
+  private statusBlockRut: boolean = false;
+
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
     if (checkAnonymous(message.username!)) {
       await replyMessage(
@@ -22,10 +24,41 @@ export class SystemCommand extends CommandMessage {
       );
       return;
     }
+
     if (commandName === "kttk") {
       await systemService.checkUserBalance(message);
     }
     if (commandName === "rut") {
+      if (message.sender_id === "1840678415796015104" && args[0] === "block") {
+        this.statusBlockRut = true;
+        await replyMessage(
+          message.channel_id,
+          "Withdrawals are now disabled by an administrator.",
+          message.message_id!
+        );
+        return;
+      }
+      if (
+        message.sender_id === "1840678415796015104" &&
+        args[0] === "unblock"
+      ) {
+        this.statusBlockRut = false;
+        await replyMessage(
+          message.channel_id,
+          "Withdrawals are now disabled by an administrator.",
+          message.message_id!
+        );
+        return;
+      }
+      if (this.statusBlockRut) {
+        await replyMessage(
+          message.channel_id,
+          "Withdrawals are currently disabled by an administrator.",
+          message.message_id!
+        );
+        return;
+      }
+
       let money = Number(args[0] || 0);
 
       if (!Number.isInteger(money) || money <= 0) {
