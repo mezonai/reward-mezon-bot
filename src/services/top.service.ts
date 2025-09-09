@@ -331,29 +331,6 @@ export class TopService {
         ) {
           const userData = JSON.parse(result.content[0].text);
 
-          if (userData.length > 0) {
-            const highestScore = userData[0].total_point;
-            const usersWithHighestScore = userData.filter(
-              (user: any) => user.total_point === highestScore
-            );
-
-            if (usersWithHighestScore.length > 1) {
-              const randomIndex = Math.floor(
-                Math.random() * usersWithHighestScore.length
-              );
-              const selectedUser = usersWithHighestScore[randomIndex];
-
-              userData[0] = selectedUser;
-
-              userData.sort((a: any, b: any) => {
-                if (b.total_point !== a.total_point) {
-                  return b.total_point - a.total_point;
-                }
-                return b.trophy_count - a.trophy_count;
-              });
-            }
-          }
-
           const selectedUsers = userData.slice(0, rewardAmounts.length);
 
           const message = formatLeaderboard(selectedUsers, `Month ${month}`);

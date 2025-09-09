@@ -612,7 +612,7 @@ export const CallTools = async (request: any) => {
             WHERE point_threshold <= utp.total_point
             LIMIT 1
             ) rr ON true
-            ORDER BY total_point DESC
+            ORDER BY total_point DESC, utp.user_name ASC
           LIMIT 3;
                   `;
 
