@@ -4,11 +4,14 @@ import { TextChannel } from "mezon-sdk/dist/cjs/mezon-client/structures/TextChan
 
 dotenv.config();
 
-if (!process.env.MEZON_TOKEN) {
+if (!process.env.MEZON_TOKEN || !process.env.BOT) {
   throw new Error("MEZON_TOKEN is not defined in .env file");
 }
 
-const client = new MezonClient(process.env.MEZON_TOKEN);
+const client = new MezonClient({
+  botId: process.env.BOT,
+  token: process.env.MEZON_TOKEN,
+});
 
 client.once("ready", () => {
   console.log("✅ Mezon bot is ready!");

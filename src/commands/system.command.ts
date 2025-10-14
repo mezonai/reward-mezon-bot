@@ -13,7 +13,7 @@ import { getRandomColor } from "../ultis/color";
 import { checkAnonymous } from "../ultis/constant";
 
 export class SystemCommand extends CommandMessage {
-  private statusBlockRut: boolean = false;
+  private statusBlockRut: boolean = true;
 
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
     if (checkAnonymous(message.username!)) {
